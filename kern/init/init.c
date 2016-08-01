@@ -164,7 +164,7 @@ void __noreturn master_init(void)
 
 	init_IRQ();
 	/* temporary */
-#if 1
+#if 0
 	idle_init();
 	timer_init();
 	local_irq_enable();

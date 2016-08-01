@@ -8,36 +8,20 @@
 #include <mach-conf.h>
 #include <sched.h>
 #include <trap.h>
+#include <drivers/console/cons.h>
+#include <asm-generic/funcs.h>
 
 #define DEVICE_MODEL	"ns16550"
 
 static struct chr_driver drv;
-static struct {
-	char buf[BUFSIZ];
-	int head;
-	int tail;
-	lock_t lock;
-} cbuf = { {0}, 0, 0, EMPTY_LOCK(&cbuf.lock) };
 
 static int __intr(int irq)
 {
 	struct chr_device *dev;
-	unsigned char c;
-	unsigned long flags;
 
 	dev = (struct chr_device *)dev_from_id(makedev(UART_MAJOR, 0));
 	assert(dev != NULL);
-	c = __uart_ns16550_getchar(dev);
-	spin_lock_irq_save(&cbuf.lock, flags);
-	if (cbuf.head == (cbuf.tail + 1) % BUFSIZ) {
-		spin_unlock_irq_restore(&cbuf.lock, flags);
-		return 0;
-	}
-	cbuf.buf[cbuf.tail++] = c;
-	cbuf.tail %= BUFSIZ;
-	wakeup(&cbuf);
-	spin_unlock_irq_restore(&cbuf.lock, flags);
-	return 0;
+	return cons_intr(irq, dev, __uart_ns16550_getchar);
 }
 
 static int __new(struct devtree_entry *entry)
@@ -64,9 +48,56 @@ static int __new(struct devtree_entry *entry)
 	return 0;
 }
 
+static int __open(dev_t devno, int mode, struct proc *p)
+{
+	struct chr_device *dev;
+	kpdebug("opening UART 16550\n");
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	cons_open(dev, mode, p);
+	return 0;
+}
+
+static int __close(dev_t devno, int mode, struct proc *p)
+{
+	/* currently we do nothing */
+	return 0;
+}
+
+static int __putc(dev_t devno, int c)
+{
+	struct chr_device *dev;
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	return cons_putc(dev, c, __uart_ns16550_putchar);
+}
+
+static int __getc(dev_t devno)
+{
+	struct chr_device *dev;
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	return cons_getc(dev);
+}
+
+static int __write(dev_t devno, struct uio *uio, int ioflags)
+{
+	struct chr_device *dev;
+
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev == NULL);
+	return cons_write(dev, uio, ioflags, __uart_ns16550_putchar);
+}
+
 static struct chr_driver drv = {
 	.class = DEVCLASS_CHR,
 	.new = __new,
+	.open = __open,
+	.close = __close,
+	.read = NOTSUP,	/* NYI */
+	.write = __write,
+	.getc = __getc,
+	.putc = __putc,
 };
 
 static int __driver_init(void)

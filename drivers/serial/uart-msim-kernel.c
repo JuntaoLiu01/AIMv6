@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <aim/sync.h>
 #include <aim/device.h>
 #include <aim/initcalls.h>
 #include <proc.h>
@@ -26,19 +25,11 @@
 #include <mach-conf.h>
 #include <libc/string.h>
 #include <trap.h>
-#include <sched.h>
-#include <fs/uio.h>
 #include <asm-generic/funcs.h>
+#include <drivers/console/cons.h>
 
 #define LP_DEVICE_MODEL		"msim-lpr"
 #define KBD_DEVICE_MODEL	"msim-kbd"
-
-static struct {
-	char buf[BUFSIZ];
-	int head;
-	int tail;
-	lock_t lock;
-} cbuf = { {0}, 0, 0, EMPTY_LOCK(&cbuf.lock) };
 
 static struct chr_driver kbddrv, lpdrv;
 
@@ -46,11 +37,12 @@ static struct chr_driver kbddrv, lpdrv;
 static int __open(dev_t devno, int mode, struct proc *p, bool kbd)
 {
 	struct chr_device *dev;
-	kprintf("DEV: opening %s device\n", kbd ? "keyboard" : "printer");
+	kpdebug("opening %s device\n", kbd ? "keyboard" : "printer");
 
 	dev = (struct chr_device *)dev_from_id(devno);
 	/* should be initialized by device prober... */
 	assert(dev != NULL);
+	cons_open(dev, mode, p);
 	return 0;
 }
 
@@ -74,38 +66,21 @@ static int __kbdopen(dev_t devno, int mode, struct proc *p)
 static int __kbdintr(int irq)
 {
 	struct chr_device *kbd;
-	unsigned char c;
-	unsigned long flags;
 
 	/* XXX I'm assuming there's only one keyboard */
 	kbd = (struct chr_device *)dev_from_id(makedev(MSIM_KBD_MAJOR, 0));
 	assert(kbd != NULL);
-	c = __uart_msim_getchar(kbd);
-	spin_lock_irq_save(&cbuf.lock, flags);
-	if (cbuf.head == (cbuf.tail + 1) % BUFSIZ) {
-		spin_unlock_irq_restore(&cbuf.lock, flags);
-		return 0;	/* discard keyboard input */
-	}
-	cbuf.buf[cbuf.tail++] = c;
-	cbuf.tail %= BUFSIZ;
-	wakeup(&cbuf);
-	spin_unlock_irq_restore(&cbuf.lock, flags);
-	return 0;
+	return cons_intr(irq, kbd, __uart_msim_getchar);
 }
 
 static int __kbdgetc(dev_t devno)
 {
-	int c;
-	unsigned long flags;
+	struct chr_device *kbd;
 
 	/* XXX I'm assuming there's only one keyboard */
-	spin_lock_irq_save(&cbuf.lock, flags);
-	while (cbuf.head == cbuf.tail)
-		sleep_with_lock(&cbuf, &cbuf.lock);
-	c = cbuf.buf[cbuf.head++];
-	cbuf.head %= BUFSIZ;
-	spin_unlock_irq_restore(&cbuf.lock, flags);
-	return c;
+	kbd = (struct chr_device *)dev_from_id(makedev(MSIM_KBD_MAJOR, 0));
+	assert(kbd != NULL);
+	return cons_getc(kbd);
 }
 
 static int __lpputc(dev_t devno, int c)
@@ -113,28 +88,16 @@ static int __lpputc(dev_t devno, int c)
 	struct chr_device *lp;
 	lp = (struct chr_device *)dev_from_id(devno);
 	assert(lp != NULL);
-	return __uart_msim_putchar(lp, c);
+	return cons_putc(lp, c, __uart_msim_putchar);
 }
 
 static int __lpwrite(dev_t devno, struct uio *uio, int ioflags)
 {
 	struct chr_device *lp;
-	char buf[BUFSIZ];
-	size_t len;
-	int err, i;
 
 	lp = (struct chr_device *)dev_from_id(devno);
 	assert(lp != NULL);
-	while (uio->resid > 0) {
-		len = min2(uio->resid, BUFSIZ);
-		err = uiomove(buf, len, uio);
-		if (err)
-			return err;
-		for (i = 0; i < len; ++i)
-			__uart_msim_putchar(lp, buf[i]);
-	}
-
-	return 0;
+	return cons_write(lp, uio, ioflags, __uart_msim_putchar);
 }
 
 static int __new(struct devtree_entry *entry, bool kbd)
@@ -187,9 +150,9 @@ static struct chr_driver kbddrv = {
 	.class = DEVCLASS_CHR,
 	.open = __kbdopen,
 	.close = __close,
-	.read = NOTSUP,
+	.read = NOTSUP,		/* NYI */
 	.write = NOTSUP,
-	.getc = __kbdgetc,
+	.getc = __kbdgetc,	/* used by tty */
 	.putc = NOTSUP,
 	.new = __kbdnew,
 };

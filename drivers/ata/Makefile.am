@@ -17,8 +17,12 @@
 
 include $(top_srcdir)/env.am
 
-noinst_LIBRARIES = libata.a
-noinst_DATA = ata_ide.o
+noinst_LIBRARIES =
+noinst_DATA =
 
+if MACH_LOONGSON3A
+noinst_LIBRARIES += libata.a
+noinst_DATA += ata_ide.o
 libata_a_SOURCES = ata_ide.c
+endif
 

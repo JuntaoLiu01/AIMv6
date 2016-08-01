@@ -17,13 +17,7 @@
 
 include $(top_srcdir)/env.am
 
-noinst_LIBRARIES = libintr.a
-noinst_DATA =
+noinst_LTLIBRARIES = libcons.la
 
-libintr_a_SOURCES =
-
-if MACH_LOONGSON3A
-libintr_a_SOURCES += i8259.c i8259.h
-noinst_DATA += i8259.o
-endif
+libcons_la_SOURCES = cons.c
 

@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <aim/sync.h>
 #include <list.h>
+#include <libc/stddef.h>
 
 /* forward */
 struct bus_device;
@@ -155,7 +156,13 @@ struct device {
 struct chr_device {
 	struct device;
 
-	/* Reserved for later use */
+	/* Character buffer for keyboard/serial console/etc. */
+	struct cbuf {
+		unsigned char buf[BUFSIZ];
+		int head;
+		int tail;
+		lock_t lock;
+	} cbuf;
 };
 
 struct blk_device {

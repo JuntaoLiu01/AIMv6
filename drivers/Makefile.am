@@ -28,6 +28,7 @@ SUBDIRS = io \
 	  hd \
 	  tty \
 	  common \
+	  console \
 	  ata
 
 noinst_LTLIBRARIES = libdrivers-raw.la libdrivers.la
@@ -51,4 +52,5 @@ libdrivers_la_LIBADD = \
 	$(builddir)/hd/libhd.la \
 	$(builddir)/pci/libpci.la \
 	$(builddir)/common/libcommon.la \
-	$(builddir)/tty/libtty.la
+	$(builddir)/tty/libtty.la \
+	$(builddir)/console/libcons.la

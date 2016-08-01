@@ -392,6 +392,7 @@ AC_CONFIG_FILES([
 	drivers/ata/Makefile
 	drivers/block/Makefile
 	drivers/common/Makefile
+	drivers/console/Makefile
 	drivers/hd/Makefile
 	drivers/interrupt-controller/Makefile
 	drivers/io/Makefile

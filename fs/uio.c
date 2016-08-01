@@ -44,8 +44,12 @@ uiomove(void *kbuf, size_t len, struct uio *uio)
 		assert(uio->iovcnt > 0);
 		mvlen = min2(len, uio->iov->iov_len);
 		assert(uio->resid >= mvlen);
-		kpdebug("uiomove: moving %ld bytes from %p to %p\n",
-		    mvlen, kbuf, uio->iov->iov_base);
+		kpdebug("uiomove: moving %ld bytes %s %p %s %p\n",
+		    mvlen,
+		    uio->rw == UIO_READ ? "from" : "to",
+		    kbuf,
+		    uio->rw == UIO_READ ? "to" : "from",
+		    uio->iov->iov_base);
 		err = __uiomove(kbuf, uio->iov->iov_base, mvlen, uio->rw,
 		    uio->seg, uio->proc, uio->mm);
 		if (err)
