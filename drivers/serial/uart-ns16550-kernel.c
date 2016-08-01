@@ -67,17 +67,25 @@ static int __close(dev_t devno, int mode, struct proc *p)
 static int __putc(dev_t devno, int c)
 {
 	struct chr_device *dev;
+	int err;
 	dev = (struct chr_device *)dev_from_id(devno);
 	assert(dev != NULL);
+	/* XXX */
+	if (c == '\n' &&
+	    (err = cons_putc(dev, '\r', __uart_ns16550_putchar)) != 0)
+		return err;
 	return cons_putc(dev, c, __uart_ns16550_putchar);
 }
 
 static int __getc(dev_t devno)
 {
 	struct chr_device *dev;
+	int c;
 	dev = (struct chr_device *)dev_from_id(devno);
 	assert(dev != NULL);
-	return cons_getc(dev);
+	c = cons_getc(dev);
+	/* XXX */
+	return (c == '\r' ? '\n' : c);
 }
 
 static int __write(dev_t devno, struct uio *uio, int ioflags)
@@ -85,8 +93,8 @@ static int __write(dev_t devno, struct uio *uio, int ioflags)
 	struct chr_device *dev;
 
 	dev = (struct chr_device *)dev_from_id(devno);
-	assert(dev == NULL);
-	return cons_write(dev, uio, ioflags, __uart_ns16550_putchar);
+	assert(dev != NULL);
+	return cons_write(dev, uio, ioflags);
 }
 
 static struct chr_driver drv = {

@@ -97,7 +97,7 @@ static int __lpwrite(dev_t devno, struct uio *uio, int ioflags)
 
 	lp = (struct chr_device *)dev_from_id(devno);
 	assert(lp != NULL);
-	return cons_write(lp, uio, ioflags, __uart_msim_putchar);
+	return cons_write(lp, uio, ioflags);
 }
 
 static int __new(struct devtree_entry *entry, bool kbd)

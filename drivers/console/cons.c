@@ -66,8 +66,7 @@ int cons_putc(struct chr_device *dev, int c,
 	return putc(dev, c);
 }
 
-int cons_write(struct chr_device *dev, struct uio *uio, int ioflags,
-    int (*putc)(struct chr_device *, unsigned char))
+int cons_write(struct chr_device *dev, struct uio *uio, int ioflags)
 {
 	char buf[BUFSIZ];
 	size_t len;
@@ -79,7 +78,7 @@ int cons_write(struct chr_device *dev, struct uio *uio, int ioflags,
 		if (err)
 			return err;
 		for (i = 0; i < len; ++i)
-			putc(dev, buf[i]);
+			dev->chr_driver.putc(dev->devno, buf[i]);
 	}
 
 	return 0;

@@ -11,7 +11,6 @@ int cons_intr(int, struct chr_device *, unsigned char (*)(struct chr_device *));
 int cons_getc(struct chr_device *);
 int cons_putc(struct chr_device *, int,
     int (*)(struct chr_device *, unsigned char));
-int cons_write(struct chr_device *, struct uio *, int,
-    int (*)(struct chr_device *, unsigned char));
+int cons_write(struct chr_device *, struct uio *, int);
 
 #endif

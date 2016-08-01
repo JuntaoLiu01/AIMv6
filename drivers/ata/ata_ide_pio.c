@@ -97,8 +97,12 @@ __intr(int irq)
 		return 0;
 	}
 	if (!(bp->flags & B_DIRTY) && (bp->flags & B_INVALID)) {
-		kpdebug("fetching to %p\n", bp->data);
+		kpdebug("fetching to %p\n",
+		    bp->data + bp->nbytes - bp->nbytesrem);
 		__fetch(hd, bp);
+	} else if (bp->flags & B_DIRTY) {
+		/* Write finished, set remaining bytes to 0 */
+		bp->nbytesrem = 0;
 	}
 
 	kpdebug("buf %p remain %d\n", bp, bp->nbytesrem);
