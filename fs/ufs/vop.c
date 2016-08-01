@@ -42,7 +42,7 @@ ufs_strategy(struct buf *bp)
 	 * file system framework, so I didn't do that (it's for teaching
 	 * purpose after all).
 	 */
-	assert(bp->nbytes == (BLOCK_SIZE << VFSTOUFS(vp->mount)->fsbtodb));
+	assert(bp->nbytes == (SECTOR_SIZE << VFSTOUFS(vp->mount)->fsbtodb));
 
 	if (bp->blkno == BLKNO_INVALID) {
 		err = VOP_BMAP(vp, bp->lblkno, NULL, &(bp->blkno), NULL);

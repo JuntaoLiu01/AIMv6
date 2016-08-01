@@ -20,9 +20,8 @@
 #define _DRIVERS_BLOCK_HD_H
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <aim/device.h>
-
-#define SECTOR_SIZE	512
 
 #define HD_PART_BITS		4
 #define HD_PART_MASK		((1 << HD_PART_BITS) - 1)

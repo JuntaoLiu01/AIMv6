@@ -3,6 +3,7 @@
 #include <aim/device.h>
 #include <drivers/interrupt-controller/i8259.h>
 #include <platform.h>	/* I8259_IRQ_BASE */
+#include <sleep.h>
 
 static struct bus_device *portio;
 static bus_read_fp in8;
@@ -67,6 +68,8 @@ void i8259_init(bool auto_eoi)
 	out8(portio, 0, PIC_SLAVE_IMR, PIC_CASCADE_IR);
 	/* Slave ICW4: normal EOI, Intel x86 mode */
 	out8(portio, 0, PIC_SLAVE_IMR, 1);
+
+	udelay(100);
 
 	/* Read IRR by default */
 	out8(portio, 0, PIC_MASTER_CMD, 0x0a);

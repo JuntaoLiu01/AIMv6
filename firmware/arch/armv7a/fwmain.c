@@ -22,6 +22,7 @@
 
 /* from kernel */
 #include <sys/types.h>
+#include <sys/param.h>	/* SECTOR_SIZE */
 #include <util.h>
 /* from libc */
 #include <libc/string.h>
@@ -33,8 +34,6 @@
 #include <drivers/timer/timer-a9.h>
 #include <drivers/sd/sd.h>
 #include <drivers/sd/sd-zynq.h>
-
-#define SECTOR_SIZE	512
 
 char fw_stack[4096];
 

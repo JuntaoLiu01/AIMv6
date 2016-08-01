@@ -41,12 +41,11 @@ void timer_init(void)
 
 void pre_timer_interrupt(void)
 {
-	uint32_t compare = read_c0_compare();
-	write_c0_compare(compare + inc);
 }
 
 void post_timer_interrupt(void)
 {
+	write_c0_compare(read_c0_count() + inc);
 }
 
 void udelay(unsigned int us)

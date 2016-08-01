@@ -92,6 +92,7 @@ static int __ht_interrupt(struct trapframe *regs)
 	bus_write_fp mwrite32;
 	uint64_t irqmask;
 
+	kpdebug("handling HT interrupt\n");
 	mem = (struct bus_device *)dev_from_name("memory");
 	mread32 = mem->bus_driver.get_read_fp(mem, 32);
 	mwrite32 = mem->bus_driver.get_write_fp(mem, 32);
@@ -102,8 +103,9 @@ static int __ht_interrupt(struct trapframe *regs)
 
 	for (int i = 15; i >= 0; --i) {
 		if (irqmask & (1 << i)) {
+			kpdebug("found IRQ %d\n", i);
 			__io_interrupt_handler[i](i);
-			/* Acknowledge highest interrupt on 8259 side */
+			/* Acknowledge interrupt on 8259 side */
 			i8259_eoi(i);
 		}
 	}

@@ -89,7 +89,7 @@ ext2fs_sbinit(struct vnode *devvp, struct ext2fs *ondiskfs, struct m_ext2fs *sb)
 	sb->ncg = DIV_ROUND_UP(fs->bcount - fs->first_dblock, fs->bpg);
 	sb->fsbtodb = fs->log_bsize + 1;
 	sb->bsize = MINBSIZE << fs->log_bsize;
-	sb->bsects = sb->bsize / BLOCK_SIZE;
+	sb->bsects = sb->bsize / SECTOR_SIZE;
 	sb->bshift = LOG_MINBSIZE + fs->log_bsize;
 	sb->fsize = MINFSIZE << fs->log_fsize;
 	sb->qbmask = sb->bsize - 1;
@@ -154,7 +154,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 	vlock(devvp);
 	kpdebug("reading ext2fs super block\n");
-	err = bread(devvp, SBOFF / BLOCK_SIZE, SBSIZE, &bp);
+	err = bread(devvp, SBOFF / SECTOR_SIZE, SBSIZE, &bp);
 	if (err != 0)
 		goto rollback_open;
 

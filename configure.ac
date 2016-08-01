@@ -211,9 +211,11 @@ AIM_ARG_WITH([highram-size], [HIGHRAM_SIZE],
 
 # Loongson 3A
 AIM_ARG_ENABLE_FEATURE([loongson3a-ram-detection], [LOONGSON3A_RAM_DETECTION],
-	[RAM space detection on Loongson 3A port (EXPERIMENTAL)])
+	[RAM space detection on Loongson 3A port (RECOMMENDED)])
 AIM_ARG_ENABLE_FEATURE([pagesize-16k], [PAGESIZE_16K],
 	[16K pages (for Loongson 3A)])
+AIM_ARG_ENABLE_FEATURE([ide-bmdma], [IDE_BMDMA],
+	[PCI IDE Bus-mastering DMA])
 
 # target details
 AIM_ARG_WITH([ram-physbase], [RAM_PHYSBASE], [physical memory start point],

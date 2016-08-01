@@ -29,7 +29,7 @@
 #define NOMAJOR	((unsigned int)(-1))
 #define MAJOR_MAX	16
 #define DEVICE_MAX	32
-#define BLOCK_SIZE	512
+#define SECTOR_SIZE	512
 #define JUNKBYTE	0x20
 
 #endif

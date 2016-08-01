@@ -94,15 +94,15 @@ static void __start(struct hd_device *dev)
 	assert(!list_empty(&dev->bufqueue));
 	bp = list_first_entry(&dev->bufqueue, struct buf, ionode);
 	assert(bp->nbytesrem != 0);
-	assert(IS_ALIGNED(bp->nbytes, BLOCK_SIZE));
-	assert(IS_ALIGNED(bp->nbytesrem, BLOCK_SIZE));
+	assert(IS_ALIGNED(bp->nbytes, SECTOR_SIZE));
+	assert(IS_ALIGNED(bp->nbytesrem, SECTOR_SIZE));
 	assert(bp->flags & (B_DIRTY | B_INVALID));
 	assert(bp->flags & B_BUSY);
 	assert(bp->blkno != BLKNO_INVALID);
 	partno = hdpartno(bp->devno);
 	assert((partno == 0) || (dev->part[partno].len != 0));
 	partoff = (partno == 0) ? 0 : dev->part[partno].offset;
-	blkno = bp->blkno + (bp->nbytes - bp->nbytesrem) / BLOCK_SIZE + partoff;
+	blkno = bp->blkno + (bp->nbytes - bp->nbytesrem) / SECTOR_SIZE + partoff;
 	data = bp->data + (bp->nbytes - bp->nbytesrem);
 	bp->flags &= ~(B_DONE | B_ERROR | B_EINTR);
 
@@ -170,7 +170,7 @@ static int __intr(int irq)
 		kpdebug("fetching to %p\n", dst);
 		__msim_dd_fetch(hd, dst);
 	}
-	bp->nbytesrem -= BLOCK_SIZE;
+	bp->nbytesrem -= SECTOR_SIZE;
 	kpdebug("buf %p remain %d\n", bp, bp->nbytesrem);
 
 	if (bp->nbytesrem == 0) {

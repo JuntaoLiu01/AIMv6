@@ -20,9 +20,17 @@ include $(top_srcdir)/env.am
 noinst_LIBRARIES =
 noinst_DATA =
 
+if IDE_BMDMA
+ATA_DRIVER_SRCS = ata_ide_bmdma.c
+else
+ATA_DRIVER_SRCS = ata_ide_pio.c
+endif
+
 if MACH_LOONGSON3A
 noinst_LIBRARIES += libata.a
 noinst_DATA += ata_ide.o
 libata_a_SOURCES = ata_ide.c
+
+ata_ide.o: ata_ide.c $(ATA_DRIVER_SRCS)
 endif
 

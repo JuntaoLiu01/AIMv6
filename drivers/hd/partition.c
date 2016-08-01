@@ -21,6 +21,8 @@ int detect_hd_partitions(struct hd_device *dev)
 		if (__regfuncs[i](dev) == 0)
 			return 0;
 	}
+	panic("No partition table found\n");
+	/* NOTREACHED */
 	return -1;
 }
 

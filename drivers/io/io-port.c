@@ -54,11 +54,12 @@ static int __read8(struct bus_device *inst, addr_t base, addr_t offset,
 
 	if (bus) {
 		bus_read8 = bus->bus_driver.get_read_fp(bus, 8);
-		return bus_read8(bus, inst->base, base + offset, ptr);
+		bus_read8(bus, inst->base, base + offset, ptr);
 	} else {
 		*ptr = inb((uint16_t)(base + offset));
-		return 0;
 	}
+
+	return 0;
 }
 
 static int __write8(struct bus_device *inst, addr_t base, addr_t offset,
@@ -84,11 +85,12 @@ static int __read16(struct bus_device *inst, addr_t base, addr_t offset,
 
 	if (bus) {
 		bus_read16 = bus->bus_driver.get_read_fp(bus, 16);
-		return bus_read16(bus, inst->base, base + offset, ptr);
+		bus_read16(bus, inst->base, base + offset, ptr);
 	} else {
 		*ptr = inw((uint16_t)(base + offset));
-		return 0;
 	}
+
+	return 0;
 }
 
 static int __write16(struct bus_device *inst, addr_t base, addr_t offset,
@@ -114,11 +116,12 @@ static int __read32(struct bus_device *inst, addr_t base, addr_t offset,
 
 	if (bus) {
 		bus_read32 = bus->bus_driver.get_read_fp(bus, 32);
-		return bus_read32(bus, inst->base, base + offset, ptr);
+		bus_read32(bus, inst->base, base + offset, ptr);
 	} else {
 		*ptr = ind((uint16_t)(base + offset));
-		return 0;
 	}
+
+	return 0;
 }
 
 static int __write32(struct bus_device *inst, addr_t base, addr_t offset,
