@@ -198,7 +198,7 @@ Vnode is the kernel representation of a file in AIMv6 (and also BSD
 and Linux - though Linux uses the term "inode", a UFS-specific term,
 across all file systems for this purpose).
 
-#### Files, directories, and device files
+#### Files, directories
 
 A file, by [definition](https://en.wikipedia.org/wiki/Computer_file), is
 a kind of information storage, available for programs to read and write
@@ -209,13 +209,55 @@ either a collection of files, or a collection of file references.  In
 Unix, directories are treated as files, so they share the same
 kernel representation.
 
+##### Device files, device identifier and `rootdev`
+
 Unix (and also Windows!) further extended the concept of files by
-treating devices as *special files*, and device accesses and manipulations
+treating devices as *special files* (or *device files*, or sometimes *device
+nodes*).  In this document these terms may be used interchangeably),
+and device accesses and manipulations
 as file operations.  For example, outputting text to a serial console
 is viewed as `write`'s, while receiving information from serial console
 are treated as `read`'s.  The operations which are rather hard to
 classify as ordinary file operations (such as changing baud rate of
 a serial console) are called `ioctl`'s.
+
+Unix also extended the concept of a device.  A device in Unix can either
+be a real peripheral (e.g. serial console, hard disk), be a virtual
+concept (e.g. framebuffer), be a mixture of several devices (e.g. terminal,
+which involves a keyboard peripheral and a screen peripheral), or some other
+stuff (e.g. memory or I/O port bus).
+
+A *device identifier* uniquely identifies a device in a convenient way.
+Typically, a device identifier, typed `dev_t`, is represented as an integer.
+The integer may be decomposed into two parts:
+
+* *Major number*, identifying the class of a device, or which driver the
+  kernel will use.
+* *Minor number*, identifying a specific instance of a device in that class.
+
+There is no absolute standard for how a minor number should be exactly used.
+It is entirely decided by device drivers.  For example,
+
+* A hard disk driver can designate some of the bits in
+  the minor number to represent the hard disk number, and the rest of the bits
+  to represent the partition number.
+
+How major numbers and device drivers correspond to each other is also left
+open for operating system designers.  For example,
+
+* Unix and other ~~canonical~~ clones such as OpenBSD assigns each driver a
+  major number statically.  This requires that all the device files created in
+  the root file system should be coupled to the kernel.  Usually, a script
+  called `MAKEDEV` does the job during system installation or first boot.
+  * In AIMv6, we follow this solution, since it's the simplest one.
+* More pioneering clones such as FreeBSD, Solaris, and old Linux, create the
+  device nodes inside a particular memory region, which is then exposed as a
+  file system to outside world.  The file system is usually called `devfs`.
+* Most Linux distros today, including Ubuntu and Fedora, pushes the job of
+  creating and communicating with device files into `systemd`, which is
+  ~~a part of the Linux kernel pretending to be~~ a userspace daemon.
+
+##### Pipes, sockets, and more
 
 Occasionally, inter-process communications, including pipes and sockets,
 can also appear in various forms of file operations.
@@ -228,9 +270,9 @@ There are more concepts and objects that can be treated as files, some of
 which are even beyond imagination ~~and are proposed by [dark magic
 practitioners](https://en.wikipedia.org/wiki/Plan_9_from_Bell_Labs)~~:
 
-* Special data sources and sinks (e.g. random number generator)
-* Memory
-* CPU
+* Special data sources and sinks (e.g. random number generator, as devices)
+* Memory (as a device)
+* CPU (as a device)
 * Web servers
 * Wikipedia
 * [~~Your belongings~~](https://en.wikipedia.org/wiki/Dunnet_(video_game))
@@ -270,4 +312,17 @@ of them:
 
 #### `getdevvp()`, `bdevvp()` and `cdevvp()`
 
-TBD
+The job of `getdevvp()` is simple: find or create a vnode corresponding to
+the provided device identifier.  A device may or may not have a device identifier.
+If a device does have an identifier, then exactly one vnode corresponds to it.
+Such vnode is called a *special vnode*, which has type `VCHR` or `VBLK`.
+
+When creating a vnode, `getdevvp()` performs the following tasks:
+
+* Assigning the vnode a set of operations dedicated for special files, or devices.
+  They are described in the `spec_vops` structure.
+* Allocate a `specinfo` structure, which then keeps the device identifier.
+* Associate the vnode and the `specinfo` structure.
+
+`bdevvp()` and `cdevvp()` are merely special cases for creating a block vnode or
+character vnode respectively.
