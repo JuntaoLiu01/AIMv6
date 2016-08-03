@@ -179,9 +179,9 @@ struct ext2fs_dinode {
 /* e2fs needs byte swapping on big-endian systems */
 #ifdef LITTLE_ENDIAN
 #define e2fs_iload(fs, old, new)	\
-	memcpy((new),(old), min2(EXT2_DINODE_SIZE(fs), sizeof(*new)))
+	memcpy((new),(old), min2(EXT2_DINODE_SIZE(fs), sizeof(struct ext2fs_dinode)))
 #define e2fs_isave(fs, old, new) \
-	memcpy((new),(old), min2(EXT2_DINODE_SIZE(fs), sizeof(*new)))
+	memcpy((new),(old), min2(EXT2_DINODE_SIZE(fs), sizeof(struct ext2fs_dinode)))
 #else
 struct m_ext2fs;
 void e2fs_i_bswap(struct m_ext2fs *, struct ext2fs_dinode *, struct ext2fs_dinode *);

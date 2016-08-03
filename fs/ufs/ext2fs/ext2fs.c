@@ -11,7 +11,8 @@
 
 struct vfsops ext2fs_vfsops = {
 	.root = ufs_root,
-	.vget = ext2fs_vget
+	.vget = ext2fs_vget,
+	.sync = ext2fs_sync,
 };
 
 struct vops ext2fs_vops = {

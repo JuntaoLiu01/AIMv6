@@ -6,6 +6,8 @@
 
 struct mount;	/* fs/mount.h */
 struct vnode;	/* fs/vnode.h */
+struct ucred;	/* ucred.h */
+struct proc;	/* proc.h */
 
 struct vfsconf {
 	const char *name;
@@ -25,10 +27,15 @@ struct vfsops {
 	 * Returns a locked vnode.
 	 */
 	int (*vget)(struct mount *mp, ino_t ino, struct vnode **vpp);
+	/*
+	 * sync() - Flush out all dirty buffers and modifications onto storage
+	 */
+	int (*sync)(struct mount *mp, struct ucred *cred, struct proc *p);
 };
 
 #define VFS_ROOT(mp, vpp)	((mp)->ops->root((mp), (vpp)))
 #define VFS_VGET(mp, ino, vpp)	((mp)->ops->vget((mp), (ino), (vpp)))
+#define VFS_SYNC(mp, cred, p)	((mp)->ops->sync((mp), (cred), (p)))
 
 #define MAX_VFSCONFS	5
 

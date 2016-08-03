@@ -8,6 +8,7 @@
 #include <proc.h>
 #include <panic.h>
 #include <vmm.h>
+#include <ucred.h>
 
 int
 ext2fs_inactive(struct vnode *vp, struct proc *p)
@@ -22,7 +23,7 @@ ext2fs_inactive(struct vnode *vp, struct proc *p)
 
 	if (dp->nlink == 0) {
 		if (ext2fs_getsize(ip) > 0)
-			panic("ext2fs truncate NYI\n");
+			err = ext2fs_truncate(ip, 0, NOCRED); /* real NOCRED */
 		/* TODO: set this to *real* time */
 		EXT2_DINODE(ip)->dtime = 1;
 		ip->flags |= IN_CHANGE | IN_UPDATE;
@@ -32,7 +33,7 @@ ext2fs_inactive(struct vnode *vp, struct proc *p)
 		ext2fs_update(ip);
 out:
 	vunlock(vp);
-	return 0;
+	return err;
 }
 
 int

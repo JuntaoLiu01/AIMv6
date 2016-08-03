@@ -147,7 +147,8 @@ struct vops {
 	((dvp)->ops->create((dvp), (name), (imode), (vpp)))
 #define VOP_BMAP(vp, lblkno, vpp, blkno, runp) \
 	((vp)->ops->bmap((vp), (lblkno), (vpp), (blkno), (runp)))
-#define VOP_FSYNC(vp, cred, p) (0)	/* NYI */
+/* We do not need this because currently all operations are sync. */
+#define VOP_FSYNC(vp, cred, p)
 
 /* ioflags */
 #define IO_APPEND	0x02	/* Append to end of file when writing */

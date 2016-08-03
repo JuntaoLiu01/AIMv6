@@ -26,12 +26,13 @@ libext2fs_la_SOURCES = \
 		       bmap.c \
 		       create.c \
 		       dump.c \
-		       mount.c \
-		       lookup.c \
-		       vget.c \
 		       inode.c \
-		       reclaim.c \
+		       lookup.c \
+		       mount.c \
 		       readwrite.c \
+		       reclaim.c \
+		       sync.c \
+		       vget.c \
 		       ext2fs.h \
 		       dinode.h \
 		       dir.h

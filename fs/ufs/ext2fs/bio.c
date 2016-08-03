@@ -43,7 +43,7 @@ ext2fs_buf_alloc(struct inode *ip, off_t lblkno, struct ucred *cred,
 		fsblk = EXT2_DINODE(ip)->blocks[lblkno];
 		if (fsblk != 0) {
 			/* We already have the block, read it and return */
-			err = bread(devvp, fsblk, fs->bsize, &bp);
+			err = bread(devvp, fsbtodb(fs, fsblk), fs->bsize, &bp);
 			if (err) {
 				brelse(bp);
 				return err;
@@ -77,12 +77,13 @@ ext2fs_buf_alloc(struct inode *ip, off_t lblkno, struct ucred *cred,
 	assert(level != 0);
 
 	/* Fetch or allocate the first indirect block */
-	nb = EXT2_DINODE(ip)->blocks[NIADDR + level - 1];
+	nb = EXT2_DINODE(ip)->blocks[NDADDR + level - 1];
 	if (nb == 0) {
 		/* need allocation */
 		err = ext2fs_blkalloc(ip, cred, &fsblk);
 		if (err)
 			return err;
+		kpdebug("ext2fs bufalloc first indir block at %ld\n", fsblk);
 		/* clean the indirect block so that it never contain garbage */
 		ibp = bget(devvp, fsbtodb(fs, fsblk), fs->bsize);
 		if (ibp == NULL) {
@@ -98,7 +99,7 @@ ext2fs_buf_alloc(struct inode *ip, off_t lblkno, struct ucred *cred,
 		}
 		/* record the block we allocated for rolling back in case of
 		 * something miserable happens */
-		EXT2_DINODE(ip)->blocks[NIADDR + level - 1] = fsblk;
+		EXT2_DINODE(ip)->blocks[NDADDR + level - 1] = fsblk;
 		nb = fsblks[alloced++] = fsblk;
 	}
 	path[used++] = nb;
@@ -123,24 +124,23 @@ ext2fs_buf_alloc(struct inode *ip, off_t lblkno, struct ucred *cred,
 				brelse(bp);
 				goto fail;
 			}
-			if (i != level - 1) {
-				/* clean the block if it's an indirect block */
-				ibp = bget(devvp, fsbtodb(fs, fsblk), fs->bsize);
-				if (ibp == NULL) {
-					err = -ENOMEM;
-					ext2fs_blkfree(ip, fsblk);
-					brelse(bp);
-					goto fail;
-				}
-				memset(ibp->data, 0, fs->bsize);
-				err = bwrite(ibp);
-				brelse(ibp);
-				if (err != 0) {
-					err = -1;
-					ext2fs_blkfree(ip, fsblk);
-					brelse(bp);
-					goto fail;
-				}
+			kpdebug("ext2fs bufalloc new block %ld\n", fsblk);
+			/* clean the block */
+			ibp = bget(devvp, fsbtodb(fs, fsblk), fs->bsize);
+			if (ibp == NULL) {
+				err = -ENOMEM;
+				ext2fs_blkfree(ip, fsblk);
+				brelse(bp);
+				goto fail;
+			}
+			memset(ibp->data, 0, fs->bsize);
+			err = bwrite(ibp);
+			brelse(ibp);
+			if (err != 0) {
+				err = -1;
+				ext2fs_blkfree(ip, fsblk);
+				brelse(bp);
+				goto fail;
 			}
 			/*
 			 * Here's a different thing to do: write the file
@@ -176,7 +176,7 @@ fail:
 		--used;
 		if (used == 0) {
 			/* rollback the indirect block in inode structure */
-			EXT2_DINODE(ip)->blocks[NIADDR + level - 1] = 0;
+			EXT2_DINODE(ip)->blocks[NDADDR + level - 1] = 0;
 		} else {
 			assert(i > 0);
 			/* rollback intermediate indirect blocks */
@@ -198,22 +198,71 @@ epic_fail:
 	return 0;
 }
 
-void
+/*
+ * Frees a logical block in a file.  Does NOT check whether the block exists
+ * or not (in which case the function simply returns).
+ */
+int
 ext2fs_lblkfree(struct inode *ip, off_t lblkno, struct ucred *cred)
 {
+	struct m_ext2fs *fs = ip->superblock;
+	struct vnode *devvp = ip->ufsmount->devvp;
 	int level;
 	int offsets[NIADDR];
 	off_t path[NIADDR + 1];
+	struct buf *bp;
+	int i, err = 0;
+
+	kpdebug("ext2fs lblkfree %ld %ld\n", ip->ino, lblkno);
 
 	if (lblkno < NDADDR) {
+		if (EXT2_DINODE(ip)->blocks[lblkno] == 0)
+			return 0;
 		ext2fs_blkfree(ip, EXT2_DINODE(ip)->blocks[lblkno]);
 		EXT2_DINODE(ip)->blocks[lblkno] = 0;
-		return;
+		goto finalize;
 	}
 
 	level = ext2fs_indirs(ip, lblkno, offsets);
-	path[0] = EXT2_DINODE(ip)->blocks[NIADDR + level - 1];
-	assert(path[0] != 0);
-	/* TODO */
-	panic("%s: unfinished\n", __func__);
+	path[0] = EXT2_DINODE(ip)->blocks[NDADDR + level - 1];
+	if (path[0] == 0)
+		return 0;
+
+	for (i = 0; i < level; ++i) {
+		err = bread(devvp, fsbtodb(fs, path[i]), fs->bsize, &bp);
+		if (err) {
+			brelse(bp);
+			goto finalize;
+		}
+		path[i + 1] = ((uint32_t *)bp->data)[offsets[i]];
+		brelse(bp);
+		if (path[i + 1] == 0)
+			return 0;
+	}
+
+	ext2fs_blkfree(ip, path[level]);
+
+	for (i = level - 1; i >= 0; --i) {
+		err = bread(devvp, fsbtodb(fs, path[i]), fs->bsize, &bp);
+		if (err) {
+			brelse(bp);
+			goto finalize;
+		}
+		((uint32_t *)bp->data)[offsets[i]] = 0;
+		bwrite(bp);
+		for (int j = 0; j < NINDIR(fs); ++j) {
+			if (((uint32_t *)bp->data)[j] != 0) {
+				brelse(bp);
+				goto finalize;
+			}
+		}
+		brelse(bp);
+		ext2fs_blkfree(ip, path[i]);
+	}
+
+	EXT2_DINODE(ip)->blocks[NDADDR + level - 1] = 0;
+finalize:
+	ip->flags |= IN_CHANGE | IN_UPDATE;
+	return err;
 }
+

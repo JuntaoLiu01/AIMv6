@@ -58,8 +58,8 @@
 #define SBSIZE		1024
 #define	BBOFF		((off_t)(0))
 #define	SBOFF		((off_t)(BBOFF + BBSIZE))
-#define	BBLOCK		((daddr_t)(0))
-#define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
+#define	BBLOCK		((off_t)(0))
+#define	SBLOCK		((off_t)(BBLOCK + BBSIZE / SECTOR_SIZE))
 
 /*
  * Inodes are, like in UFS, 32-bit unsigned integers and therefore ufsino_t.
@@ -266,6 +266,7 @@ extern struct vops ext2fs_specvops;
 
 /* VFS operations */
 int ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
+int ext2fs_sync(struct mount *mp, struct ucred *cred, struct proc *p);
 
 /* vnode operations */
 int ext2fs_read(struct vnode *, struct uio *, int, struct ucred *);
@@ -285,6 +286,8 @@ void ext2fs_blkfree(struct inode *, off_t);
 int ext2fs_update(struct inode *);
 int ext2fs_indirs(struct inode *, off_t, int *);
 int ext2fs_buf_alloc(struct inode *, off_t, struct ucred *, struct buf **);
+int ext2fs_lblkfree(struct inode *, off_t, struct ucred *);
+int ext2fs_truncate(struct inode *, size_t, struct ucred *);
 
 #endif
 
