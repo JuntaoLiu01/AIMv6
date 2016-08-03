@@ -22,11 +22,18 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	char c;
+	pid_t pid;
 
 	/*
 	 * Replace it with your own job for now.
 	 */
 	write(STDOUT_FILENO, "INIT: now init\n", 15);
+	pid = fork();
+	if (pid == 0) {
+		getpid();
+		for (;;)
+			;
+	}
 	for (;;) {
 		/* echo, since terminal echoing is NYI */
 		if (read(STDIN_FILENO, &c, 1) != 1)

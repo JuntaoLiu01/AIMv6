@@ -10,6 +10,26 @@ __check_error_ack_interrupt(struct hd_device *hd)
 }
 
 static void
+__send_one_sector(struct hd_device *hd, void *data)
+{
+	struct bus_device *bus;
+	bus_write_fp w8;
+	bus_read_fp r8;
+	uint64_t tmp;
+
+	bus = hd->bus;
+	w8 = bus->bus_driver.get_write_fp(bus, 8);
+	r8 = bus->bus_driver.get_read_fp(bus, 8);
+
+	do {
+		r8(bus, hd->bases[port], ATA_REG_STATUS, &tmp);
+	} while (!(tmp & ATA_DRQ));
+	for (int i = 0; i < SECTOR_SIZE; i++, data++)
+		w8(bus, hd->bases[port], ATA_REG_DATA, *(char *)data);
+	kpdebug("sent one sector from %p\n", data);
+}
+
+static void
 __write_sectors(struct hd_device *hd, off_t blkno, size_t nbytes, void *data)
 {
 	struct bus_device *bus;
@@ -22,8 +42,7 @@ __write_sectors(struct hd_device *hd, off_t blkno, size_t nbytes, void *data)
 	__prepare_regs(hd, nsects, blkno);
 	w8(bus, hd->bases[port], ATA_REG_CMD, ATA_CMD_PIO_WRITE_EXT);
 
-	for (; nbytes; nbytes--, data++)
-		w8(bus, hd->bases[port], ATA_REG_DATA, *(char *)data);
+	__send_one_sector(hd, data);
 }
 
 static void
@@ -101,8 +120,8 @@ __intr(int irq)
 		    bp->data + bp->nbytes - bp->nbytesrem);
 		__fetch(hd, bp);
 	} else if (bp->flags & B_DIRTY) {
-		/* Write finished, set remaining bytes to 0 */
-		bp->nbytesrem = 0;
+		/* Write finished, decrement one sector */
+		bp->nbytesrem -= SECTOR_SIZE;
 	}
 
 	kpdebug("buf %p remain %d\n", bp, bp->nbytesrem);
@@ -113,6 +132,9 @@ __intr(int irq)
 		/* We start the next request only if the current request is
 		 * done or failed */
 		__startnext(hd);
+	} else if (bp->flags & B_DIRTY) {
+		/* Send next sector to PIO if not finished */
+		__send_one_sector(hd, bp->data + bp->nbytes - bp->nbytesrem);
 	}
 	spin_unlock_irq_restore(&hd->lock, flags);
 	return 0;
