@@ -14,6 +14,17 @@ number 0.
 
 That's it.  :(
 
+Although the infrastructures except file system framework are finished,
+Currently our system only supports `fork(2)`, `execve(2)`,
+`getpid(2)`, and `read(2)` or `write(2)` on a terminal (that is, with
+`fd` argument `STDIN_FILENO` and `STDOUT_FILENO` respectively, without
+`open(2)`).  This is largely due to our unfinished file system, as
+porting ext2 onto our system involves a lot of work.
+
+Also, note that `getpid(2)` prints a kernel message indicating current
+PID and current CPU the process is running on.  This is for debugging
+and will be removed in future.
+
 ### Loongson 3A
 
 Please refer to `doc/toolchain.md` for how to build a **MIPS multilib**
