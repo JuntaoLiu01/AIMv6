@@ -249,7 +249,9 @@ open for operating system designers.  For example,
   major number statically.  This requires that all the device files created in
   the root file system should be coupled to the kernel.  Usually, a script
   called `MAKEDEV` does the job during system installation or first boot.
-  * In AIMv6, we follow this solution, since it's the simplest one.
+  * In AIMv6, we follow this solution, since it's the simplest one.  `rootdev`
+    in our system therefore is the device identifier hardwired in the kernel
+    identifying the root hard disk partition.
 * More pioneering clones such as FreeBSD, Solaris, and old Linux, create the
   device nodes inside a particular memory region, which is then exposed as a
   file system to outside world.  The file system is usually called `devfs`.
@@ -326,3 +328,7 @@ When creating a vnode, `getdevvp()` performs the following tasks:
 
 `bdevvp()` and `cdevvp()` are merely special cases for creating a block vnode or
 character vnode respectively.
+
+### Mount - the file system representation inside kernel
+
+TBD
