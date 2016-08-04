@@ -5,9 +5,11 @@
 #include <fs/bio.h>
 #include <fs/ufs/inode.h>
 #include <fs/ufs/ext2fs/ext2fs.h>
+#include <fs/ufs/ext2fs/dinode.h>
 #include <buf.h>
 #include <ucred.h>
 #include <panic.h>
+#include <errno.h>
 
 int
 ext2fs_read(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
@@ -49,14 +51,16 @@ ext2fs_read(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 	return 0;
 }
 
-#if 0
 int
 ext2fs_write(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 {
 	struct inode *ip = VTOI(vp);
 	struct m_ext2fs *fs = ip->superblock;
 	size_t len = 0;
+	size_t resid, osize, xfersize;
+	off_t lbn, blkoffset, fileoffset = uio->offset;
 	int i, err;
+	struct buf *bp;
 
 	/* sanity checks */
 	for (i = 0; i < uio->iovcnt; ++i)
@@ -74,7 +78,7 @@ ext2fs_write(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 	switch (vp->type) {
 	case VREG:
 		if (ioflags & IO_APPEND)
-			uio->offset = ext2fs_getsize(ip);
+			fileoffset = ext2fs_getsize(ip);
 		/* fallthru */
 	case VLNK:
 	case VDIR:
@@ -83,19 +87,51 @@ ext2fs_write(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 		panic("%s: bad type %d\n", __func__, vp->type);
 	}
 
-	if (uio->offset + uio->resid < uio->resid ||	/* overflowing */
-	    uio->offset + uio->resid > fs->maxfilesize)
+	if (fileoffset + uio->resid < uio->resid ||	/* overflowing */
+	    fileoffset + uio->resid > fs->maxfilesize)
 		return -EFBIG;
 
 	resid = uio->resid;
 	osize = ext2fs_getsize(ip);
 
 	for (err = 0; uio->resid > 0; ) {
-		lbn = lblkno(fs, uio->offset);
-		blkoffset = blkoff(fs, uio->offset);
+		lbn = lblkno(fs, fileoffset);
+		blkoffset = lblkoff(fs, fileoffset);
 		xfersize = min2(uio->resid, fs->bsize - blkoffset);
 
 		err = ext2fs_buf_alloc(ip, lbn, cred, &bp);
+		if (err)
+			break;
+		if (fileoffset + xfersize > ext2fs_getsize(ip)) {
+			err = ext2fs_setsize(ip, fileoffset + xfersize);
+			if (err) {
+				brelse(bp);
+				break;
+			}
+		}
+
+		err = uiomove(bp->data + blkoffset, xfersize, uio);
+		if (err) {
+			brelse(bp);
+			break;
+		}
+
+		err = bwrite(bp);
+		brelse(bp);
+		if (err)
+			break;
+		ip->flags |= IN_CHANGE | IN_UPDATE;
+		fileoffset += xfersize;
 	}
+
+	if (err) {
+		/* Rollback everything */
+		ext2fs_truncate(ip, osize, cred);
+		uio->resid = resid;
+	} else if (resid > uio->resid) {
+		ext2fs_update(ip);
+	}
+
+	return err;
 }
-#endif
+

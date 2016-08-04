@@ -182,10 +182,6 @@ struct m_ext2fs {
 	struct	ext2_gd *gd;	/* group descriptor array */
 };
 
-#define EXT2_NDATABLK(ip) \
-	DIV_ROUND_UP((ip)->filesize, \
-		    ((struct m_ext2fs *)(ip)->superblock)->bsize)
-
 struct ext2_gd {
 	uint32_t b_bitmap;	/* blocks bitmap block */
 	uint32_t i_bitmap;	/* inodes bitmap block */
@@ -270,6 +266,7 @@ int ext2fs_sync(struct mount *mp, struct ucred *cred, struct proc *p);
 
 /* vnode operations */
 int ext2fs_read(struct vnode *, struct uio *, int, struct ucred *);
+int ext2fs_write(struct vnode *, struct uio *, int, struct ucred *);
 int ext2fs_inactive(struct vnode *vp, struct proc *p);
 int ext2fs_reclaim(struct vnode *vp);
 int ext2fs_bmap(struct vnode *, off_t, struct vnode **, soff_t *, int *);
@@ -278,6 +275,10 @@ int ext2fs_create(struct vnode *, char *, int, struct vnode **);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);
+#define ext2fs_ndatablk(ip) \
+	DIV_ROUND_UP(ext2fs_getsize(ip), \
+		    ((struct m_ext2fs *)(ip)->superblock)->bsize)
+
 int ext2fs_setsize(struct inode *ip, uint64_t size);
 int ext2fs_inode_alloc(struct vnode *, int, struct vnode **);
 void ext2fs_inode_free(struct inode *, ufsino_t, int);

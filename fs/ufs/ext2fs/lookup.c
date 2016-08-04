@@ -37,7 +37,7 @@ ext2fs_lookup(struct vnode *dvp, char *name, struct vnode **vpp)
 	 */
 	/* Do a linear search in the directory content: we read the data
 	 * blocks one by one, look up the name, and return the vnode. */
-	for (i = 0; i < EXT2_NDATABLK(ip); ++i) {
+	for (i = 0; i < ext2fs_ndatablk(ip); ++i) {
 		err = bread(dvp, i, fs->bsize, &bp);
 		if (err) {
 			brelse(bp);

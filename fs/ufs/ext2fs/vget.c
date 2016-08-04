@@ -174,7 +174,6 @@ retry:
 		ext2fs_setsize(ip, 0);
 	}
 	ip->nsect = ((uint64_t)ndp->nblock_hi << 32) | ndp->nblock;
-	ip->filesize = ((uint64_t)ndp->size_hi << 32) | ndp->size;
 
 	kpdebug("ext2fs vget initializing vnode\n");
 	err = ext2fs_vinit(mp, &ext2fs_specvops, NULL, &vp);

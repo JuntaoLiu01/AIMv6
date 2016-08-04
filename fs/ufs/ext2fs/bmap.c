@@ -62,7 +62,7 @@ ext2fs_bmap(struct vnode *vp, off_t lblkno, struct vnode **vpp,
 	 * We deal with the simplest cases first: when the logical
 	 * block number is invalid, or we can directly address it.
 	 */
-	if (lblkno >= EXT2_NDATABLK(ip)) {
+	if (lblkno >= ext2fs_ndatablk(ip)) {
 		fsblkno = BLKNO_INVALID;
 		err = -E2BIG;
 		goto finish;

@@ -26,7 +26,6 @@ struct inode {
 	uint32_t	uid;
 	uint32_t	gid;
 	uint64_t	nsect;		/* number of disk sectors */
-	uint64_t	filesize;
 	void		*dinode;	/* on-disk inode (dinode) */
 };
 

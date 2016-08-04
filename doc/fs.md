@@ -25,6 +25,10 @@ file systems, including UFS-like file systems.
 
 To aid study, I provided an end-to-end walkthrough here.
 
+Please not that this file system framework implementation is **super slow**.
+It does not by any means serve as an implementation in real production
+environment *where efficiency matters*.  Nevertheless, we are pretty close.
+
 ### Development constraints
 
 **To readers of walkthrough: if you are not developers improving, enhancing,
