@@ -46,7 +46,7 @@ struct hd_device {
 
 	/* Only valid for whole hd's */
 	uint32_t	openmask;
-	uint32_t	flags;
+	uint32_t	hdflags;
 #define HD_LOADED	0x1
 };
 

@@ -59,6 +59,8 @@ static int detect_dos_partitions(struct hd_device *dev)
 
 	brelse(buf);
 
+	dev->hdflags |= HD_LOADED;
+
 	return 0;
 }
 

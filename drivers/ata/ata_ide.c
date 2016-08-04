@@ -19,6 +19,7 @@
 #include <trap.h>
 #include <util.h>
 #include <list.h>
+#include <libc/stdio.h>
 
 #define DEVICE_MODEL	"ide"
 
@@ -122,17 +123,31 @@ static int __open(dev_t dev, int mode, struct proc *p)
 {
 	struct hd_device *hdpart;
 	struct hd_device *hd;
+	char partname[DEV_NAME_MAX];
+
+	hd = (struct hd_device *)dev_from_id(hdbasedev(dev));
+	/* should be initialized by device prober... */
+	assert(hd != NULL);
+	hdpart = (struct hd_device *)dev_from_id(dev);
+	if (hdpart != NULL)
+		/* covered the case where partno == 0 */
+		return 0;
 
 	kpdebug("__open: %d, %d\n", major(dev), minor(dev));
 
-	hdpart = (struct hd_device *)dev_from_id(dev);
-	hd = (struct hd_device *)dev_from_id(hdbasedev(dev));
-
-	/* should be initialized by device prober... */
-	assert(hd != NULL);
-
-	if (hdpart == NULL)
+	/* Detect all partitions if the hard disk has not yet detected its
+	 * partitions. */
+	if (!(hd->hdflags & HD_LOADED))
 		detect_hd_partitions(hd);
+
+	if (hd->part[hdpartno(dev)].len == 0)
+		return -ENODEV;
+
+	/* Create a partition device for use */
+	hdpart = kmalloc(sizeof(*hdpart), GFP_ZERO);
+	snprintf(partname, DEV_NAME_MAX, "%s~%d\n", hd->name, hdpartno(dev));
+	initdev(hdpart, DEVCLASS_BLK, partname, dev, &drv);
+	dev_add(hdpart);
 
 	return 0;
 }

@@ -4,6 +4,7 @@
 #include <fs/vnode.h>
 #include <fs/specdev.h>
 #include <fs/uio.h>
+#include <fs/bio.h>
 #include <ucred.h>
 #include <buf.h>
 #include <vmm.h>
@@ -109,6 +110,9 @@ spec_read(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 {
 	int err;
 	struct driver *drv;
+	off_t offset, bn;
+	size_t on, n;
+	struct buf *bp;
 
 	assert(vp->type == VCHR || vp->type == VBLK);
 	assert(uio->rw == UIO_READ);
@@ -123,7 +127,29 @@ spec_read(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 		vlock(vp);
 		return err;
 	case VBLK:
-		panic("spec_read: blk device NYI\n");
+		/* Assumes all block devices have their block size 512 */
+		if (uio->offset < 0)
+			return -EINVAL;
+		assert(uio->rw == UIO_READ);
+		offset = uio->offset;
+		do {
+			/* Read in the data sector by sector */
+			bn = offset / SECTOR_SIZE;
+			on = offset % SECTOR_SIZE;
+			n = min2(SECTOR_SIZE - on, uio->resid);
+
+			err = bread(vp, bn, SECTOR_SIZE, &bp);
+			if (err) {
+				brelse(bp);
+				return err;
+			}
+			err = uiomove(bp->data + on, n, uio);
+			brelse(bp);
+			offset += n;
+		} while (err == 0 && uio->resid > 0 && n != 0);
+
+		vlock(vp);
+		return err;
 	default:
 		panic("spec_read: not spec\n");
 	}
@@ -136,6 +162,9 @@ spec_write(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 {
 	int err;
 	struct driver *drv;
+	off_t offset, bn;
+	size_t on, n;
+	struct buf *bp;
 
 	assert(vp->type == VCHR || vp->type == VBLK);
 	assert(uio->rw == UIO_WRITE);
@@ -150,7 +179,32 @@ spec_write(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 		vlock(vp);
 		return err;
 	case VBLK:
-		panic("spec_write: blk device NYI\n");
+		if (uio->offset < 0)
+			return -EINVAL;
+		if (uio->resid == 0)
+			return 0;
+		assert(uio->rw == UIO_WRITE);
+		offset = uio->offset;
+		do {
+			/* write out the data sector by sector */
+			bn = offset / SECTOR_SIZE;
+			on = offset % SECTOR_SIZE;
+			n = min2(SECTOR_SIZE - on, uio->resid);
+
+			err = bread(vp, bn, SECTOR_SIZE, &bp);
+			if (err) {
+				brelse(bp);
+				return err;
+			}
+			err = uiomove(bp->data + on, n, uio);
+			/* keep writing regardless of errors */
+			bwrite(bp);
+			brelse(bp);
+			offset += n;
+		} while (err == 0 && uio->resid > 0 && n != 0);
+
+		vlock(vp);
+		return err;
 	default:
 		panic("spec_write: not spec\n");
 	}

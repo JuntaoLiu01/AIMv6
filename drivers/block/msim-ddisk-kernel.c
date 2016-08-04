@@ -17,6 +17,10 @@
  */
 
 /*
+ * TODO: merge common code among all disk drivers
+ */
+
+/*
  * This is the code for kernel driver.
  * It is separated from msim-ddisk.c for clarity and is included as is in
  * msim-ddisk.c by #include.
@@ -36,6 +40,7 @@
 #include <panic.h>
 #include <drivers/hd/hd.h>
 #include <trap.h>
+#include <libc/stdio.h>
 
 #define DEVICE_MODEL	"msim-disk"
 
@@ -52,20 +57,32 @@ static int __open(dev_t dev, int mode, struct proc *p)
 {
 	struct hd_device *hdpart;
 	struct hd_device *hd;
+	char partname[DEV_NAME_MAX];
+
+	hd = (struct hd_device *)dev_from_id(hdbasedev(dev));
+	/* should be initialized by device prober... */
+	assert(hd != NULL);
+	hdpart = (struct hd_device *)dev_from_id(dev);
+	if (hdpart != NULL)
+		/* covered the case where partno == 0 */
+		return 0;
 
 	kpdebug("__open: %d, %d\n", major(dev), minor(dev));
 
-	hdpart = (struct hd_device *)dev_from_id(dev);
-	hd = (struct hd_device *)dev_from_id(hdbasedev(dev));
-
-	/* should be initialized by device prober... */
-	assert(hd != NULL);
-
-	/* Detect all partitions if we could not find the partition device
-	 * structure. */
-	if (hdpart == NULL) {
+	/* Detect all partitions if the hard disk has not yet detected its
+	 * partitions. */
+	if (!(hd->hdflags & HD_LOADED))
 		detect_hd_partitions(hd);
-	}
+
+	if (hd->part[hdpartno(dev)].len == 0)
+		return -ENODEV;
+
+	/* Create a partition device for use */
+	hdpart = kmalloc(sizeof(*hdpart), GFP_ZERO);
+	snprintf(partname, DEV_NAME_MAX, "%s~%d\n", hd->name, hdpartno(dev));
+	initdev(hdpart, DEVCLASS_BLK, partname, dev, &drv);
+	dev_add(hdpart);
+
 	return 0;
 }
 
