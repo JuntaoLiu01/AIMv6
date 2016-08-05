@@ -72,6 +72,8 @@ struct vops {
 	 * read:
 	 * Read from a vnode as specified by the uio structure.
 	 * Assumes that the vnode is locked.
+	 * Returns an error if reading beyond the vnode (if it does have
+	 * a size).
 	 */
 	int (*read)(struct vnode *, struct uio *, int, struct ucred *);
 	/*
@@ -108,7 +110,7 @@ struct vops {
 	int (*lookup)(struct vnode *, char *, struct vnode **);
 	/*
 	 * create:
-	 * Create a regular file according to given file name segment.
+	 * Create a regular file with given file name segment as its name.
 	 * The directory should be locked.
 	 * The returned vnode is retrieved via vget() hence locked.
 	 * Does NOT check whether the file name already exists.

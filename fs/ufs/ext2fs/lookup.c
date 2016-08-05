@@ -20,10 +20,9 @@ ext2fs_lookup(struct vnode *dvp, char *name, struct vnode **vpp)
 	struct buf *bp = NULL;
 	struct inode *ip = VTOI(dvp);
 	struct m_ext2fs *fs = ip->superblock;
-	struct ext2fs_dirhdr dh;
+	struct ext2fs_direct dir;
 	void *cur;
 	int err;
-	char *entry_name;
 	size_t namelen = strnlen(name, PATH_MAX);
 
 	assert(dvp->type == VDIR);
@@ -45,16 +44,15 @@ ext2fs_lookup(struct vnode *dvp, char *name, struct vnode **vpp)
 		}
 		/* Iterate over the list of directory entries */
 		cur = bp->data;
-		e2fs_load_dirhdr(cur, &dh);
-		for (e2fs_load_dirhdr(cur, &dh);
-		     (cur < bp->data + fs->bsize) && (dh.reclen != 0);
-		     e2fs_load_dirhdr(cur, &dh)) {
-			entry_name = cur + sizeof(dh);
+		e2fs_load_dirhdr(cur, &dir);
+		for (e2fs_load_dirhdr(cur, &dir);
+		     (cur < bp->data + fs->bsize) && (dir.reclen != 0);
+		     e2fs_load_dirhdr(cur, &dir)) {
 			/* Found? */
-			if (dh.namelen == namelen &&
-			    memcmp(entry_name, name, dh.namelen) == 0) {
+			if (dir.namelen == namelen &&
+			    memcmp(dir.name, name, dir.namelen) == 0) {
 				brelse(bp);
-				if (dh.ino == VTOI(dvp)->ino) {
+				if (dir.ino == VTOI(dvp)->ino) {
 					/*
 					 * Since @dvp is already vget'd, we
 					 * don't want to vget() it again.
@@ -62,12 +60,12 @@ ext2fs_lookup(struct vnode *dvp, char *name, struct vnode **vpp)
 					vp = dvp;
 					err = 0;
 				} else {
-					err = VFS_VGET(dvp->mount, dh.ino, &vp);
+					err = VFS_VGET(dvp->mount, dir.ino, &vp);
 				}
 				*vpp = (err == 0) ? vp : NULL;
 				return err;
 			}
-			cur += EXT2FS_DIRSIZ(dh.namelen);
+			cur += EXT2FS_DIRSIZ(dir.namelen);
 		}
 		brelse(bp);
 		bp = NULL;

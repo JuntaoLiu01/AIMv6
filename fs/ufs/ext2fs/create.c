@@ -6,13 +6,6 @@
 #include <panic.h>
 
 int
-ext2fs_direnter(struct inode *ip, struct vnode *dvp, char *name)
-{
-	panic("ext2fs direnter NYI\n");
-	return 0;
-}
-
-int
 ext2fs_makeinode(int imode, struct vnode *dvp, char *name, struct vnode **vpp)
 {
 	int err;
@@ -20,6 +13,8 @@ ext2fs_makeinode(int imode, struct vnode *dvp, char *name, struct vnode **vpp)
 	struct inode *ip;
 
 	assert((imode & EXT2_IFMT) != 0);
+
+	kpdebug("ext2fs makeinode %o %s %u\n", imode, name, VTOI(dvp)->ino);
 
 	err = ext2fs_inode_alloc(dvp, imode, &tvp);
 	if (err)

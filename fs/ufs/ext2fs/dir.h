@@ -90,14 +90,6 @@ struct ext2fs_dirhdr {
 #define EXT2_FT_MAX             8
 };
 
-#ifdef LITTLE_ENDIAN
-#define e2fs_load_dirhdr(old, new) \
-	memcpy((new), (old), sizeof(struct ext2fs_dirhdr))
-#define e2fs_save_dirhdr(old, new) \
-	memcpy((new), (old), sizeof(struct ext2fs_dirhdr))
-#else
-#endif
-
 #define E2IFTODT(mode)	(((mode) & 0170000) >> 12)
 
 /* NOTE: this is different from IFTODT */
@@ -128,5 +120,15 @@ struct ext2fs_direct {
  * terminating null byte, rounded up to a 4 byte boundary.
  */
 #define EXT2FS_DIRSIZ(len)	ALIGN_ABOVE(8 + (len), 4)
+
+#ifdef LITTLE_ENDIAN
+#define e2fs_load_dirhdr(old, new) \
+	memcpy((new), (old), \
+	    EXT2FS_DIRSIZ(((struct ext2fs_dirhdr *)(old))->namelen))
+#define e2fs_save_dirhdr(old, new) \
+	memcpy((new), (old), \
+	    EXT2FS_DIRSIZ(((struct ext2fs_dirhdr *)(old))->namelen))
+#else
+#endif
 
 #endif
