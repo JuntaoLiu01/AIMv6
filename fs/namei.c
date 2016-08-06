@@ -39,6 +39,7 @@ namei(struct nameidata *nd)
 		rootdir = rootvnode;
 	nd->parentvp = (path_lookup[0] == '/') ? rootdir : p->cwd;
 	path = kmalloc(PATH_MAX, 0);
+	nd->pathbuf = path;
 	strlcpy(path, path_lookup, PATH_MAX);
 
 	/*
@@ -107,7 +108,11 @@ namei(struct nameidata *nd)
 					err = 0;
 					/* do not put parentvp away */
 				} else {
+					err = -EEXIST;
+					vput(nd->vp);
+					nd->vp = NULL;
 					vput(nd->parentvp);
+					nd->parentvp = NULL;
 				}
 				goto finish;
 			}
@@ -150,7 +155,12 @@ namei(struct nameidata *nd)
 	}
 
 finish:
-	kfree(path);
 	return err;
+}
+
+void
+namei_cleanup(struct nameidata *nd)
+{
+	kfree(nd->pathbuf);
 }
 

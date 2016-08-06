@@ -6,8 +6,27 @@
 #include <fs/vnode.h>
 #include <fs/specdev.h>
 #include <fs/ufs/ufs.h>
+#include <fs/ufs/inode.h>
 #include <fs/ufs/ext2fs/ext2fs.h>
+#include <fs/ufs/ext2fs/dinode.h>
 #include <panic.h>
+
+int
+ext2fs_open(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
+{
+	return 0;
+}
+
+int
+ext2fs_close(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
+{
+	struct inode *ip = VTOI(vp);
+
+	if (!(ip->flags & (IN_ACCESS | IN_CHANGE | IN_UPDATE)))
+		return 0;
+	EXT2FS_ITIMES(ip);
+	return ext2fs_update(ip);
+}
 
 struct vfsops ext2fs_vfsops = {
 	.root = ufs_root,
@@ -16,10 +35,10 @@ struct vfsops ext2fs_vfsops = {
 };
 
 struct vops ext2fs_vops = {
-	.open = NOTSUP,
-	.close = NOTSUP,
+	.open = ext2fs_open,
+	.close = ext2fs_close,
 	.read = ext2fs_read,
-	.write = NOTSUP,
+	.write = ext2fs_write,
 	.inactive = ext2fs_inactive,
 	.reclaim = ext2fs_reclaim,
 	.strategy = ufs_strategy,

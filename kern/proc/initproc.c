@@ -79,6 +79,7 @@ static void ttyinit(void)
 	current_proc->tty = tty;
 
 	vunlock(nd.vp);
+	namei_cleanup(&nd);
 }
 
 void initproc_entry(void)

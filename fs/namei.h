@@ -23,11 +23,13 @@ struct nameidata {
 	/* output fields */
 	struct vnode	*vp;
 	struct vnode	*parentvp;
+	char		*seg;	/* current segment name we're looking */
 
 	/* internal fields */
-	char		*seg;	/* current segment name we're looking */
+	char		*pathbuf;	/* internal path buffer */
 };
 
 int namei(struct nameidata *);
+void namei_cleanup(struct nameidata *);	/* each namei() should end with this */
 
 #endif

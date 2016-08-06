@@ -390,6 +390,7 @@ sys_execve(struct trapframe *tf, int *errno, char *ufilename, char *uargv[],
 	kfree(ph);
 	kfree(sh);
 	vput(nd.vp);
+	namei_cleanup(&nd);
 	kfree(filename);
 	*errno = 0;
 	/* The process will begin its new life after returning from trap
@@ -401,6 +402,7 @@ rollback_hdrs:
 	kfree(sh);
 rollback_vp:
 	vput(nd.vp);
+	namei_cleanup(&nd);
 rollback_mm:
 	mm_destroy(new_mm);
 rollback_malloc:
