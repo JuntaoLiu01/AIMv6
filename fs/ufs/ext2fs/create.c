@@ -3,14 +3,17 @@
 #include <fs/ufs/inode.h>
 #include <fs/ufs/ext2fs/dinode.h>
 #include <fs/ufs/ext2fs/ext2fs.h>
+#include <fs/namei.h>
 #include <panic.h>
 
 int
-ext2fs_makeinode(int imode, struct vnode *dvp, char *name, struct vnode **vpp)
+ext2fs_makeinode(int imode, struct nameidata *nd)
 {
 	int err;
 	struct vnode *tvp;
 	struct inode *ip;
+	struct vnode *dvp = nd->parentvp;
+	char *name = nd->seg;
 
 	assert((imode & EXT2_IFMT) != 0);
 
@@ -36,9 +39,9 @@ ext2fs_makeinode(int imode, struct vnode *dvp, char *name, struct vnode **vpp)
 	 * to erase the bit in inode bitmap. */
 	if ((err = ext2fs_update(ip)) != 0)
 		goto rollback_inode;
-	if ((err = ext2fs_direnter(ip, dvp, name)) != 0)
+	if ((err = ext2fs_direnter(ip, dvp, name, nd->cred)) != 0)
 		goto rollback_inode;
-	*vpp = tvp;
+	nd->vp = tvp;
 	return 0;
 
 rollback_inode:
@@ -50,8 +53,8 @@ rollback_inode:
 }
 
 int
-ext2fs_create(struct vnode *dvp, char *name, int mode, struct vnode **vpp)
+ext2fs_create(struct nameidata *nd, int mode)
 {
-	return ext2fs_makeinode(EXT2_MAKEIMODE(VREG, mode), dvp, name, vpp);
+	return ext2fs_makeinode(EXT2_MAKEIMODE(VREG, mode), nd);
 }
 

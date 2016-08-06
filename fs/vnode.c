@@ -130,7 +130,6 @@ vgone(struct vnode *vp)
 	vp->flags |= VXLOCK;
 	spin_unlock_irq_restore(&(vp->lock), flags);
 
-	/* FIXME: replace with suitable ucred and proc */
 	vinvalbuf(vp, NOCRED, current_proc);
 
 	assert(VOP_RECLAIM(vp) == 0);

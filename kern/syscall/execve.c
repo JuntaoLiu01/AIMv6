@@ -361,8 +361,10 @@ sys_execve(struct trapframe *tf, int *errno, char *ufilename, char *uargv[],
 	nd.path = filename;
 	nd.intent = NAMEI_LOOKUP;
 	nd.flags = NAMEI_FOLLOW;
+	nd.cred = NOCRED;
+	nd.proc = current_proc;
 
-	if ((err = namei(&nd, current_proc)) != 0)
+	if ((err = namei(&nd)) != 0)
 		goto rollback_mm;
 
 	if ((err = load_elf_hdrs(nd.vp, &eh, &ph, &sh)) != 0)

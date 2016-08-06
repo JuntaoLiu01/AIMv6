@@ -32,6 +32,7 @@ SRCS = \
 	snprintf.c \
 	strcmp.c \
 	strlcpy.c \
+	strlen.c \
 	strnlen.c \
 	$(top_srcdir)/include/sys/types.h \
 	stdarg.h \

@@ -13,6 +13,7 @@ struct ucred;		/* include/ucred.h */
 struct proc;		/* include/proc.h */
 struct mm;		/* include/mm.h */
 struct uio;		/* fs/uio.h */
+struct nameidata;	/* fs/namei.h */
 enum uio_seg;		/* fs/uio.h */
 
 enum vtype {
@@ -102,21 +103,20 @@ struct vops {
 	int (*strategy)(struct buf *);
 	/*
 	 * lookup:
-	 * Finds a directory entry by name.
-	 * The directory should be locked.
+	 * Finds a directory entry by name (nd->seg).
+	 * The directory (nd->parentvp) should be locked.
 	 * The returned vnode is retrieved via vget() hence locked.
-	 * Does NOT check credentials.
 	 */
-	int (*lookup)(struct vnode *, char *, struct vnode **);
+	int (*lookup)(struct nameidata *);
 	/*
 	 * create:
-	 * Create a regular file with given file name segment as its name.
-	 * The directory should be locked.
+	 * Create a regular file with given file name segment (nd->seg) as its
+	 * name.
+	 * The directory (nd->parentvp) should be locked.
 	 * The returned vnode is retrieved via vget() hence locked.
 	 * Does NOT check whether the file name already exists.
-	 * Does NOT check credentials.
 	 */
-	int (*create)(struct vnode *, char *, int, struct vnode **);
+	int (*create)(struct nameidata *, int);
 	/*
 	 * bmap:
 	 * Translate a logical block number of a file to a disk sector
@@ -143,10 +143,10 @@ struct vops {
 	((vp)->ops->reclaim(vp))
 #define VOP_STRATEGY(bp) \
 	((bp)->vnode->ops->strategy(bp))
-#define VOP_LOOKUP(dvp, name, vpp) \
-	((dvp)->ops->lookup((dvp), (name), (vpp)))
-#define VOP_CREATE(dvp, name, imode, vpp) \
-	((dvp)->ops->create((dvp), (name), (imode), (vpp)))
+#define VOP_LOOKUP(nd) \
+	((nd)->parentvp->ops->lookup(nd))
+#define VOP_CREATE(nd, imode) \
+	((nd)->parentvp->ops->create((nd), (imode)))
 #define VOP_BMAP(vp, lblkno, vpp, blkno, runp) \
 	((vp)->ops->bmap((vp), (lblkno), (vpp), (blkno), (runp)))
 /* We do not need this because currently all operations are sync. */

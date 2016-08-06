@@ -55,7 +55,9 @@ static void ttyinit(void)
 	nd.path = "/dev/tty";
 	nd.intent = NAMEI_LOOKUP;
 	nd.flags = NAMEI_FOLLOW;
-	if (namei(&nd, current_proc) != 0)
+	nd.proc = current_proc;
+	nd.cred = NOCRED;
+	if (namei(&nd) != 0)
 		panic("/dev/tty: not found\n");
 	if (nd.vp->type != VCHR)
 		panic("/dev/tty: bad file type\n");

@@ -17,12 +17,17 @@ struct nameidata {
 #define NAMEI_RENAME	3
 	uint32_t	flags;
 #define NAMEI_FOLLOW	0x1	/* follow symlinks */
+	struct ucred	*cred;
+	struct proc	*proc;
 
 	/* output fields */
 	struct vnode	*vp;
 	struct vnode	*parentvp;
+
+	/* internal fields */
+	char		*seg;	/* current segment name we're looking */
 };
 
-int namei(struct nameidata *, struct proc *);
+int namei(struct nameidata *);
 
 #endif

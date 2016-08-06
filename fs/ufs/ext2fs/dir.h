@@ -73,7 +73,7 @@
 
 #define	EXT2FS_MAXNAMLEN	255
 
-struct ext2fs_dirhdr {
+struct ext2fs_direct {
 	uint32_t ino;
 	uint16_t reclen;
 	uint8_t	namelen;
@@ -88,6 +88,7 @@ struct ext2fs_dirhdr {
 #define EXT2_FT_SOCK            6
 #define EXT2_FT_SYMLINK         7
 #define EXT2_FT_MAX             8
+	char	name[EXT2FS_MAXNAMLEN];
 };
 
 #define E2IFTODT(mode)	(((mode) & 0170000) >> 12)
@@ -107,11 +108,6 @@ static inline uint8_t E2IF_TO_E2DT(uint16_t type)
 	return tbl[IFTODT(type)];
 }
 
-struct ext2fs_direct {
-	struct ext2fs_dirhdr;
-	char	name[EXT2FS_MAXNAMLEN];
-};
-
 /*
  * The EXT2FS_DIRSIZ macro gives the minimum record length which will hold
  * the directory entryfor a name len "len" (without the terminating null byte).
@@ -122,12 +118,12 @@ struct ext2fs_direct {
 #define EXT2FS_DIRSIZ(len)	ALIGN_ABOVE(8 + (len), 4)
 
 #ifdef LITTLE_ENDIAN
-#define e2fs_load_dirhdr(old, new) \
+#define e2fs_load_direct(old, new) \
 	memcpy((new), (old), \
-	    EXT2FS_DIRSIZ(((struct ext2fs_dirhdr *)(old))->namelen))
-#define e2fs_save_dirhdr(old, new) \
+	    EXT2FS_DIRSIZ(((struct ext2fs_direct *)(old))->namelen))
+#define e2fs_save_direct(old, new) \
 	memcpy((new), (old), \
-	    EXT2FS_DIRSIZ(((struct ext2fs_dirhdr *)(old))->namelen))
+	    EXT2FS_DIRSIZ(((struct ext2fs_direct *)(old))->namelen))
 #else
 #endif
 
