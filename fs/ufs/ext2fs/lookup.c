@@ -50,16 +50,14 @@ ext2fs_lookup(struct nameidata *nd)
 			if (dir.namelen == namelen &&
 			    memcmp(dir.name, name, dir.namelen) == 0) {
 				brelse(bp);
-				if (dir.ino == VTOI(dvp)->ino) {
+				if (dir.ino == VTOI(dvp)->ino)
 					/*
 					 * Since @dvp is already vget'd, we
-					 * don't want to vget() it again.
+					 * unlock it to allow re-VGET it so
+					 * that we can increase ref count.
 					 */
-					vp = dvp;
-					err = 0;
-				} else {
-					err = VFS_VGET(dvp->mount, dir.ino, &vp);
-				}
+					vunlock(dvp);
+				err = VFS_VGET(dvp->mount, dir.ino, &vp);
 				nd->vp = (err == 0) ? vp : NULL;
 				return err;
 			}
@@ -69,6 +67,6 @@ ext2fs_lookup(struct nameidata *nd)
 		bp = NULL;
 	}
 	nd->vp = NULL;
-	return -ENOENT;
+	return 0;
 }
 

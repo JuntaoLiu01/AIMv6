@@ -82,8 +82,13 @@ namei(struct nameidata *nd)
 		}
 
 		nd->seg = segstart;
-		/* look for that segment in the directory */
+		/*
+		 * Look for that segment in the directory.
+		 * There @vp will be set if an entry is found.
+		 */
 		err = VOP_LOOKUP(nd);
+		if (err)
+			goto fail;
 
 		/*
 		 * If we encountered a symlink and we are not at the
@@ -98,43 +103,37 @@ namei(struct nameidata *nd)
 		 * flag.
 		 */
 		if (pathend) {
-			/*
-			 * If we are creating a file, we should ensure that
-			 * the file does not exist (by checking @err),
-			 * VOP_CREATE() the file, and return the vp.
-			 */
-			if (nd->intent == NAMEI_CREATE) {
-				if (err == -ENOENT) {
-					err = 0;
-					/* do not put parentvp away */
-				} else {
-					err = -EEXIST;
-					vput(nd->vp);
-					nd->vp = NULL;
-					vput(nd->parentvp);
-					nd->parentvp = NULL;
-				}
-				goto finish;
+			if (!(nd->flags & NAMEI_PARENT)) {
+				vput(nd->parentvp);
+				nd->parentvp = NULL;
 			}
-			vput(nd->parentvp);
+			if (nd->vp == NULL) {
+				if (nd->intent == NAMEI_CREATE)
+					/* allow if creating file */
+					goto finish;
+				err = -ENOENT;
+				goto fail;
+			}
 			if (nd->vp->type == VLNK && (nd->flags & NAMEI_FOLLOW)) {
 				/* TODO */
 				kprintf("KERN: symlink lookup NYI\n");
-				vput(nd->vp);
-				nd->vp = NULL;
 				err = -ENOTSUP;
-				goto finish;
+				goto fail;
 			}
 			goto finish;
 		} else {
+			/* always put back intermediate parent nodes */
 			vput(nd->parentvp);
+			nd->parentvp = NULL;
+			if (nd->vp == NULL) {
+				err = -ENOENT;
+				goto fail;
+			}
 			if (nd->vp->type == VLNK) {
 				/* TODO */
 				kprintf("KERN: symlink lookup NYI\n");
-				vput(nd->vp);
-				nd->vp = NULL;
 				err = -ENOTSUP;
-				goto finish;
+				goto fail;
 			}
 			/* is it a directory?  for further lookups */
 			if (nd->vp->type == VDIR) {
@@ -146,14 +145,22 @@ namei(struct nameidata *nd)
 				 * put the vnode we just vget'd back */
 				assert(nd->vp->type != VNON);
 				assert(nd->vp->type != VBAD);
-				vput(nd->vp);
-				nd->vp = NULL;
 				err = -EPERM;
-				goto finish;
+				goto fail;
 			}
 		}
 	}
 
+fail:
+	kfree(path);
+	if (nd->parentvp) {
+		vput(nd->parentvp);
+		nd->parentvp = NULL;
+	}
+	if (nd->vp) {
+		vput(nd->vp);
+		nd->vp = NULL;
+	}
 finish:
 	return err;
 }

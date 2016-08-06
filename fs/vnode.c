@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <fs/vnode.h>
 #include <fs/specdev.h>
+#include <fs/namei.h>
 #include <fs/mount.h>
 #include <fs/bio.h>
 #include <fs/uio.h>
@@ -16,6 +17,7 @@
 #include <percpu.h>
 #include <atomic.h>
 #include <ucred.h>
+#include <fcntl.h>
 
 struct allocator_cache vnodepool = {
 	.size = sizeof(struct vnode),
@@ -130,6 +132,7 @@ vgone(struct vnode *vp)
 	vp->flags |= VXLOCK;
 	spin_unlock_irq_restore(&(vp->lock), flags);
 
+	/* XXX I think it's OK with NOCRED */
 	vinvalbuf(vp, NOCRED, current_proc);
 
 	assert(VOP_RECLAIM(vp) == 0);
@@ -298,5 +301,66 @@ vn_write(struct vnode *vp, off_t offset, size_t len, void *buf, int ioflags,
     enum uio_seg seg, struct proc *p, struct mm *mm, struct ucred *cred)
 {
 	return vn_rw(vp, offset, len, buf, ioflags, UIO_WRITE, seg, p, mm, cred);
+}
+
+int
+vn_open(char *path, int flags, int mode, struct nameidata *nd)
+{
+	struct vnode *vp;
+	struct vattr va;
+	int err;
+
+	if (!(flags & (FREAD | FWRITE)))
+		return -EINVAL;		/* u wot m8 */
+	nd->path = path;
+	nd->flags = 0;
+	if (flags & O_CREAT) {
+		nd->intent = NAMEI_CREATE;
+		nd->flags |= NAMEI_PARENT;
+		if (!(flags & (O_NOFOLLOW | O_EXCL)))
+			nd->flags |= NAMEI_FOLLOW;
+		if ((err = namei(nd)) != 0)
+			return err;
+
+		if (nd->vp == NULL) {
+			/* truly non-existent, create it */
+			va.type = VREG;
+			va.mode = mode;
+			err = VOP_CREATE(nd, &va);
+			if (err) {
+				vput(nd->parentvp);
+				namei_cleanup(nd);
+				return err;
+			}
+			vput(nd->parentvp);
+			vp = nd->vp;
+		} else {
+			if (nd->parentvp == nd->vp)
+				vrele(nd->parentvp);	/* only decrease ref count */
+			else
+				vput(nd->parentvp);
+			nd->parentvp = NULL;
+			vp = nd->vp;
+			if (flags & O_EXCL) {
+				err = -EEXIST;
+				goto bad;
+			}
+		}
+	} else {
+		nd->intent = NAMEI_LOOKUP;
+		if (!(flags & O_NOFOLLOW))
+			nd->flags |= NAMEI_FOLLOW;
+		if ((err = namei(nd)) != 0)
+			return err;
+		vp = nd->vp;
+	}
+
+	if ((err = VOP_OPEN(vp, flags, nd->cred, nd->proc)) != 0)
+		goto bad;
+
+	return 0;
+bad:
+	vput(vp);
+	return err;
 }
 

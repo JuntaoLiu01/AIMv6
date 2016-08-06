@@ -72,12 +72,11 @@ write_entry:
 	newdir.type = E2IF_TO_E2DT(EXT2_DINODE(ip)->mode);
 	strlcpy(newdir.name, name, EXT2FS_MAXNAMLEN);
 
-	e2fs_save_direct(&dir, bp->data + offset);
+	e2fs_save_direct(&newdir, bp->data + offset);
 	err = bwrite(bp);
 	brelse(bp);
 
 	if (err) {
-		/* TODO: replace NOCRED */
 		ext2fs_lblkfree(dp, i, cred);
 		return err;
 	}

@@ -60,6 +60,11 @@ struct vnode {
 	void		*data;
 };
 
+struct vattr {
+	enum vtype	type;	/* vnode type */
+	int		mode;	/* file access mode and type */
+};
+
 struct vops {
 	/*
 	 * open:
@@ -105,7 +110,10 @@ struct vops {
 	 * lookup:
 	 * Finds a directory entry by name (nd->seg).
 	 * The directory (nd->parentvp) should be locked.
-	 * The returned vnode is retrieved via vget() hence locked.
+	 * The returned vnode is retrieved via vget() hence locked, or NULL if
+	 * the file does not exist.
+	 * If the vnode is the same as directory, lookup() increases ref count.
+	 * Note that lookup() still succeeds even if the file does not exist.
 	 */
 	int (*lookup)(struct nameidata *);
 	/*
@@ -116,7 +124,7 @@ struct vops {
 	 * The returned vnode is retrieved via vget() hence locked.
 	 * Does NOT check whether the file name already exists.
 	 */
-	int (*create)(struct nameidata *, int);
+	int (*create)(struct nameidata *, struct vattr *);
 	/*
 	 * bmap:
 	 * Translate a logical block number of a file to a disk sector
@@ -145,8 +153,8 @@ struct vops {
 	((bp)->vnode->ops->strategy(bp))
 #define VOP_LOOKUP(nd) \
 	((nd)->parentvp->ops->lookup(nd))
-#define VOP_CREATE(nd, imode) \
-	((nd)->parentvp->ops->create((nd), (imode)))
+#define VOP_CREATE(nd, va) \
+	((nd)->parentvp->ops->create((nd), (va)))
 #define VOP_BMAP(vp, lblkno, vpp, blkno, runp) \
 	((vp)->ops->bmap((vp), (lblkno), (vpp), (blkno), (runp)))
 /* We do not need this because currently all operations are sync. */
@@ -171,6 +179,8 @@ int vn_read(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
     struct proc *, struct mm *, struct ucred *);
 int vn_write(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
     struct proc *, struct mm *, struct ucred *);
+/* the core function of open(2), open3(2), openat(2), creat(2), etc. */
+int vn_open(char *, int, int, struct nameidata *);
 
 extern dev_t rootdev;	/* initialized in mach_init() or arch_init() */
 extern struct vnode *rootvp;	/* root disk device vnode */

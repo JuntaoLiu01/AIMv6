@@ -75,7 +75,6 @@ static int
 ext2fs_extend(struct inode *ip, size_t len, struct ucred *cred)
 {
 	struct m_ext2fs *fs = ip->superblock;
-	int offset = lblkoff(fs, len - 1);
 	off_t lbn = lblkno(fs, len - 1);
 	int err;
 	struct buf *bp;

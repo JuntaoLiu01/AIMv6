@@ -53,8 +53,8 @@ rollback_inode:
 }
 
 int
-ext2fs_create(struct nameidata *nd, int mode)
+ext2fs_create(struct nameidata *nd, struct vattr *va)
 {
-	return ext2fs_makeinode(EXT2_MAKEIMODE(VREG, mode), nd);
+	return ext2fs_makeinode(EXT2_MAKEIMODE(va->type, va->mode), nd);
 }
 

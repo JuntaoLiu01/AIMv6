@@ -248,6 +248,7 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
 struct proc;	/* include/proc.h */
 struct mount;	/* fs/mount.h */
 struct vnode;	/* fs/vnode.h */
+struct vattr;	/* fs/vnode.h */
 struct vfsops;	/* fs/vfs.h */
 struct vops;	/* fs/vnode.h */
 struct uio;	/* fs/uio.h */
@@ -272,7 +273,7 @@ int ext2fs_inactive(struct vnode *vp, struct proc *p);
 int ext2fs_reclaim(struct vnode *vp);
 int ext2fs_bmap(struct vnode *, off_t, struct vnode **, soff_t *, int *);
 int ext2fs_lookup(struct nameidata *);
-int ext2fs_create(struct nameidata *, int);
+int ext2fs_create(struct nameidata *, struct vattr *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);

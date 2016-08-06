@@ -52,17 +52,12 @@ static void ttyinit(void)
 	dev_t ttydevno;
 	struct tty_device *tty;
 
-	nd.path = "/dev/tty";
-	nd.intent = NAMEI_LOOKUP;
-	nd.flags = NAMEI_FOLLOW;
 	nd.proc = current_proc;
-	nd.cred = NOCRED;
-	if (namei(&nd) != 0)
+	nd.cred = NOCRED;	/* TODO REPLACE? */
+	if (vn_open("/dev/tty", FREAD | FWRITE, 0, &nd) != 0)
 		panic("/dev/tty: not found\n");
 	if (nd.vp->type != VCHR)
 		panic("/dev/tty: bad file type\n");
-	assert(VOP_OPEN(nd.vp, FREAD | FWRITE, NOCRED, current_proc) == 0);
-	assert(nd.vp->type == VCHR);
 	assert(major(vdev(nd.vp)) == TTY_MAJOR);
 	nd.vp->flags |= VISTTY;
 
