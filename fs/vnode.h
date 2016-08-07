@@ -91,7 +91,7 @@ struct vops {
 	/*
 	 * inactive:
 	 * Truncate, update, unlock.  Usually called when a kernel is no
-	 * longer using the vnode.
+	 * longer using the vnode (i.e. @refs == 0).
 	 * xv6 equivalent is iput().
 	 * NOTE: this primitive is different from OpenBSD.
 	 */
@@ -140,10 +140,20 @@ struct vops {
 	/*
 	 * link:
 	 * Make a hard link.
-	 * Assumes that source vnode @srcvp and directory vnode @dvp is
+	 * Assumes that source vnode @srcvp and directory vnode @dvp are
 	 * locked.
 	 */
 	int (*link)(struct vnode *, char *, struct vnode *, struct ucred *,
+	    struct proc *);
+	/*
+	 * remove:
+	 * Remove a directory entry.
+	 * Assumes that @vp indeed has an entry @name in @dvp.
+	 * Assumes that @dvp and @vp are locked.
+	 * For a file with @nlink == 0, the actual removal of data blocks and
+	 * inode takes place in inactive().
+	 */
+	int (*remove)(struct vnode *, char *, struct vnode *, struct ucred *,
 	    struct proc *);
 };
 
@@ -169,6 +179,8 @@ struct vops {
 	((vp)->ops->bmap((vp), (lblkno), (vpp), (blkno), (runp)))
 #define VOP_LINK(dvp, name, vp, cred, p) \
 	((dvp)->ops->link((dvp), (name), (vp), (cred), (p)))
+#define VOP_REMOVE(dvp, name, vp, cred, p) \
+	((dvp)->ops->remove((dvp), (name), (vp), (cred), (p)))
 /* We do not need this because currently all operations are sync. */
 #define VOP_FSYNC(vp, cred, p)
 

@@ -12,6 +12,9 @@
 /*
  * Translates a path into a vnode.
  * This will be a HUUUUUGE subroutine.
+ *
+ * Currently NAMEI_DELETE and NAMEI_LOOKUP are identical as there is no
+ * additional job neede for deletion here.
  */
 int
 namei(struct nameidata *nd)
@@ -23,7 +26,7 @@ namei(struct nameidata *nd)
 	int pathend, err;
 	struct proc *p = nd->proc;
 
-	if (nd->intent != NAMEI_LOOKUP && nd->intent != NAMEI_CREATE) {
+	if (nd->intent == NAMEI_RENAME) {
 		kprintf("KERN: rename and delete namei NYI\n");
 		return -ENOTSUP;
 	}

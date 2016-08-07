@@ -25,7 +25,6 @@ libext2fs_la_SOURCES = \
 		       bio.c \
 		       bmap.c \
 		       create.c \
-		       dir.c \
 		       dump.c \
 		       inode.c \
 		       lookup.c \

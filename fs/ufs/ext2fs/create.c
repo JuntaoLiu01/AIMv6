@@ -84,7 +84,26 @@ ext2fs_link(struct vnode *dvp, char *name, struct vnode *srcvp,
 		/* rollback :( */
 		EXT2_DINODE(ip)->nlink--;
 		ip->flags |= IN_CHANGE;
-		ext2fs_update(ip);
+	}
+
+	return err;
+}
+
+int
+ext2fs_remove(struct vnode *dvp, char *name, struct vnode *vp,
+    struct ucred *cred, struct proc *p)
+{
+	struct inode *ip = VTOI(vp);
+	int err;
+
+	if (vp->type == VDIR)
+		/* Please use rmdir(2) instead */
+		return -EPERM;
+
+	err = ext2fs_dirremove(dvp, name, cred);
+	if (err == 0) {
+		EXT2_DINODE(ip)->nlink--;
+		ip->flags |= IN_CHANGE;
 	}
 
 	return err;

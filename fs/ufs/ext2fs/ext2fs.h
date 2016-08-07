@@ -277,6 +277,8 @@ int ext2fs_create(struct vnode *, char *, struct vattr *, struct vnode **,
     struct ucred *, struct proc *);
 int ext2fs_link(struct vnode *, char *, struct vnode *, struct ucred *,
     struct proc *);
+int ext2fs_remove(struct vnode *, char *, struct vnode *, struct ucred *,
+    struct proc *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);
@@ -295,6 +297,7 @@ int ext2fs_buf_alloc(struct inode *, off_t, struct ucred *, struct buf **);
 int ext2fs_lblkfree(struct inode *, off_t, struct ucred *);
 int ext2fs_truncate(struct inode *, size_t, struct ucred *);
 int ext2fs_direnter(struct inode *, struct vnode *, char *, struct ucred *);
+int ext2fs_dirremove(struct vnode *, char *, struct ucred *);
 
 #endif
 
