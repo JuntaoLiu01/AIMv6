@@ -108,23 +108,25 @@ struct vops {
 	int (*strategy)(struct buf *);
 	/*
 	 * lookup:
-	 * Finds a directory entry by name (nd->seg).
+	 * Finds a directory entry by name (nd->seg) within nd->parentvp.
 	 * The directory (nd->parentvp) should be locked.
 	 * The returned vnode is retrieved via vget() hence locked, or NULL if
 	 * the file does not exist.
 	 * If the vnode is the same as directory, lookup() increases ref count.
 	 * Note that lookup() still succeeds even if the file does not exist.
 	 */
-	int (*lookup)(struct nameidata *);
+	int (*lookup)(struct vnode *, char *, struct vnode **, struct ucred *,
+	    struct proc *);
 	/*
 	 * create:
 	 * Create a regular file with given file name segment (nd->seg) as its
-	 * name.
+	 * name within nd->parentvp.
 	 * The directory (nd->parentvp) should be locked.
 	 * The returned vnode is retrieved via vget() hence locked.
 	 * Does NOT check whether the file name already exists.
 	 */
-	int (*create)(struct nameidata *, struct vattr *);
+	int (*create)(struct vnode *, char *, struct vattr *, struct vnode **,
+	    struct ucred *, struct proc *);
 	/*
 	 * bmap:
 	 * Translate a logical block number of a file to a disk sector
@@ -151,10 +153,10 @@ struct vops {
 	((vp)->ops->reclaim(vp))
 #define VOP_STRATEGY(bp) \
 	((bp)->vnode->ops->strategy(bp))
-#define VOP_LOOKUP(nd) \
-	((nd)->parentvp->ops->lookup(nd))
-#define VOP_CREATE(nd, va) \
-	((nd)->parentvp->ops->create((nd), (va)))
+#define VOP_LOOKUP(dvp, name, vpp, cred, p) \
+	((dvp)->ops->lookup((dvp), (name), (vpp), (cred), (p)))
+#define VOP_CREATE(dvp, name, va, vpp, cred, p) \
+	((dvp)->ops->create((dvp), (name), (va), (vpp), (cred), (p)))
 #define VOP_BMAP(vp, lblkno, vpp, blkno, runp) \
 	((vp)->ops->bmap((vp), (lblkno), (vpp), (blkno), (runp)))
 /* We do not need this because currently all operations are sync. */

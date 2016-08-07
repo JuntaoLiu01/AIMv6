@@ -254,7 +254,6 @@ struct vops;	/* fs/vnode.h */
 struct uio;	/* fs/uio.h */
 struct ucred;	/* include/ucred.h */
 struct inode;	/* fs/ufs/inode.h */
-struct nameidata;	/* fs/namei.h */
 
 int ext2fs_mountroot(void);
 
@@ -272,8 +271,10 @@ int ext2fs_write(struct vnode *, struct uio *, int, struct ucred *);
 int ext2fs_inactive(struct vnode *vp, struct proc *p);
 int ext2fs_reclaim(struct vnode *vp);
 int ext2fs_bmap(struct vnode *, off_t, struct vnode **, soff_t *, int *);
-int ext2fs_lookup(struct nameidata *);
-int ext2fs_create(struct nameidata *, struct vattr *);
+int ext2fs_lookup(struct vnode *, char *, struct vnode **, struct ucred *,
+    struct proc *);
+int ext2fs_create(struct vnode *, char *, struct vattr *, struct vnode **,
+    struct ucred *, struct proc *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);

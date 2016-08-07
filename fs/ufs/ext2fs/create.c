@@ -7,13 +7,12 @@
 #include <panic.h>
 
 int
-ext2fs_makeinode(int imode, struct nameidata *nd)
+ext2fs_makeinode(int imode, struct vnode *dvp, char *name, struct vnode **vpp,
+    struct ucred *cred, struct proc *p)
 {
 	int err;
 	struct vnode *tvp;
 	struct inode *ip;
-	struct vnode *dvp = nd->parentvp;
-	char *name = nd->seg;
 
 	assert((imode & EXT2_IFMT) != 0);
 
@@ -39,9 +38,9 @@ ext2fs_makeinode(int imode, struct nameidata *nd)
 	 * to erase the bit in inode bitmap. */
 	if ((err = ext2fs_update(ip)) != 0)
 		goto rollback_inode;
-	if ((err = ext2fs_direnter(ip, dvp, name, nd->cred)) != 0)
+	if ((err = ext2fs_direnter(ip, dvp, name, cred)) != 0)
 		goto rollback_inode;
-	nd->vp = tvp;
+	*vpp = tvp;
 	return 0;
 
 rollback_inode:
@@ -53,8 +52,15 @@ rollback_inode:
 }
 
 int
-ext2fs_create(struct nameidata *nd, struct vattr *va)
+ext2fs_create(struct vnode *dvp, char *name, struct vattr *va,
+	      struct vnode **vpp, struct ucred *cred, struct proc *p)
 {
-	return ext2fs_makeinode(EXT2_MAKEIMODE(va->type, va->mode), nd);
+	return ext2fs_makeinode(EXT2_MAKEIMODE(va->type, va->mode), dvp, name,
+	    vpp, cred, p);
+}
+
+int
+ext2fs_link(struct nameidata *nd, struct vattr *va)
+{
 }
 

@@ -14,12 +14,11 @@
 #include <errno.h>
 
 int
-ext2fs_lookup(struct nameidata *nd)
+ext2fs_lookup(struct vnode *dvp, char *name, struct vnode **vpp,
+    struct ucred *cred, struct proc *p)
 {
 	unsigned int i;
 	struct vnode *vp;
-	struct vnode *dvp = nd->parentvp;
-	char *name = nd->seg;
 	struct buf *bp = NULL;
 	struct inode *ip = VTOI(dvp);
 	struct m_ext2fs *fs = ip->superblock;
@@ -58,7 +57,7 @@ ext2fs_lookup(struct nameidata *nd)
 					 */
 					vunlock(dvp);
 				err = VFS_VGET(dvp->mount, dir.ino, &vp);
-				nd->vp = (err == 0) ? vp : NULL;
+				*vpp = (err == 0) ? vp : NULL;
 				return err;
 			}
 			cur += EXT2FS_DIRSIZ(dir.namelen);
@@ -66,7 +65,7 @@ ext2fs_lookup(struct nameidata *nd)
 		brelse(bp);
 		bp = NULL;
 	}
-	nd->vp = NULL;
+	*vpp = NULL;
 	return 0;
 }
 

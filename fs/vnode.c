@@ -326,7 +326,8 @@ vn_open(char *path, int flags, int mode, struct nameidata *nd)
 			/* truly non-existent, create it */
 			va.type = VREG;
 			va.mode = mode;
-			err = VOP_CREATE(nd, &va);
+			err = VOP_CREATE(nd->parentvp, nd->seg, &va, &nd->vp,
+			    nd->cred, nd->proc);
 			if (err) {
 				vput(nd->parentvp);
 				namei_cleanup(nd);
@@ -336,13 +337,14 @@ vn_open(char *path, int flags, int mode, struct nameidata *nd)
 			vp = nd->vp;
 		} else {
 			if (nd->parentvp == nd->vp)
-				vrele(nd->parentvp);	/* only decrease ref count */
+				vrele(nd->parentvp);	/* only dec ref count */
 			else
 				vput(nd->parentvp);
 			nd->parentvp = NULL;
 			vp = nd->vp;
 			if (flags & O_EXCL) {
 				err = -EEXIST;
+				namei_cleanup(nd);
 				goto bad;
 			}
 		}
@@ -355,9 +357,12 @@ vn_open(char *path, int flags, int mode, struct nameidata *nd)
 		vp = nd->vp;
 	}
 
-	if ((err = VOP_OPEN(vp, flags, nd->cred, nd->proc)) != 0)
+	if ((err = VOP_OPEN(vp, flags, nd->cred, nd->proc)) != 0) {
+		namei_cleanup(nd);
 		goto bad;
+	}
 
+	namei_cleanup(nd);
 	return 0;
 bad:
 	vput(vp);

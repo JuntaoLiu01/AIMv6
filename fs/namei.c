@@ -86,7 +86,8 @@ namei(struct nameidata *nd)
 		 * Look for that segment in the directory.
 		 * There @vp will be set if an entry is found.
 		 */
-		err = VOP_LOOKUP(nd);
+		err = VOP_LOOKUP(nd->parentvp, nd->seg, &nd->vp, nd->cred,
+		    nd->proc);
 		if (err)
 			goto fail;
 
