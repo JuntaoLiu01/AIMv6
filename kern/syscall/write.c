@@ -34,6 +34,12 @@ ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
 	int err;
 	size_t len;
 
+	if (file->type != FVNODE) {
+		/* pipe NYI */
+		*errno = -ENOTSUP;
+		return -1;
+	}
+
 	if (file->vnode == NULL) {
 		*errno = EBADF;
 		return -1;

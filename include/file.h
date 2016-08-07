@@ -22,12 +22,25 @@
 #include <sys/types.h>
 #include <fs/vnode.h>
 
+enum ftype {
+	FVNODE,
+	FSOCKET,
+	FPIPE,
+};
+
 /*
  * This is the "file" structure used by processes, and serves as the
  * highest-level object where syscalls like read(2) and write(2) takes place.
  */
 struct file {
-	struct vnode	*vnode;
+	enum ftype	type;
+	union {
+		struct vnode *vnode;
+#if 0
+		struct socket *socket;
+		struct pipe *pipe;
+#endif
+	};
 	off_t		offset;
 	int		ioflags;
 };
@@ -35,7 +48,7 @@ struct file {
 #if 0
 
 /*
- * NOTE:
+ * [OBSOLETE]:
  * The actual file and file system operations are inside fs/ directory.
  */
 
