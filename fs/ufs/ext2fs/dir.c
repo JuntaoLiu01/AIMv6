@@ -25,6 +25,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, char *name,
 	struct ext2fs_direct dir, newdir;
 	size_t newnamelen = strlen(name), freespace;
 	size_t osize = ext2fs_getsize(dp);
+	bool newblk = false;
 
 	assert(ITOV(ip)->flags & VXLOCK);
 	assert(dvp->flags & VXLOCK);
@@ -59,6 +60,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, char *name,
 		return err;
 	freespace = fs->bsize;
 	offset = 0;
+	newblk = true;
 
 write_entry:
 	/*
@@ -80,8 +82,10 @@ write_entry:
 		ext2fs_lblkfree(dp, i, cred);
 		return err;
 	}
-	ext2fs_setsize(dp, osize + fs->bsize);
-	dp->flags |= IN_CHANGE | IN_UPDATE;
+	if (newblk) {
+		ext2fs_setsize(dp, osize + fs->bsize);
+		dp->flags |= IN_CHANGE | IN_UPDATE;
+	}
 
 	return ext2fs_update(dp);
 }

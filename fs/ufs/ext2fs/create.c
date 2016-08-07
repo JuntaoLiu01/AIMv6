@@ -5,6 +5,8 @@
 #include <fs/ufs/ext2fs/ext2fs.h>
 #include <fs/namei.h>
 #include <panic.h>
+#include <errno.h>
+#include <limits.h>
 
 int
 ext2fs_makeinode(int imode, struct vnode *dvp, char *name, struct vnode **vpp,
@@ -53,14 +55,38 @@ rollback_inode:
 
 int
 ext2fs_create(struct vnode *dvp, char *name, struct vattr *va,
-	      struct vnode **vpp, struct ucred *cred, struct proc *p)
+    struct vnode **vpp, struct ucred *cred, struct proc *p)
 {
 	return ext2fs_makeinode(EXT2_MAKEIMODE(va->type, va->mode), dvp, name,
 	    vpp, cred, p);
 }
 
 int
-ext2fs_link(struct nameidata *nd, struct vattr *va)
+ext2fs_link(struct vnode *dvp, char *name, struct vnode *srcvp,
+    struct ucred *cred, struct proc *p)
 {
+	struct inode *ip = VTOI(srcvp);
+	int err;
+
+	if (srcvp->type == VDIR)
+		/*
+		 * Allowing hard-linking directories is a BAD IDEA(TM).
+		 */
+		return -EISDIR;
+	if (EXT2_DINODE(ip)->nlink >= LINK_MAX)
+		return -EMLINK;
+
+	EXT2_DINODE(ip)->nlink++;
+	ip->flags |= IN_CHANGE;
+	if ((err = ext2fs_update(ip)) == 0)
+		ext2fs_direnter(ip, dvp, name, cred);
+	if (err) {
+		/* rollback :( */
+		EXT2_DINODE(ip)->nlink--;
+		ip->flags |= IN_CHANGE;
+		ext2fs_update(ip);
+	}
+
+	return err;
 }
 

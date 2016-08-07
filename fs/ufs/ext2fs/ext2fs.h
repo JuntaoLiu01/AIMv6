@@ -275,6 +275,8 @@ int ext2fs_lookup(struct vnode *, char *, struct vnode **, struct ucred *,
     struct proc *);
 int ext2fs_create(struct vnode *, char *, struct vattr *, struct vnode **,
     struct ucred *, struct proc *);
+int ext2fs_link(struct vnode *, char *, struct vnode *, struct ucred *,
+    struct proc *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);

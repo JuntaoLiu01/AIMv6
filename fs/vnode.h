@@ -137,6 +137,14 @@ struct vops {
 	 *         direct + indirect blocks can handle
 	 */
 	int (*bmap)(struct vnode *, off_t, struct vnode **, soff_t *, int *);
+	/*
+	 * link:
+	 * Make a hard link.
+	 * Assumes that source vnode @srcvp and directory vnode @dvp is
+	 * locked.
+	 */
+	int (*link)(struct vnode *, char *, struct vnode *, struct ucred *,
+	    struct proc *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -159,6 +167,8 @@ struct vops {
 	((dvp)->ops->create((dvp), (name), (va), (vpp), (cred), (p)))
 #define VOP_BMAP(vp, lblkno, vpp, blkno, runp) \
 	((vp)->ops->bmap((vp), (lblkno), (vpp), (blkno), (runp)))
+#define VOP_LINK(dvp, name, vp, cred, p) \
+	((dvp)->ops->link((dvp), (name), (vp), (cred), (p)))
 /* We do not need this because currently all operations are sync. */
 #define VOP_FSYNC(vp, cred, p)
 

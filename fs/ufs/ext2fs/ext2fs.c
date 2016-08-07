@@ -45,6 +45,7 @@ struct vops ext2fs_vops = {
 	.lookup = ext2fs_lookup,
 	.create = ext2fs_create,
 	.bmap = ext2fs_bmap,
+	.link = ext2fs_link,
 };
 
 /*
@@ -62,6 +63,7 @@ struct vops ext2fs_specvops = {
 	.lookup = NOTSUP,
 	.create = NOTSUP,
 	.bmap = NOTSUP,
+	.link = NOTSUP,
 };
 
 int

@@ -28,7 +28,7 @@
 #define ARG_MAX		4096
 #define OPEN_MAX	16		/* max number of open files */
 #define PROC_NAME_LEN_MAX	256
-
+#define LINK_MAX	127
 
 #endif
 
