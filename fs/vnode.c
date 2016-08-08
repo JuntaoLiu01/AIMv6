@@ -263,10 +263,11 @@ loop:
 int
 vn_rw(struct vnode *vp, off_t offset, size_t len, void *buf, int ioflags,
     enum uio_rw rw, enum uio_seg seg, struct proc *p, struct mm *mm,
-    struct ucred *cred)
+    struct ucred *cred, size_t *done)
 {
 	struct uio uio;
 	struct iovec iovec;
+	int err;
 
 	iovec.iov_base = buf;
 	iovec.iov_len = len;
@@ -281,26 +282,36 @@ vn_rw(struct vnode *vp, off_t offset, size_t len, void *buf, int ioflags,
 
 	switch (rw) {
 	case UIO_READ:
-		return VOP_READ(vp, &uio, ioflags, cred);
+		err = VOP_READ(vp, &uio, ioflags, cred);
+		break;
 	case UIO_WRITE:
-		return VOP_WRITE(vp, &uio, ioflags, cred);
+		err = VOP_WRITE(vp, &uio, ioflags, cred);
+		break;
+	default:
+		/* NOTREACHED */
+		return -EINVAL;
 	}
-	/* NOTREACHED */
-	return -EINVAL;
+	if (done)
+		*done = len - uio.resid;
+	return err;
 }
 
 int
 vn_read(struct vnode *vp, off_t offset, size_t len, void *buf, int ioflags,
-    enum uio_seg seg, struct proc *p, struct mm *mm, struct ucred *cred)
+    enum uio_seg seg, struct proc *p, struct mm *mm, struct ucred *cred,
+    size_t *done)
 {
-	return vn_rw(vp, offset, len, buf, ioflags, UIO_READ, seg, p, mm, cred);
+	return vn_rw(vp, offset, len, buf, ioflags, UIO_READ, seg, p, mm,
+	    cred, done);
 }
 
 int
 vn_write(struct vnode *vp, off_t offset, size_t len, void *buf, int ioflags,
-    enum uio_seg seg, struct proc *p, struct mm *mm, struct ucred *cred)
+    enum uio_seg seg, struct proc *p, struct mm *mm, struct ucred *cred,
+    size_t *done)
 {
-	return vn_rw(vp, offset, len, buf, ioflags, UIO_WRITE, seg, p, mm, cred);
+	return vn_rw(vp, offset, len, buf, ioflags, UIO_WRITE, seg, p, mm,
+	    cred, done);
 }
 
 int

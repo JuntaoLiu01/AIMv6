@@ -209,9 +209,9 @@ int vwaitforio(struct vnode *);
 int vinvalbuf(struct vnode *, struct ucred *, struct proc *);
 
 int vn_read(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
-    struct proc *, struct mm *, struct ucred *);
+    struct proc *, struct mm *, struct ucred *, size_t *);
 int vn_write(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
-    struct proc *, struct mm *, struct ucred *);
+    struct proc *, struct mm *, struct ucred *, size_t *);
 /* the core function of open(2), open3(2), openat(2), creat(2), etc. */
 int vn_open(char *, int, int, struct nameidata *);
 
