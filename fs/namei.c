@@ -9,12 +9,26 @@
 #include <panic.h>
 #include <libc/string.h>
 
+int
+namei_putparent(struct nameidata *nd)
+{
+	if (nd->parentvp == nd->vp)
+		vrele(nd->parentvp);
+	else
+		vput(nd->parentvp);
+	return 0;
+}
+
 /*
  * Translates a path into a vnode.
  * This will be a HUUUUUGE subroutine.
  *
  * Currently NAMEI_DELETE and NAMEI_LOOKUP are identical as there is no
  * additional job neede for deletion here.
+ *
+ * Assumes that there are no trailing slashes (except for root directory
+ * "/").  If the path name contains trailing slashes, the caller must
+ * strip them.
  */
 int
 namei(struct nameidata *nd)
@@ -25,6 +39,7 @@ namei(struct nameidata *nd)
 	size_t pathlen = strnlen(path_lookup, PATH_MAX);
 	int pathend, err;
 	struct proc *p = nd->proc;
+	bool firstseg = true;
 
 	if (nd->intent == NAMEI_RENAME) {
 		kprintf("KERN: rename and delete namei NYI\n");
@@ -36,6 +51,8 @@ namei(struct nameidata *nd)
 	else if (pathlen == 0)
 		return -ENOENT;
 
+	kpdebug("namei %s\n", nd->path);
+
 	assert(p != NULL);
 	rootdir = p->rootd;
 	if (rootdir == NULL)
@@ -44,14 +61,7 @@ namei(struct nameidata *nd)
 	path = kmalloc(PATH_MAX, 0);
 	nd->pathbuf = path;
 	strlcpy(path, path_lookup, PATH_MAX);
-	if (nd->flags & NAMEI_STRIP) {
-		for (int i = strlen(path) - 1; i >= 1; --i) {
-			if (path[i] == '/')
-				path[i] = '\0';
-			else
-				break;
-		}
-	}
+	assert(path[pathlen - 1] != '/' || pathlen == 1);
 
 	/*
 	 * Here we are dealing with the simplest case: the file we are
@@ -60,8 +70,11 @@ namei(struct nameidata *nd)
 	 * things are much more complicated.
 	 */
 	vget(nd->parentvp);
-	nd->vp = rootdir;		/* If we found a '/', return the rootdir */
+	nd->vp = rootdir;	/* If we found a '/', return the rootdir */
 	err = 0;
+	if (strcmp(path, "/") == 0)
+		return 0;
+
 	for (segstart = path; *segstart != '\0'; segstart = segend + 1) {
 		/* chomp a segment */
 		for (segend = segstart; *segend != '/' && *segend != '\0';
@@ -72,108 +85,80 @@ namei(struct nameidata *nd)
 		if (segstart == segend)
 			continue;
 
-		/*
-		 * Usually, the file system provider should deal with
-		 * special segments "." and "..".  There are cases
-		 * (e.g. ext2) where the on-disk directories store
-		 * the file ID of parent directories.
-		 *
-		 * However, if we arrive at the root vnode of a process
-		 * (due to chroot(2)), or the root vnode of the whole
-		 * file system tree, we will have to do a NOP by our own.
-		 *
-		 * Also, there are cases where we are crossing file systems
-		 * if current directory is the root of a file system mounted
-		 * on a directory of another file system.  We do not support
-		 * mounting multiple file systems right now.
-		 */
-		if (strcmp(segstart, "..") == 0) {
-			if (nd->parentvp == rootdir || nd->parentvp == rootvnode)
-				continue;
+		if (!firstseg) {
+			namei_putparent(nd);
+			nd->parentvp = nd->vp;
 		}
 
 		nd->seg = segstart;
-		/*
-		 * Look for that segment in the directory.
-		 * There @vp will be set if an entry is found.
-		 */
+
+		if (strcmp(nd->seg, "..") == 0 &&
+		    (nd->parentvp == rootdir || nd->parentvp == rootvnode)) {
+			nd->vp = nd->parentvp;
+			vref(nd->vp);
+			continue;
+		}
+
 		err = VOP_LOOKUP(nd->parentvp, nd->seg, &nd->vp, nd->cred,
 		    nd->proc);
 		if (err)
 			goto fail;
 
-		/*
-		 * If we encountered a symlink and we are not at the
-		 * last segment, we should always read in the content
-		 * of the symlink and replace the path string to
-		 * continue lookup, regardless of the NAMEI_FOLLOW
-		 * flag.
-		 *
-		 * If we found a symlink at the last segment, then
-		 * we either return the symlink itself or the
-		 * referenced file, depending on the NAMEI_FOLLOW
-		 * flag.
-		 */
 		if (pathend) {
-			if (!(nd->flags & NAMEI_PARENT)) {
-				vput(nd->parentvp);
-				nd->parentvp = NULL;
-			}
-			if (nd->vp == NULL) {
-				if (nd->intent == NAMEI_CREATE)
-					/* allow if creating file */
-					goto finish;
-				err = -ENOENT;
-				goto fail;
-			}
-			if (nd->vp->type == VLNK && (nd->flags & NAMEI_FOLLOW)) {
-				/* TODO */
-				kprintf("KERN: symlink lookup NYI\n");
-				err = -ENOTSUP;
-				goto fail;
-			}
-			goto finish;
+			goto last;
 		} else {
-			/* always put back intermediate parent nodes */
-			vput(nd->parentvp);
-			nd->parentvp = NULL;
+			/*
+			 * We require that the current segment is a directory.
+			 * Since there are no trailing slashes, the directory
+			 * must exist.
+			 */
 			if (nd->vp == NULL) {
 				err = -ENOENT;
 				goto fail;
 			}
 			if (nd->vp->type == VLNK) {
-				/* TODO */
-				kprintf("KERN: symlink lookup NYI\n");
+				kprintf("namei: symlink NYI\n");
 				err = -ENOTSUP;
 				goto fail;
-			}
-			/* is it a directory?  for further lookups */
-			if (nd->vp->type == VDIR) {
-				/* Note that vp is already vget'd in VOP_LOOKUP;
-				 * we don't need to vget() it again. */
-				nd->parentvp = nd->vp;
-			} else {
-				/* trying to get directory entry inside a file,
-				 * put the vnode we just vget'd back */
-				assert(nd->vp->type != VNON);
-				assert(nd->vp->type != VBAD);
+			} else if (nd->vp->type != VDIR) {
 				err = -EPERM;
 				goto fail;
 			}
+			firstseg = false;
 		}
 	}
+	/* NOTREACHED */
+	panic("namei: no ending segment?\n");
+last:
+	if (!(nd->flags & NAMEI_PARENT)) {
+		namei_putparent(nd);
+		nd->parentvp = NULL;
+	}
+	if (nd->vp == NULL) {
+		if (nd->intent == NAMEI_CREATE) {
+			return 0;
+		} else {
+			err = -ENOENT;
+			goto fail;
+		}
+	}
+	if (nd->vp->type == VLNK && (nd->flags & NAMEI_FOLLOW)) {
+		kprintf("namei: symlink NYI\n");
+		err = -ENOTSUP;
+		goto fail;
+	}
+	return 0;
 
 fail:
 	kfree(path);
 	if (nd->parentvp) {
-		vput(nd->parentvp);
+		namei_putparent(nd);
 		nd->parentvp = NULL;
 	}
 	if (nd->vp) {
 		vput(nd->vp);
 		nd->vp = NULL;
 	}
-finish:
 	return err;
 }
 

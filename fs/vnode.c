@@ -340,17 +340,15 @@ vn_open(char *path, int flags, int mode, struct nameidata *nd)
 			err = VOP_CREATE(nd->parentvp, nd->seg, &va, &nd->vp,
 			    nd->cred, nd->proc);
 			if (err) {
-				vput(nd->parentvp);
+				namei_putparent(nd);
+				nd->parentvp = NULL;
 				namei_cleanup(nd);
 				return err;
 			}
-			vput(nd->parentvp);
+			namei_putparent(nd);
 			vp = nd->vp;
 		} else {
-			if (nd->parentvp == nd->vp)
-				vrele(nd->parentvp);	/* only dec ref count */
-			else
-				vput(nd->parentvp);
+			namei_putparent(nd);
 			nd->parentvp = NULL;
 			vp = nd->vp;
 			if (flags & O_EXCL) {

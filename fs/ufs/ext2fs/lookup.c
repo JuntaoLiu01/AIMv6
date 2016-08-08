@@ -58,15 +58,15 @@ ext2fs_lookup(struct vnode *dvp, char *name, struct vnode **vpp,
 			if (dir.ino != 0 && dir.namelen == namelen &&
 			    memcmp(dir.name, name, dir.namelen) == 0) {
 				brelse(bp);
-				if (dir.ino == VTOI(dvp)->ino)
-					/*
-					 * Since @dvp is already vget'd, we
-					 * unlock it to allow re-VGET it so
-					 * that we can increase ref count.
-					 */
-					vunlock(dvp);
-				err = VFS_VGET(dvp->mount, dir.ino, &vp);
-				*vpp = (err == 0) ? vp : NULL;
+				if (dir.ino == VTOI(dvp)->ino) {
+					vref(dvp);
+					*vpp = dvp;
+				} else {
+					err = VFS_VGET(dvp->mount, dir.ino, &vp);
+					*vpp = (err == 0) ? vp : NULL;
+				}
+				kpdebug("ext2fs lookup %p(%d) %s done\n",
+				    dvp, ip->ino, name);
 				return err;
 			}
 			offset += dir.reclen;
