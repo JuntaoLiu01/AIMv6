@@ -18,6 +18,7 @@ struct nameidata {
 	uint32_t	flags;
 #define NAMEI_FOLLOW	0x1	/* follow symlinks */
 #define NAMEI_PARENT	0x100	/* preserve parent */
+#define NAMEI_STRIP	0x200	/* strip trailing slashes */
 	struct ucred	*cred;
 	struct proc	*proc;
 

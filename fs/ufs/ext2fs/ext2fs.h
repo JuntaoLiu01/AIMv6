@@ -279,6 +279,8 @@ int ext2fs_link(struct vnode *, char *, struct vnode *, struct ucred *,
     struct proc *);
 int ext2fs_remove(struct vnode *, char *, struct vnode *, struct ucred *,
     struct proc *);
+int ext2fs_mkdir(struct vnode *, char *, struct vattr *, struct vnode **,
+    struct ucred *, struct proc *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);
@@ -287,7 +289,7 @@ uint64_t ext2fs_getsize(struct inode *);
 		    ((struct m_ext2fs *)(ip)->superblock)->bsize)
 
 int ext2fs_setsize(struct inode *ip, uint64_t size);
-int ext2fs_inode_alloc(struct vnode *, int, struct vnode **);
+int ext2fs_inode_alloc(struct vnode *, int, struct ucred *, struct vnode **);
 void ext2fs_inode_free(struct inode *, ufsino_t, int);
 int ext2fs_blkalloc(struct inode *, struct ucred *, off_t *);
 void ext2fs_blkfree(struct inode *, off_t);

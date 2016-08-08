@@ -20,7 +20,8 @@
  * Changes and writes inode bitmap to disk.
  */
 int
-ext2fs_inode_alloc(struct vnode *dvp, int imode, struct vnode **vpp)
+ext2fs_inode_alloc(struct vnode *dvp, int imode, struct ucred *cred,
+    struct vnode **vpp)
 {
 	struct vnode *devvp = VFSTOUFS(dvp->mount)->devvp;
 	struct vnode *vp;	/* the vnode of allocated inode */

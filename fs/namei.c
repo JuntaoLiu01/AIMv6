@@ -44,6 +44,14 @@ namei(struct nameidata *nd)
 	path = kmalloc(PATH_MAX, 0);
 	nd->pathbuf = path;
 	strlcpy(path, path_lookup, PATH_MAX);
+	if (nd->flags & NAMEI_STRIP) {
+		for (int i = strlen(path) - 1; i >= 1; --i) {
+			if (path[i] == '/')
+				path[i] = '\0';
+			else
+				break;
+		}
+	}
 
 	/*
 	 * Here we are dealing with the simplest case: the file we are

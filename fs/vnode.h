@@ -162,6 +162,12 @@ struct vops {
 	 * system framework, and maybe in system calls (which are NYI).
 	 */
 	int (*access)(struct vnode *, int, struct ucred *, struct proc *);
+	/*
+	 * mkdir:
+	 * Create a directory
+	 */
+	int (*mkdir)(struct vnode *, char *, struct vattr *, struct vnode **,
+	    struct ucred *, struct proc *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -191,6 +197,8 @@ struct vops {
 #define VOP_ACCESS(vp, acc, cred, p) \
 	((vp)->ops->access((vp), (acc), (cred), (p)))
 /* We do not need this because currently all operations are sync. */
+#define VOP_MKDIR(dvp, name, va, vpp, cred, p) \
+	((dvp)->ops->mkdir((dvp), (name), (va), (vpp), (cred), (p)))
 #define VOP_FSYNC(vp, cred, p)
 
 /* ioflags */

@@ -29,6 +29,12 @@ Please not that this file system framework implementation is **super slow**.
 It does not by any means serve as an implementation in real production
 environment *where efficiency matters*.  Nevertheless, we are pretty close.
 
+Also, this file system framework implementation should be pretty buggy for
+now, especially in error handling since I never thoroughly tested them because
+I don't have the time to do so.  Be sure to make backups.  If you found bugs,
+please fix ithem (preferred), or submit patches (preferred), or contact us to
+fix them (welcomed, but it will take some time).
+
 ### Development constraints
 
 **To readers of walkthrough: if you are not developers improving, enhancing,
