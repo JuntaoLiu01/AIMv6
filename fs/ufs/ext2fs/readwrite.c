@@ -17,7 +17,7 @@ ext2fs_read(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 	struct buf *bp = NULL;
 	struct m_ext2fs *fs = VTOI(vp)->superblock;
 	off_t fsb;
-	size_t len = 0, b_off;
+	size_t len = 0, b_off, bytesinfile;
 	int i;
 	int err;
 
@@ -31,12 +31,15 @@ ext2fs_read(struct vnode *vp, struct uio *uio, int ioflags, struct ucred *cred)
 	b_off = lblkoff(fs, uio->offset);
 
 	while (uio->resid > 0) {
+		bytesinfile = ext2fs_getsize(VTOI(vp)) - uio->offset;
+		if (bytesinfile <= 0)
+			break;
 		err = bread(vp, fsb, fs->bsize, &bp);
 		if (err) {
 			brelse(bp);
 			return err;
 		}
-		len = min2(uio->resid, fs->bsize - b_off);
+		len = min3(uio->resid, fs->bsize - b_off, bytesinfile);
 		err = uiomove(bp->data + b_off, len, uio);
 		if (err) {
 			brelse(bp);

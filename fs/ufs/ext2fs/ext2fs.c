@@ -47,6 +47,7 @@ struct vops ext2fs_vops = {
 	.bmap = ext2fs_bmap,
 	.link = ext2fs_link,
 	.remove = ext2fs_remove,
+	.access = NOP,	/* TODO */
 };
 
 /*
@@ -66,6 +67,7 @@ struct vops ext2fs_specvops = {
 	.bmap = NOTSUP,
 	.link = NOTSUP,
 	.remove = NOTSUP,
+	.access = NOP,	/* TODO */
 };
 
 int

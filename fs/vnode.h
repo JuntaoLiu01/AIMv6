@@ -78,8 +78,6 @@ struct vops {
 	 * read:
 	 * Read from a vnode as specified by the uio structure.
 	 * Assumes that the vnode is locked.
-	 * Returns an error if reading beyond the vnode (if it does have
-	 * a size).
 	 */
 	int (*read)(struct vnode *, struct uio *, int, struct ucred *);
 	/*
@@ -155,6 +153,15 @@ struct vops {
 	 */
 	int (*remove)(struct vnode *, char *, struct vnode *, struct ucred *,
 	    struct proc *);
+	/*
+	 * access:
+	 * Check whether user credential @cred and process @p can indeed
+	 * access file vnode @vp with required access permissions @acc.
+	 * TODO: feel free to change this interface.
+	 * TODO: insert VOP_ACCESS() calls into necessary positions in file
+	 * system framework, and maybe in system calls (which are NYI).
+	 */
+	int (*access)(struct vnode *, int, struct ucred *, struct proc *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -181,6 +188,8 @@ struct vops {
 	((dvp)->ops->link((dvp), (name), (vp), (cred), (p)))
 #define VOP_REMOVE(dvp, name, vp, cred, p) \
 	((dvp)->ops->remove((dvp), (name), (vp), (cred), (p)))
+#define VOP_ACCESS(vp, acc, cred, p) \
+	((vp)->ops->access((vp), (acc), (cred), (p)))
 /* We do not need this because currently all operations are sync. */
 #define VOP_FSYNC(vp, cred, p)
 
