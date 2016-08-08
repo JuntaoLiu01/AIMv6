@@ -50,9 +50,8 @@ ssize_t sys_read(struct trapframe *tf, int *errno, int fd, void *buf,
 	}
 
 	vlock(file->vnode);
-	len = count;	/* TODO limit @len by file size */
-	err = vn_read(file->vnode, file->offset, len, buf, file->ioflags,
-	    UIO_USER, current_proc, NULL, NOCRED); /* TODO REPLACE */
+	err = vn_read(file->vnode, file->offset, count, buf, file->ioflags,
+	    UIO_USER, current_proc, NULL, NOCRED, &len); /* TODO REPLACE */
 	if (err) {
 		*errno = -err;
 		vunlock(file->vnode);

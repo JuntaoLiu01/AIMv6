@@ -66,7 +66,7 @@ __load_elf_hdrs(struct vnode *vnode, struct elfhdr *eh, struct elf_phdr **pharr,
 	szsh = (word_len == 64) ? sizeof(sh64) : sizeof(sh32);
 
 	err = vn_read(vnode, 0, szeh, tmpeh, 0, UIO_KERNEL, current_proc, NULL,
-	    NOCRED);	/* TODO REPLACE */
+	    NOCRED, NULL);	/* TODO REPLACE */
 	if (err)
 		return err;
 	if (word_len == 64)
@@ -78,7 +78,7 @@ __load_elf_hdrs(struct vnode *vnode, struct elfhdr *eh, struct elf_phdr **pharr,
 	off = eh->phoff;
 	for (i = 0; i < eh->phnum; ++i) {
 		err = vn_read(vnode, off, szph, tmpph, 0, UIO_KERNEL,
-		    current_proc, NULL, NOCRED);	/* TODO REPLACE */
+		    current_proc, NULL, NOCRED, NULL);	/* TODO REPLACE */
 		if (err)
 			goto rollback_pharray;
 		if (word_len == 64)
@@ -92,7 +92,7 @@ __load_elf_hdrs(struct vnode *vnode, struct elfhdr *eh, struct elf_phdr **pharr,
 	off = eh->shoff;
 	for (i = 0; i < eh->shnum; ++i) {
 		err = vn_read(vnode, off, szsh, tmpsh, 0, UIO_KERNEL,
-		    current_proc, NULL, NOCRED);	/* TODO REPLACE */
+		    current_proc, NULL, NOCRED, NULL);	/* TODO REPLACE */
 		if (err)
 			goto rollback_sharray;
 		if (word_len == 64)
@@ -125,7 +125,7 @@ load_elf_hdrs(struct vnode *vnode, struct elfhdr *eh, struct elf_phdr **pharr,
 	/* TODO: check permissions */
 
 	err = vn_read(vnode, 0, EI_NIDENT, ident, 0, UIO_KERNEL, current_proc,
-	    NULL, NOCRED);	/* TODO REPLACE */
+	    NULL, NOCRED, NULL);	/* TODO REPLACE */
 	if (err)
 		return err;
 
@@ -177,7 +177,7 @@ __load_elf_seg(struct vnode *vnode, struct elf_phdr *ph, struct mm *mm)
 		return err;
 
 	err = vn_read(vnode, ph->offset, ph->filesz, start, 0, UIO_USER,
-	    current_proc, mm, NOCRED);	/* TODO REPLACE */
+	    current_proc, mm, NOCRED, NULL);	/* TODO REPLACE */
 	return err;
 }
 
