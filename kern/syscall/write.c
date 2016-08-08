@@ -50,7 +50,7 @@ ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
 	}
 
 	vlock(file->vnode);
-	err = vn_write(file->vnode, file->offset, len, buf, file->ioflags,
+	err = vn_write(file->vnode, file->offset, count, buf, file->ioflags,
 	    UIO_USER, current_proc, NULL, NOCRED, &len); /* TODO REPLACE */
 	if (err) {
 		*errno = -err;
