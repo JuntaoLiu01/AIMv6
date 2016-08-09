@@ -3,6 +3,7 @@
 #include <fs/mount.h>
 #include <fs/bio.h>
 #include <fs/vfs.h>
+#include <fs/uio.h>
 #include <fs/namei.h>
 #include <fs/ufs/inode.h>
 #include <fs/ufs/ext2fs/dinode.h>
@@ -13,6 +14,7 @@
 #include <libc/string.h>
 #include <errno.h>
 #include <ucred.h>
+#include <dirent.h>
 
 /*
  * TODO:
@@ -238,5 +240,56 @@ remove:
 	brelse(bp);
 	ip->flags |= IN_CHANGE | IN_UPDATE;
 	return err;
+}
+
+/*
+ * Assumes that uio->offset is always at the start of an entry.
+ */
+int
+ext2fs_readdir(struct vnode *dvp, struct uio *uio, struct ucred *cred,
+    bool *eofflag)
+{
+	struct ext2fs_direct dir, dir_disk;
+	struct dirent dirent;
+	size_t offset = uio->offset, done;
+	bool read = false;
+	int err;
+	*eofflag = false;
+
+	for (;;) {
+		/* Read one entry */
+		err = vn_read(dvp, offset, sizeof(dir_disk), &dir_disk, 0,
+		    UIO_KERNEL, uio->proc, NULL, cred, &done);
+		if (err)
+			return err;
+		if (done == 0) {
+			/* EOF */
+			*eofflag = true;
+			break;
+		}
+		e2fs_load_direct(&dir_disk, &dir);
+		/* Convert ext2fs entry @dir to standard format @dirent */
+		memset(&dirent, 0, sizeof(dirent));
+		dirent.d_ino = dir.ino;
+		dirent.d_off = offset + dir.reclen;
+		dirent.d_reclen = DIRENT_RECSIZE(dir.namelen);
+		dirent.d_type = E2DT_TO_E2IF(dir.type);
+		memcpy(dirent.d_name, dir.name, dir.namelen);
+		/* Check if @uio is ready to receive @dirent */
+		if (uio->resid < dirent.d_reclen)
+			break;
+		err = uiomove(&dirent, dirent.d_reclen, uio);
+		if (err)
+			return err;
+		read = true;
+		offset += dir.reclen;
+	}
+
+	if (!read) {
+		assert(done != 0);
+		return -EINVAL;
+	} else {
+		return 0;
+	}
 }
 

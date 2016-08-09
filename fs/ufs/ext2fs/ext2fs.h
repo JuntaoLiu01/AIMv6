@@ -281,6 +281,7 @@ int ext2fs_remove(struct vnode *, char *, struct vnode *, struct ucred *,
     struct proc *);
 int ext2fs_mkdir(struct vnode *, char *, struct vattr *, struct vnode **,
     struct ucred *, struct proc *);
+int ext2fs_readdir(struct vnode *, struct uio *, struct ucred *, bool *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);

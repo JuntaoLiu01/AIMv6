@@ -168,6 +168,12 @@ struct vops {
 	 */
 	int (*mkdir)(struct vnode *, char *, struct vattr *, struct vnode **,
 	    struct ucred *, struct proc *);
+	/*
+	 * readdir:
+	 * Read directory content and convert to standard struct dirent format
+	 * (getdents(2)).
+	 */
+	int (*readdir)(struct vnode *, struct uio *, struct ucred *, bool *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -199,6 +205,8 @@ struct vops {
 /* We do not need this because currently all operations are sync. */
 #define VOP_MKDIR(dvp, name, va, vpp, cred, p) \
 	((dvp)->ops->mkdir((dvp), (name), (va), (vpp), (cred), (p)))
+#define VOP_READDIR(dvp, uio, cred, eofflag) \
+	((dvp)->ops->readdir((dvp), (uio), (cred), (eofflag)))
 #define VOP_FSYNC(vp, cred, p)
 
 /* ioflags */

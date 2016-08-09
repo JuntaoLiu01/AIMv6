@@ -49,6 +49,7 @@ struct vops ext2fs_vops = {
 	.remove = ext2fs_remove,
 	.access = NOP,	/* TODO */
 	.mkdir = ext2fs_mkdir,
+	.readdir = ext2fs_readdir,
 };
 
 /*
@@ -70,6 +71,7 @@ struct vops ext2fs_specvops = {
 	.remove = NOTSUP,
 	.access = NOP,	/* TODO */
 	.mkdir = NOTSUP,
+	.readdir = NOTSUP,
 };
 
 int

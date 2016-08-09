@@ -108,6 +108,15 @@ static inline uint8_t E2IF_TO_E2DT(uint16_t type)
 	return tbl[IFTODT(type)];
 }
 
+static inline uint8_t E2DT_TO_E2IF(uint8_t dtype)
+{
+	static uint8_t tbl[] = {
+		DT_UNKNOWN, DT_REG, DT_DIR, DT_CHR,
+		DT_BLK, DT_FIFO, DT_SOCK, DT_LNK,
+	};
+	return tbl[dtype];
+}
+
 /*
  * The EXT2FS_DIRSIZ macro gives the minimum record length which will hold
  * the directory entryfor a name len "len" (without the terminating null byte).
