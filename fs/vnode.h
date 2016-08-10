@@ -182,6 +182,18 @@ struct vops {
 	 */
 	int (*rmdir)(struct vnode *, char *, struct vnode *, struct ucred *,
 	    struct proc *);
+	/*
+	 * getattr:
+	 * Get file attribute.
+	 */
+	int (*getattr)(struct vnode *, struct vattr *, struct ucred *,
+	    struct proc *);
+	/*
+	 * setattr:
+	 * Set file attribute.
+	 */
+	int (*setattr)(struct vnode *, struct vattr *, struct ucred *,
+	    struct proc *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -216,6 +228,10 @@ struct vops {
 	((dvp)->ops->readdir((dvp), (uio), (cred), (eofflag)))
 #define VOP_RMDIR(dvp, name, vp, cred, p) \
 	((dvp)->ops->rmdir((dvp), (name), (vp), (cred), (p)))
+#define VOP_GETATTR(vp, va, cred, p) \
+	((vp)->ops->getattr((vp), (va), (cred), (p)))
+#define VOP_SETATTR(vp, va, cred, p) \
+	((vp)->ops->setattr((vp), (va), (cred), (p)))
 /* We do not need this because currently all operations are sync. */
 #define VOP_FSYNC(vp, cred, p)
 
