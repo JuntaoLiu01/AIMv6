@@ -329,8 +329,6 @@ operations set in the `spec_vops` record, where we can found the concrete
 implementation of `open` and `close` operations at `spec_open` and
 `spec_close`.
 
-Some file systems including ext2 may
-
 #### Hardware drivers (Part 1, `open` and `close`)
 
 TODO:
