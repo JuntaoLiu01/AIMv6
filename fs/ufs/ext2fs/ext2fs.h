@@ -282,6 +282,8 @@ int ext2fs_remove(struct vnode *, char *, struct vnode *, struct ucred *,
 int ext2fs_mkdir(struct vnode *, char *, struct vattr *, struct vnode **,
     struct ucred *, struct proc *);
 int ext2fs_readdir(struct vnode *, struct uio *, struct ucred *, bool *);
+int ext2fs_rmdir(struct vnode *, char *, struct vnode *, struct ucred *,
+    struct proc *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);
@@ -301,6 +303,7 @@ int ext2fs_lblkfree(struct inode *, off_t, struct ucred *);
 int ext2fs_truncate(struct inode *, size_t, struct ucred *);
 int ext2fs_direnter(struct inode *, struct vnode *, char *, struct ucred *);
 int ext2fs_dirremove(struct vnode *, char *, struct ucred *);
+bool ext2fs_dirempty(struct inode *, ufsino_t, struct ucred *, struct proc *);
 
 #endif
 

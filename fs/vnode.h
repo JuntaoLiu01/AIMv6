@@ -174,6 +174,14 @@ struct vops {
 	 * (getdents(2)).
 	 */
 	int (*readdir)(struct vnode *, struct uio *, struct ucred *, bool *);
+	/*
+	 * rmdir:
+	 * Remove a directory.
+	 * The directory counterpart of remove().  Ensures that only empty
+	 * directories can be removed.
+	 */
+	int (*rmdir)(struct vnode *, char *, struct vnode *, struct ucred *,
+	    struct proc *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -202,11 +210,13 @@ struct vops {
 	((dvp)->ops->remove((dvp), (name), (vp), (cred), (p)))
 #define VOP_ACCESS(vp, acc, cred, p) \
 	((vp)->ops->access((vp), (acc), (cred), (p)))
-/* We do not need this because currently all operations are sync. */
 #define VOP_MKDIR(dvp, name, va, vpp, cred, p) \
 	((dvp)->ops->mkdir((dvp), (name), (va), (vpp), (cred), (p)))
 #define VOP_READDIR(dvp, uio, cred, eofflag) \
 	((dvp)->ops->readdir((dvp), (uio), (cred), (eofflag)))
+#define VOP_RMDIR(dvp, name, vp, cred, p) \
+	((dvp)->ops->rmdir((dvp), (name), (vp), (cred), (p)))
+/* We do not need this because currently all operations are sync. */
 #define VOP_FSYNC(vp, cred, p)
 
 /* ioflags */

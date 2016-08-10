@@ -293,3 +293,39 @@ ext2fs_readdir(struct vnode *dvp, struct uio *uio, struct ucred *cred,
 	}
 }
 
+bool
+ext2fs_dirempty(struct inode *ip, ufsino_t parentino, struct ucred *cred,
+    struct proc *p)
+{
+	struct ext2fs_direct dir, dir_disk;
+	int err;
+	off_t off;
+	size_t done, namelen;
+
+	for (off = 0; off < ext2fs_getsize(ip); off += dir.reclen) {
+		err = vn_read(ITOV(ip), off, sizeof(dir_disk), &dir_disk, 0,
+		    UIO_KERNEL, p, NULL, cred, &done);
+		if (err || done == 0)
+			return false;
+		e2fs_load_direct(&dir_disk, &dir);
+		if (dir.reclen == 0)
+			/* the directory is likely corrupted */
+			return false;
+		if (dir.ino == 0)
+			/* free entry */
+			continue;
+		namelen = dir.namelen;
+		/* accept only "." and ".." */
+		if (namelen > 2)
+			return false;
+		if (dir.name[0] != '.')
+			return false;
+		if (namelen == 1)
+			continue;
+		if (dir.name[1] == '.' && dir.ino == parentino)
+			continue;
+		return false;
+	}
+	return true;
+}
+

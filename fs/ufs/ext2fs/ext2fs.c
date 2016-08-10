@@ -50,6 +50,7 @@ struct vops ext2fs_vops = {
 	.access = NOP,	/* TODO */
 	.mkdir = ext2fs_mkdir,
 	.readdir = ext2fs_readdir,
+	.rmdir = ext2fs_rmdir,
 };
 
 /*
@@ -72,6 +73,7 @@ struct vops ext2fs_specvops = {
 	.access = NOP,	/* TODO */
 	.mkdir = NOTSUP,
 	.readdir = NOTSUP,
+	.rmdir = NOTSUP,
 };
 
 int

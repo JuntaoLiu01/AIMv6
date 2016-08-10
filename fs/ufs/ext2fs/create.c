@@ -195,11 +195,50 @@ ext2fs_mkdir(struct vnode *dvp, char *name, struct vattr *va,
 
 rollback_dp:
 	EXT2_DINODE(dp)->nlink--;
-	EXT2_DINODE(dp)->flags |= IN_CHANGE;
+	dp->flags |= IN_CHANGE;
 rollback_inode:
 	EXT2_DINODE(ip)->nlink = 0;
-	EXT2_DINODE(ip)->flags |= IN_CHANGE;	/* trigger update */
+	ip->flags |= IN_CHANGE;	/* trigger update */
 	tvp->type = VNON;
 	vput(tvp);
 	return err;
 }
+
+int
+ext2fs_rmdir(struct vnode *dvp, char *name, struct vnode *vp,
+    struct ucred *cred, struct proc *p)
+{
+	struct inode *ip = VTOI(vp);
+	struct inode *dp = VTOI(dvp);
+	int err;
+
+	if (ip == dp)
+		/* rmdir(".") ??? */
+		return -EINVAL;
+
+	if (EXT2_DINODE(ip)->nlink != 2)
+		/* Some other directory must be there */
+		return -ENOTEMPTY;
+	if (!ext2fs_dirempty(ip, dp->ino, cred, p))
+		/* We saw some other entries */
+		return -ENOTEMPTY;
+
+	err = ext2fs_dirremove(dvp, name, cred);
+	if (err)
+		return err;
+	EXT2_DINODE(dp)->nlink--;
+	dp->flags |= IN_CHANGE;
+
+	/*
+	 * In most cases directory nlink should be 2 because we normally
+	 * don't allow hard linking directories.  If nlink is more than
+	 * 2 (because it is hard-linked on systems such as OS X), we still
+	 * decrease nlink by 2, leave the mess to those who allowed
+	 * directory hard linking, and pray.  (This is rare)
+	 */
+	EXT2_DINODE(ip)->nlink -= 2;
+	err = ext2fs_truncate(ip, 0, cred);
+
+	return err;
+}
+
