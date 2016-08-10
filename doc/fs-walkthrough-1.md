@@ -26,7 +26,7 @@ You can build a cscope database by running
 find . -name '*.c' -or -name '*.h' -or -name '*.S' >cscope.files && cscope -bquk
 ```
 
-### Before bringing up file system
+### Prelude: Before bringing up file system
 
 Because disk operations are slow compared to memory loads/stores, we usually want
 to let the CPU do other stuff while the disk controller performs I/O.  Doing
@@ -319,11 +319,19 @@ of three steps:
 3. Compute the auxilliary parameters of the file system (e.g. file system
   block size).
 
-### Vnode operations (Part 1)
+### Vnode operations (Part 1, `open` and `close`)
 
-TODO: introduce relevant operations: `open`, `close`.
+Preparing and releasing a device involves calling the `open` and `close`
+operation, respectively, of a corresponding special vnode.
 
-#### Hardware drivers (Part 1)
+In AIMv6, before mounting the ext2 file system, special vnodes have their
+operations set in the `spec_vops` record, where we can found the concrete
+implementation of `open` and `close` operations at `spec_open` and
+`spec_close`.
+
+Some file systems including ext2 may
+
+#### Hardware drivers (Part 1, `open` and `close`)
 
 TODO:
 
@@ -339,11 +347,11 @@ TODO:
 * explain `struct buf`.
 * explain `bgetempty`, and `brelse` on standalone buf's.
 
-### Vnode operations (Part 2)
+### Vnode operations (Part 2, `strategy`)
 
 TODO: introduce operation `strategy`.
 
-#### Hardware drivers (Part 2)
+#### Hardware drivers (Part 2, `strategy`)
 
 TODO:
 
@@ -351,21 +359,21 @@ TODO:
 * explain `strategy` in MSIM disk driver or ATA disk driver.
 * explain how interrupts interact with `struct buf`
 
-##### Partition detection
+### End-to-end: Partition detection
 
 TODO:
 
 * example of `strategy`: end-to-end walkthrough of partition detection in
   `VOP_OPEN`.
 
-### `bread` (Part 1)
+### `bread` (Part 1, on devices)
 
 TODO:
 
 * explain `bget` and `bread` on block devices, and also `brelse` on associated
   buf's.
 
-#### Superblock initialization
+### End-to-end: Superblock initialization
 
 TODO:
 
