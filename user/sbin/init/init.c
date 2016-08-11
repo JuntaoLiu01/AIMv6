@@ -29,15 +29,9 @@ int main(int argc, char *argv[], char *envp[])
 	/*
 	 * Replace it with your own job for now.
 	 */
-	printf("%s\n", "INIT: now init");
-	pid = fork();
-	if (pid == 0) {
-		printf("PID %d open fd %d\n", getpid(),
-		    open("/etc/hostname", O_RDONLY, 0));
-	} else {
-		printf("PID %d open fd %d\n", getpid(),
-		    open("/sbin", O_RDONLY, 0));
-	}
+	printf("INIT: now init\n");
+	printf("opening /etc/rc.conf for writing: %d\n",
+	    open("/etc/rc.conf", O_WRONLY | O_CREAT, 0));
 	for (;;) {
 		/* echo, since terminal echoing is NYI */
 		if (read(STDIN_FILENO, &c, 1) != 1)
