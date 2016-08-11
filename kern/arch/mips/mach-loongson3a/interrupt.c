@@ -104,7 +104,10 @@ static int __ht_interrupt(struct trapframe *regs)
 	for (int i = 15; i >= 0; --i) {
 		if (irqmask & (1 << i)) {
 			kpdebug("found IRQ %d\n", i);
-			__io_interrupt_handler[i](i);
+			if (__io_interrupt_handler[i] != NULL)
+				__io_interrupt_handler[i](i);
+			else
+				kprintf("KERN: discarding IRQ %d\n", i);
 			/* Acknowledge interrupt on 8259 side */
 			i8259_eoi(i);
 		}

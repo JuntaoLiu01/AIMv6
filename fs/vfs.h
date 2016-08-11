@@ -3,8 +3,8 @@
 #define _FS_VFS_H
 
 #include <sys/types.h>
+#include <fs/mount.h>
 
-struct mount;	/* fs/mount.h */
 struct vnode;	/* fs/vnode.h */
 struct ucred;	/* ucred.h */
 struct proc;	/* proc.h */

@@ -22,10 +22,12 @@
 #include <percpu.h>
 #include <fs/vnode.h>
 #include <fs/uio.h>
+#include <fs/vfs.h>
 #include <ucred.h>
 #include <syscall.h>
 #include <libc/syscalls.h>
 #include <errno.h>
+#include <fcntl.h>
 
 ssize_t sys_read(struct trapframe *tf, int *errno, int fd, void *buf,
     size_t count)
@@ -34,18 +36,25 @@ ssize_t sys_read(struct trapframe *tf, int *errno, int fd, void *buf,
 	int err;
 	size_t len;
 
-	if (file->type != FVNODE) {
-		/* pipe NYI */
-		*errno = -ENOTSUP;
+	if (file->type == FNON) {
+		*errno = EBADF;
 		return -1;
 	}
-
-	if (file->vnode == NULL) {
-		*errno = EBADF;
+	if (file->type != FVNODE) {
+		/* pipe NYI */
+		*errno = ENOTSUP;
 		return -1;
 	}
 	if (file->vnode->type == VDIR) {
 		*errno = EISDIR;
+		return -1;
+	}
+	if (!(file->openflags & FREAD)) {
+		*errno = EBADF;
+		return -1;
+	}
+	if (!is_user(buf)) {
+		*errno = EFAULT;
 		return -1;
 	}
 
@@ -55,10 +64,14 @@ ssize_t sys_read(struct trapframe *tf, int *errno, int fd, void *buf,
 	if (err) {
 		*errno = -err;
 		vunlock(file->vnode);
+		/* TODO REPLACE */
+		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 		return -1;
 	}
-	file->offset += 0;	/* TODO compute new offset */
+	file->offset += len;
 	vunlock(file->vnode);
+	/* TODO REPLACE */
+	VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 	*errno = 0;
 	return len;
 }

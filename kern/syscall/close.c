@@ -29,6 +29,7 @@
 #include <ucred.h>
 #include <errno.h>
 #include <fs/vnode.h>
+#include <fs/vfs.h>
 
 int
 sys_close(struct trapframe *tf, int *errno, int fd)
@@ -36,26 +37,31 @@ sys_close(struct trapframe *tf, int *errno, int fd)
 	struct vnode *vnode;
 	unsigned long flags;
 	int err;
+	struct file *file = &current_proc->fd[fd];
 
-	switch (current_proc->fd[fd].type) {
+	switch (file->type) {
 	case FNON:
 		*errno = EBADF;
 		return -1;
 	case FVNODE:
 		spin_lock_irq_save(&current_proc->fdlock, flags);
-		vnode = current_proc->fd[fd].vnode;
+		vnode = file->vnode;
 		vlock(vnode);
-		err = VOP_CLOSE(vnode, current_proc->fd[fd].openflags, NOCRED,
-		    current_proc);	/* TODO REPLACE */
+		/* TODO REPLACE */
+		err = VOP_CLOSE(vnode, file->openflags, NOCRED, current_proc);
 		if (err) {
 			vunlock(vnode);
 			spin_unlock_irq_restore(&current_proc->fdlock, flags);
 			*errno = -err;
 			return -1;
 		}
+
+		/* TODO REPLACE */
+		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 		vput(vnode);
-		current_proc->fd[fd].vnode = NULL;
-		current_proc->fd[fd].type = FNON;
+
+		file->vnode = NULL;
+		file->type = FNON;
 		*errno = 0;
 		spin_unlock_irq_restore(&current_proc->fdlock, flags);
 		return 0;

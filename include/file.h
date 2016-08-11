@@ -47,12 +47,13 @@ struct file {
 	int		openflags;
 };
 
-#define FINIT_VNODE(fd, vn) \
+#define FINIT_VNODE(fd, vn, off, iof, of) \
 	do { \
 		(fd)->type = FVNODE; \
 		(fd)->vnode = (vn); \
-		(fd)->offset = 0; \
-		(fd)->ioflags = 0; \
+		(fd)->offset = (off); \
+		(fd)->ioflags = (iof); \
+		(fd)->openflags = (of); \
 	} while (0)
 
 #if 0

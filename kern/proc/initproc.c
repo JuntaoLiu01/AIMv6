@@ -62,9 +62,9 @@ static void ttyinit(void)
 	nd.vp->flags |= VISTTY;
 
 	/* Set up initproc stdin, stdout, stderr */
-	FINIT_VNODE(&current_proc->fstdin, nd.vp);
-	FINIT_VNODE(&current_proc->fstdout, nd.vp);
-	FINIT_VNODE(&current_proc->fstderr, nd.vp);
+	FINIT_VNODE(&current_proc->fstdin, nd.vp, 0, 0, FREAD);
+	FINIT_VNODE(&current_proc->fstdout, nd.vp, 0, 0, FWRITE);
+	FINIT_VNODE(&current_proc->fstderr, nd.vp, 0, 0, FWRITE);
 	vref(current_proc->fstdin.vnode);
 	vref(current_proc->fstdout.vnode);
 	vref(current_proc->fstderr.vnode);
