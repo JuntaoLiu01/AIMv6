@@ -25,13 +25,24 @@ int main(int argc, char *argv[], char *envp[])
 {
 	char c;
 	pid_t pid;
+	int fd, fd2;
 
 	/*
 	 * Replace it with your own job for now.
 	 */
 	printf("INIT: now init\n");
-	printf("opening /etc/rc.conf for writing: %d\n",
-	    open("/etc/rc.conf", O_WRONLY | O_CREAT, 0));
+	fd = open("/etc/rc.conf", O_WRONLY | O_CREAT, 0);
+	printf("opening /etc/rc.conf for writing: %d\n", fd);
+	fd2 = open("/etc/fstab", O_WRONLY | O_CREAT, 0);
+	printf("opening /etc/fstab for writing: %d\n", fd2);
+	close(fd);
+	fd = open("/etc/mtab", O_WRONLY | O_CREAT, 0);
+	printf("opening /etc/mtab for writing: %d\n", fd);
+	close(fd2);
+	fd2 = open("/etc/rc.conf", O_RDONLY, 0);
+	printf("opening /etc/rc.conf for reading: %d\n", fd2);
+	close(fd2);
+	close(fd);
 	for (;;) {
 		/* echo, since terminal echoing is NYI */
 		if (read(STDIN_FILENO, &c, 1) != 1)

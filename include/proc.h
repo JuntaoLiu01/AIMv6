@@ -82,6 +82,7 @@ struct proc {
 		};
 		struct file fd[OPEN_MAX];	/* opened files */
 	};
+	lock_t		fdlock;		/* lock of file table */
 
 	/* TODO: POSIX process groups and sessions.  I'm not entirely sure
 	 * how they should look like. */

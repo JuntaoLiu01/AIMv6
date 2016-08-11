@@ -24,7 +24,8 @@ noinst_DATA = sched_yield.o \
 	      getpid.o \
 	      read.o \
 	      write.o \
-	      open.o
+	      open.o \
+	      close.o
 
 libsyscall_la_SOURCES = \
 	syscall.c

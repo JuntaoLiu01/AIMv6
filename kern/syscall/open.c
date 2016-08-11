@@ -23,6 +23,7 @@
 #include <syscall.h>
 #include <libc/syscalls.h>
 #include <libc/string.h>
+#include <aim/sync.h>
 #include <errno.h>
 #include <file.h>
 #include <limits.h>
@@ -43,17 +44,24 @@ sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags, int mode)
 	int openflags, ioflags;
 	struct nameidata nd;
 	struct vattr va;
+	unsigned long intr_flags;
+
+	spin_lock_irq_save(&current_proc->fdlock, intr_flags);
 
 	for (i = 0; i < OPEN_MAX; ++i) {
 		if (current_proc->fd[i].type == FNON)
 			goto found;
 	}
 	/* no idle descriptor found :( */
-	*errno = -ENFILE;
+	spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
+	*errno = ENFILE;
 	return -1;
 found:
-	if (strlcpy(path, ufilename, PATH_MAX) == PATH_MAX)
-		return -ENAMETOOLONG;
+	if (strlcpy(path, ufilename, PATH_MAX) == PATH_MAX) {
+		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
+		*errno = ENAMETOOLONG;
+		return -1;
+	}
 
 	NDINIT_EMPTY(&nd, NOCRED, current_proc);	/* TODO REPLACE */
 
@@ -71,14 +79,20 @@ found:
 		openflags |= FREAD | FWRITE;
 		break;
 	default:
+		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
 		*errno = EINVAL;
 		return -1;
 	}
 	if (flags & O_APPEND)
+		/*
+		 * We don't need to compute offset and store it because
+		 * vn_write already deal with IO_APPEND.
+		 */
 		ioflags |= IO_APPEND;
 
 	err = vn_open(path, openflags, mode, &nd);
 	if (err) {
+		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
 		*errno = -err;
 		return -1;
 	}
@@ -95,14 +109,18 @@ found:
 	/* Succeeded, put the vnode into file descriptor table */
 	current_proc->fd[i].type = FVNODE;
 	current_proc->fd[i].vnode = nd.vp;
+	current_proc->fd[i].openflags = openflags;
+	current_proc->fd[i].ioflags = ioflags;
 
 	VFS_SYNC(nd.vp->mount, nd.cred, nd.proc);
 
 	vunlock(nd.vp);
+	spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
 	*errno = 0;
 	return i;
 rollback_vp:
 	vput(nd.vp);
+	spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
 	*errno = -err;
 	return -1;
 }

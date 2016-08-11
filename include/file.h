@@ -44,6 +44,7 @@ struct file {
 	};
 	off_t		offset;
 	int		ioflags;
+	int		openflags;
 };
 
 #define FINIT_VNODE(fd, vn) \
