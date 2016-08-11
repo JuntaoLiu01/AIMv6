@@ -65,6 +65,9 @@ static void ttyinit(void)
 	FINIT_VNODE(&current_proc->fstdin, nd.vp);
 	FINIT_VNODE(&current_proc->fstdout, nd.vp);
 	FINIT_VNODE(&current_proc->fstderr, nd.vp);
+	vref(current_proc->fstdin.vnode);
+	vref(current_proc->fstdout.vnode);
+	vref(current_proc->fstderr.vnode);
 
 	/* Set up session data */
 	ttydevno = nd.vp->specinfo->devno;
@@ -74,7 +77,8 @@ static void ttyinit(void)
 	current_proc->ttyvnode = nd.vp;
 	current_proc->tty = tty;
 
-	vunlock(nd.vp);
+	vput(nd.vp);
+	assert(nd.vp->refs == 3);
 }
 
 void initproc_entry(void)

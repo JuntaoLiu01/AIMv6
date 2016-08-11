@@ -29,8 +29,10 @@ SRCS = \
 	memcpy.c \
 	memmove.c \
 	memset.c \
+	printf.c \
 	snprintf.c \
 	strcmp.c \
+	strlcat.c \
 	strlcpy.c \
 	strlen.c \
 	strnlen.c \

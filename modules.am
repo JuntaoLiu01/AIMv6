@@ -27,7 +27,8 @@ MODULES += $(top_builddir)/kern/syscall/fork.o \
 	   $(top_builddir)/kern/syscall/execve.o \
 	   $(top_builddir)/kern/syscall/getpid.o \
 	   $(top_builddir)/kern/syscall/read.o \
-	   $(top_builddir)/kern/syscall/write.o
+	   $(top_builddir)/kern/syscall/write.o \
+	   $(top_builddir)/kern/syscall/open.o
 
 # For each module capable for compiling into the kernel,
 # add its entry here.

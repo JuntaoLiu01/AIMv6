@@ -119,6 +119,8 @@ struct proc *proc_new(struct namespace *ns)
 	memset(&(proc->name), 0, sizeof(proc->name));
 	proc->cwd = proc->rootd = NULL;
 	memset(&proc->fd, 0, sizeof(proc->fd));
+	for (int i = 0; i < OPEN_MAX; ++i)
+		proc->fd[i].type = FNON;
 
 	proc->tty = NULL;
 	proc->ttyvnode = NULL;

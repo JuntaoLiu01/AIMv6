@@ -66,6 +66,8 @@ struct vattr {
 	lsize_t		size;	/* file size in bytes */
 };
 
+#define VNOVAL	(-1)		/* do not change the attribute */
+
 struct vops {
 	/*
 	 * open:
@@ -258,6 +260,7 @@ void vput(struct vnode *);
 void vwakeup(struct vnode *);
 int vwaitforio(struct vnode *);
 int vinvalbuf(struct vnode *, struct ucred *, struct proc *);
+void vattr_null(struct vattr *);
 
 int vn_read(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
     struct proc *, struct mm *, struct ucred *, size_t *);

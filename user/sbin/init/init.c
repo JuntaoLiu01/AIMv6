@@ -16,8 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <libc/stdio.h>
 #include <libc/string.h>
 #include <libc/unistd.h>
+#include <libc/fcntl.h>
 
 int main(int argc, char *argv[], char *envp[])
 {
@@ -27,12 +29,14 @@ int main(int argc, char *argv[], char *envp[])
 	/*
 	 * Replace it with your own job for now.
 	 */
-	write(STDOUT_FILENO, "INIT: now init\n", 15);
+	printf("%s\n", "INIT: now init");
 	pid = fork();
 	if (pid == 0) {
-		getpid();
-		for (;;)
-			;
+		printf("PID %d open fd %d\n", getpid(),
+		    open("/etc/hostname", O_RDONLY, 0));
+	} else {
+		printf("PID %d open fd %d\n", getpid(),
+		    open("/sbin", O_RDONLY, 0));
 	}
 	for (;;) {
 		/* echo, since terminal echoing is NYI */

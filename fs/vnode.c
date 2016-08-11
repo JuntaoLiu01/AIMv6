@@ -391,3 +391,12 @@ bad:
 	return err;
 }
 
+/* Initialize an empty vattr for setattr() */
+void
+vattr_null(struct vattr *va)
+{
+	va->type = VNON;
+	va->mode = VNOVAL;
+	va->size = VNOVAL;
+}
+
