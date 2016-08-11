@@ -328,7 +328,7 @@ vn_write(struct vnode *vp, off_t offset, size_t len, void *buf, int ioflags,
 }
 
 int
-vn_open(char *path, int flags, int mode, struct nameidata *nd)
+vn_open(char *path, int flags, mode_t mode, struct nameidata *nd)
 {
 	struct vnode *vp;
 	struct vattr va;

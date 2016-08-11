@@ -70,6 +70,8 @@ typedef signed long soff_t;
 
 typedef int pid_t;
 
+typedef int uid_t, gid_t, mode_t;
+
 typedef void *uintptr_t;
 #define	NULL	0
 

@@ -37,7 +37,8 @@
 #include <fs/mount.h>
 
 int
-sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags, int mode)
+sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags,
+    mode_t mode)
 {
 	char path[PATH_MAX];
 	int i, err;	/* i is the file descriptor to be returned */

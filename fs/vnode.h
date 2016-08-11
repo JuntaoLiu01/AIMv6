@@ -62,7 +62,7 @@ struct vnode {
 
 struct vattr {
 	enum vtype	type;	/* vnode type */
-	int		mode;	/* file access mode and type */
+	mode_t		mode;	/* file access mode and type */
 	lsize_t		size;	/* file size in bytes */
 };
 
@@ -267,7 +267,7 @@ int vn_read(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
 int vn_write(struct vnode *, off_t, size_t, void *, int, enum uio_seg,
     struct proc *, struct mm *, struct ucred *, size_t *);
 /* the core function of open(2), open3(2), openat(2), creat(2), etc. */
-int vn_open(char *, int, int, struct nameidata *);
+int vn_open(char *, int, mode_t, struct nameidata *);
 
 extern dev_t rootdev;	/* initialized in mach_init() or arch_init() */
 extern struct vnode *rootvp;	/* root disk device vnode */

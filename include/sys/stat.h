@@ -37,6 +37,8 @@
 #ifndef _SYS_STAT_H
 #define _SYS_STAT_H
 
+#include <sys/types.h>
+
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
 #define	S_ISTXT	0001000			/* sticky bit */
@@ -61,5 +63,16 @@
 #define	ALLPERMS	(S_ISUID|S_ISGID|S_ISTXT|S_IRWXU|S_IRWXG|S_IRWXO)
 							/* 00666 */
 #define	DEFFILEMODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH)
+
+struct stat {
+	mode_t		st_mode;	/* inode protection mode */
+	dev_t		st_dev;		/* inode's device */
+	ino_t		st_ino;		/* inode's number */
+	unsigned int	st_nlink;	/* number of hard links */
+	uid_t		st_uid;		/* user ID of the file's owner */
+	gid_t		st_gid;		/* group ID of the file's group */
+	dev_t		st_rdev;	/* device type */
+	/* timestamps are ignored */
+};
 
 #endif
