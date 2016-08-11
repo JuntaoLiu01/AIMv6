@@ -62,8 +62,9 @@ static void ttyinit(void)
 	nd.vp->flags |= VISTTY;
 
 	/* Set up initproc stdin, stdout, stderr */
-	current_proc->fstdin.vnode = current_proc->fstdout.vnode =
-	    current_proc->fstderr.vnode = nd.vp;
+	FINIT_VNODE(&current_proc->fstdin, nd.vp);
+	FINIT_VNODE(&current_proc->fstdout, nd.vp);
+	FINIT_VNODE(&current_proc->fstderr, nd.vp);
 
 	/* Set up session data */
 	ttydevno = nd.vp->specinfo->devno;

@@ -34,6 +34,7 @@ ext2fs_getsize(struct inode *ip)
 
 /*
  * Update the on-disk inode structure.
+ * This routine should work without underlying vnode locked.
  */
 int
 ext2fs_update(struct inode *ip)
@@ -125,7 +126,7 @@ ext2fs_shrink(struct inode *ip, size_t len, struct ucred *cred)
 	 *
 	 * Also I didn't care about robustness here.
 	 */
-	for (; lbn < end_lbn; ++lbn) {
+	for (; lbn <= end_lbn; ++lbn) {
 		if ((err = ext2fs_lblkfree(ip, lbn, cred)) != 0)
 			return err;
 	}

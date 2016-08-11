@@ -158,7 +158,7 @@ write_entry:
 	newdir.ino = ip->ino;
 	newdir.reclen = freespace;
 	newdir.namelen = newnamelen;
-	newdir.type = E2IF_TO_E2DT(EXT2_DINODE(ip)->mode);
+	newdir.type = 0;	/* as required by Linux */
 	strlcpy(newdir.name, name, EXT2FS_MAXNAMLEN);
 
 	e2fs_save_direct(&newdir, bp->data + offset);

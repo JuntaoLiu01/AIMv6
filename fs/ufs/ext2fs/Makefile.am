@@ -22,6 +22,7 @@ noinst_DATA = ext2fs.o
 
 libext2fs_la_SOURCES = \
 		       alloc.c \
+		       attr.c \
 		       bio.c \
 		       bmap.c \
 		       create.c \

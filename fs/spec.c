@@ -327,6 +327,15 @@ struct vops spec_vops = {
 	.strategy = spec_strategy,
 	.lookup = NOTSUP,
 	.create = NOTSUP,
-	.bmap = NOTSUP
+	.bmap = NOTSUP,
+	.link = NOTSUP,
+	.remove = NOTSUP,
+	.access = NOP,
+	.mkdir = NOTSUP,
+	.readdir = NOTSUP,
+	.rmdir = NOTSUP,
+	.getattr = NOTSUP,
+	.setattr = NOTSUP,
+	.fsync = NOP,	/* currently spec ops are always sync */
 };
 

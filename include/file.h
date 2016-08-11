@@ -23,6 +23,7 @@
 #include <fs/vnode.h>
 
 enum ftype {
+	FNON,
 	FVNODE,
 	FSOCKET,
 	FPIPE,
@@ -44,6 +45,14 @@ struct file {
 	off_t		offset;
 	int		ioflags;
 };
+
+#define FINIT_VNODE(fd, vn) \
+	do { \
+		(fd)->type = FVNODE; \
+		(fd)->vnode = (vn); \
+		(fd)->offset = 0; \
+		(fd)->ioflags = 0; \
+	} while (0)
 
 #if 0
 

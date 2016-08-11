@@ -42,6 +42,7 @@
 #define	O_RDWR		0x0002		/* open for reading and writing */
 #define	O_ACCMODE	0x0003		/* mask for above modes */
 
+#define O_APPEND	0x0008		/* set append mode */
 #define	O_NOFOLLOW	0x0100		/* if path is a symlink, don't follow */
 #define	O_CREAT		0x0200		/* create if nonexistent */
 #define	O_TRUNC		0x0400		/* truncate to zero length */

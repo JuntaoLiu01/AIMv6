@@ -63,6 +63,7 @@ struct vnode {
 struct vattr {
 	enum vtype	type;	/* vnode type */
 	int		mode;	/* file access mode and type */
+	lsize_t		size;	/* file size in bytes */
 };
 
 struct vops {
@@ -194,6 +195,13 @@ struct vops {
 	 */
 	int (*setattr)(struct vnode *, struct vattr *, struct ucred *,
 	    struct proc *);
+	/*
+	 * fsync:
+	 * Sync file metadata or flush our dirty buffers or whatever
+	 * suitable operation.
+	 * Does *NOT* require the vnode to be locked.
+	 */
+	int (*fsync)(struct vnode *, struct ucred *, struct proc *);
 };
 
 #define VOP_OPEN(vp, mode, cred, p)	\
@@ -233,7 +241,8 @@ struct vops {
 #define VOP_SETATTR(vp, va, cred, p) \
 	((vp)->ops->setattr((vp), (va), (cred), (p)))
 /* We do not need this because currently all operations are sync. */
-#define VOP_FSYNC(vp, cred, p)
+#define VOP_FSYNC(vp, cred, p) \
+	((vp)->ops->fsync((vp), (cred), (p)))
 
 /* ioflags */
 #define IO_APPEND	0x02	/* Append to end of file when writing */

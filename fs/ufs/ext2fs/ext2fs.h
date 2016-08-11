@@ -284,6 +284,11 @@ int ext2fs_mkdir(struct vnode *, char *, struct vattr *, struct vnode **,
 int ext2fs_readdir(struct vnode *, struct uio *, struct ucred *, bool *);
 int ext2fs_rmdir(struct vnode *, char *, struct vnode *, struct ucred *,
     struct proc *);
+int ext2fs_getattr(struct vnode *, struct vattr *, struct ucred *,
+    struct proc *);
+int ext2fs_setattr(struct vnode *, struct vattr *, struct ucred *,
+    struct proc *);
+int ext2fs_fsync(struct vnode *, struct ucred *, struct proc *);
 
 /* internal operations */
 uint64_t ext2fs_getsize(struct inode *);

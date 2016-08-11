@@ -32,6 +32,24 @@ struct nameidata {
 	char		*pathbuf;	/* internal path buffer */
 };
 
+#define NDINIT(nd, ndpath, ndintent, ndflags, ndcred, ndproc) \
+	do { \
+		(nd)->path = (ndpath); \
+		(nd)->intent = (ndintent); \
+		(nd)->flags = (ndflags); \
+		(nd)->cred = (ndcred); \
+		(nd)->proc = (ndproc); \
+	} while (0)
+/* To provide a default nameidata for vn_open() */
+#define NDINIT_EMPTY(nd, ndcred, ndproc) \
+	do { \
+		(nd)->path = NULL; \
+		(nd)->intent = 0; \
+		(nd)->flags = 0; \
+		(nd)->cred = (ndcred); \
+		(nd)->proc = (ndproc); \
+	} while (0)
+
 int namei_putparent(struct nameidata *nd);
 int namei(struct nameidata *);
 void namei_cleanup(struct nameidata *);	/* each namei() should end with this */

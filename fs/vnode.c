@@ -187,6 +187,16 @@ void
 vput(struct vnode *vp)
 {
 	kpdebug("vput %p refs %d\n", vp, vp->refs);
+	/*
+	 * Since we are not periodically syncing all vnodes like other Unixes
+	 * do, and VFS_SYNC() is not iterating over all vnodes to sync the
+	 * metadata into storage, the metadata for root vnode won't be stored
+	 * back into storage because its ref count is always above 0.
+	 *
+	 * So here's a little hack.
+	 */
+	if (vp == rootvnode)
+		VOP_FSYNC(rootvnode, NOCRED, current_proc);
 	atomic_dec(&(vp->refs));
 	if (vp->refs > 0) {
 		vunlock(vp);
@@ -201,6 +211,9 @@ int
 vrele(struct vnode *vp)
 {
 	kpdebug("vrele %p refs %d\n", vp, vp->refs);
+	/* the same hack (see vput()) */
+	if (vp == rootvnode)
+		VOP_FSYNC(rootvnode, NOCRED, current_proc);
 	atomic_dec(&(vp->refs));
 	if (vp->refs > 0)
 		return 0;

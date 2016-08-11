@@ -51,8 +51,9 @@ struct vops ext2fs_vops = {
 	.mkdir = ext2fs_mkdir,
 	.readdir = ext2fs_readdir,
 	.rmdir = ext2fs_rmdir,
-	.getattr = NOTSUP,	/* TODO */
-	.setattr = NOTSUP,	/* TODO */
+	.getattr = ext2fs_getattr,
+	.setattr = ext2fs_setattr,
+	.fsync = ext2fs_fsync,
 };
 
 /*
@@ -61,7 +62,7 @@ struct vops ext2fs_vops = {
  */
 struct vops ext2fs_specvops = {
 	.open = spec_open,
-	.close = spec_close,	/* shall we clean inode etc? */
+	.close = spec_close,
 	.read = spec_read,
 	.write = spec_write,
 	.inactive = ext2fs_inactive,
@@ -76,8 +77,9 @@ struct vops ext2fs_specvops = {
 	.mkdir = NOTSUP,
 	.readdir = NOTSUP,
 	.rmdir = NOTSUP,
-	.getattr = NOTSUP,	/* TODO */
-	.setattr = NOTSUP,	/* TODO */
+	.getattr = ext2fs_getattr,
+	.setattr = ext2fs_setattr,
+	.fsync = ext2fs_fsync,
 };
 
 int
