@@ -26,20 +26,10 @@ ext2fs_inactive(struct vnode *vp, struct proc *p)
 			err = ext2fs_truncate(ip, 0, NOCRED); /* real NOCRED */
 		/*
 		 * TODO: set this to *real* time.
-		 * Currently fsck(8) complains about "corrupted orphan linked
-		 * list" if dtime is unreasonable, but we can do nothing about
-		 * this since
-		 * (1) Not all platforms have a Real Time Clock (RTC), and
-		 *     we don't want to read time from Internet.
-		 * (2) Even if we do have a RTC, sometimes it's not in
-		 *     Unix Epoch format, and converting between Gregorian
-		 *     calendar and Unix Epoch is just troublesome.
-		 * So you would probably have to endure or get used to the pain.
-		 * Luckily only fsck(8) is complaining about such stuff; for
-		 * other applications such as GNOME Files or bash(1), everything
-		 * is fine.
+		 * We need to keep deletion time consistent to other times, so
+		 * here is the trick.
 		 */
-		EXT2_DINODE(ip)->dtime = 1;
+		dp->dtime = 1 + max3(dp->atime, dp->ctime, dp->mtime);
 		ip->flags |= IN_CHANGE | IN_UPDATE;
 		ext2fs_inode_free(ip, ip->ino, EXT2_DINODE(ip)->mode);
 	}

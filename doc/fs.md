@@ -17,16 +17,6 @@ counterparts in OpenBSD in order to simplify implementation.
 
 Currently, we only support ext2 rev. 0.  We may add FAT support in future.
 
-Also, note that Linux "automagically" (sic) upgrade rev. 0 ext2 file systems
-to rev. 1, and introduce "extended attributes" feature without user permission,
-messing the file system up.  However, most of the time there's no problem,
-except that `fsck(8)` may print out unpleasant messages.
-
-Because some boards (namely Zynq) does not have built-in Real Time Clock
-(RTC), during file deletion I merely set the deletion time field to 1, a
-non-zero value.  This may lead to frustrating `fsck(8)` messages talking
-about some inodes belonging to a "corrupted orphan linked list".
-
 Virtual File System (VFS) is ported from OpenBSD to AIMv6 in order to enable
 the system to work across multiple file systems smoothly.  We largely
 simplified the implementation though.  Even so, the file system framework in
