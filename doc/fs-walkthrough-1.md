@@ -297,13 +297,13 @@ Normally, a `struct mount` should keep
 Currently in AIMv6, there are three file system operations, which are all
 described in `struct vfsops`:
 
-* `root` - Get vnode of the root directory in the file system.
+* `root()` - Get vnode of the root directory in the file system.
   * On UFS-like systems including FFS and ext2, `root` returns the vnode for
     directory `"/"`.
-* `vget` - Given a `struct mount` and a file identifier, return a vnode
+* `vget()` - Given a `struct mount` and a file identifier, return a vnode
   representing the file, with its metadata (including type, attributes,
   size, etc.) loaded.
-* `sync` - Flush the in-memory superblock back to disk.
+* `sync()` - Flush the in-memory superblock back to disk.
   * On BSDs, if the system delays some write requests, `sync` flushes them
     all onto disk.  AIMv6 does not do this since it does not support either
     delayed writes or asynchronous writes; every write request is executed
@@ -311,30 +311,87 @@ described in `struct vfsops`:
     to finish.
 
 Mounting a file system merely stands for loading the superblock into memory.
-The bulk of mounting a file system is written in `ext2fs_mountfs` and consists
+The bulk of mounting a file system is written in `ext2fs_mountfs()` and consists
 of three steps:
 
-1. Prepare the partition device with a call to `VOP_OPEN`.
-2. Read the superblock on the disk into memory using `bread`.
-3. Compute the auxilliary parameters of the file system (e.g. file system
-  block size).
+1. Prepare the partition device with a call to `VOP_OPEN()`.
 
-### Vnode operations (Part 1, `open` and `close`)
+  ```C
+  err = VOP_OPEN(devvp, FREAD | FWRITE, NOCRED, p);
+  ```
+
+2. Read the superblock on the disk into memory using `bread()`.
+
+  ```C
+  err = bread(devvp, SBOFF / SECTOR_SIZE, SBSIZE, &bp);
+  ```
+
+3. Compute the auxilliary parameters of the file system (e.g. file system
+  block size) after reading the on-disk superblock.
+
+  ```C
+  fs = bp->data;
+  err = ext2fs_sbinit(devvp, fs, sb);
+  ```
+
+### Vnode operations (Part 1, `open()` and `close()`)
 
 Preparing and releasing a device involves calling the `open` and `close`
 operation, respectively, of a corresponding special vnode.
 
 In AIMv6, before mounting the ext2 file system, special vnodes have their
 operations set in the `spec_vops` record, where we can found the concrete
-implementation of `open` and `close` operations at `spec_open` and
-`spec_close`.
+implementation of `open` and `close` operations at `spec_open()` and
+`spec_close()`.
+
+Generally, the first call of `open()` on a special vnode involves initializing
+the underlying device, while the last call of `close()` may sometimes
+shutdown (or partially shutdown) a device.  The method of initialization
+or shutdown are provided in concrete hardware drivers, which are registered
+in the driver table `devsw`, and are addressed by major of the special vnode.
+For instance,
+
+* `spec_open()` is simply a wrapper for driver-provided `open()` method:
+
+  ```C
+  drv = devsw[major(vdev(vp))];
+  return (dev->open)(vdev(vp), 0, p);
+  ```
+
+* `spec_close()` on block devices is slightly more complicated since it
+  requires flushing out pending I/O's and recycling buffers.  Buffered I/O
+  will be explained later.
 
 #### Hardware drivers (Part 1, `open` and `close`)
 
+In AIMv6, `open()` in hardware drivers initialize the underlying devices (which
+can be either real or virtual) in the first call, while `close()` do nothing,
+since there are no device really available for closing (why would you want to
+shutdown console or hard disk during system execution?).
+
+The `open()` and `close()` implementation are provided by drivers, and are
+registered into the driver table `devsw` during initcalls.
+
+##### Example: MSIM hard disk driver
+
+`drivers/block/msim-ddisk-kernel.c` shows an example of MSIM hard disk driver
+on MSIM ~~toy~~ simulator.
+
+The `open()` and `close()` methods are provided in the record `drv`, and
+registered in the initcalls routine `__driver_init()`, which assigns the
+driver a device major, determined statically in `mach-conf.h`.
+
+Before file system initialization, the device prober in `probe_devices()`
+already set up the detected hardware.  In case of MSIM hard disk drive, the
+DMA address for disk drive has been assigned.
+
+MSIM hard disk driver designates the lower 4 bits of minor as partition ID,
+and upper 4 bits as disk instance ID.
+
+In `__open()`, the driver does the following:
+
 TODO:
 
-* describe the implementation of `open`, `close` for special vnode.
-* explain driver table `devsw`
 * take MSIM disk driver and/or ATA disk driver as an example, explain
   what its `open` and `close` do.
 
