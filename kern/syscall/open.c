@@ -32,6 +32,8 @@
 #include <fcntl.h>
 #include <fs/vnode.h>
 #include <fs/namei.h>
+#include <fs/vfs.h>
+#include <fs/mount.h>
 
 int
 sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags, int mode)
@@ -93,6 +95,8 @@ found:
 	/* Succeeded, put the vnode into file descriptor table */
 	current_proc->fd[i].type = FVNODE;
 	current_proc->fd[i].vnode = nd.vp;
+
+	VFS_SYNC(nd.vp->mount, nd.cred, nd.proc);
 
 	vunlock(nd.vp);
 	*errno = 0;
