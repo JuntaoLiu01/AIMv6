@@ -33,7 +33,7 @@
 int
 sys_lseek(struct trapframe *tf, int *errno, int fd, off_t offset, int whence)
 {
-	struct file *file = &current_proc->fd[fd];
+	struct file *file = current_proc->fd[fd];
 	struct vattr va;
 	int err;
 
@@ -46,6 +46,7 @@ sys_lseek(struct trapframe *tf, int *errno, int fd, off_t offset, int whence)
 		return -1;
 	}
 
+	FLOCK(file);
 	switch (whence) {
 	case SEEK_SET:
 		file->offset = offset;
@@ -69,10 +70,12 @@ sys_lseek(struct trapframe *tf, int *errno, int fd, off_t offset, int whence)
 		file->offset = va.size + offset;
 		break;
 	default:
+		FUNLOCK(file);
 		*errno = EINVAL;
 		return -1;
 	}
 
+	FUNLOCK(file);
 	*errno = 0;
 	return file->offset;
 }

@@ -21,6 +21,8 @@
 
 #include <sys/types.h>
 #include <fs/vnode.h>
+#include <aim/sync.h>
+#include <atomic.h>
 
 enum ftype {
 	FNON,
@@ -45,8 +47,34 @@ struct file {
 	off_t		offset;
 	int		ioflags;
 	int		openflags;
+	atomic_t	refs;
+	lock_t		lock;
 };
 
+#define FNEW() \
+	({ \
+		struct file *_f; \
+		do { \
+			_f = kmalloc(sizeof(*_f), GFP_ZERO); \
+			_f->refs = 1; \
+			spinlock_init(&_f->lock); \
+		} while (0); \
+	 	_f; \
+	})
+#define FREF(f) \
+	do { \
+		atomic_inc(&(f)->refs); \
+	} while (0)
+#define FRELE(fp) \
+	do { \
+		atomic_dec(&(*(fp))->refs); \
+		if ((*(fp))->refs == 0) { \
+			kfree(*(fp)); \
+			*(fp) = NULL; \
+		} \
+	} while (0)
+#define FLOCK(f)	spin_lock(&(f)->lock)
+#define FUNLOCK(f)	spin_unlock(&(f)->lock)
 #define FINIT_VNODE(fd, vn, off, iof, of) \
 	do { \
 		(fd)->type = FVNODE; \

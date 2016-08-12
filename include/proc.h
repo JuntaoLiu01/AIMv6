@@ -76,11 +76,11 @@ struct proc {
 	struct vnode	*rootd;		/* root directory (chroot) */
 	union {
 		struct {
-			struct file fstdin;	/* stdin */
-			struct file fstdout;	/* stdout */
-			struct file fstderr;	/* stderr */
+			struct file *fstdin;	/* stdin */
+			struct file *fstdout;	/* stdout */
+			struct file *fstderr;	/* stderr */
 		};
-		struct file fd[OPEN_MAX];	/* opened files */
+		struct file *fd[OPEN_MAX];	/* opened files */
 	};
 	lock_t		fdlock;		/* lock of file table */
 

@@ -37,7 +37,7 @@ sys_close(struct trapframe *tf, int *errno, int fd)
 	struct vnode *vnode;
 	unsigned long flags;
 	int err;
-	struct file *file = &current_proc->fd[fd];
+	struct file *file = current_proc->fd[fd];
 
 	switch (file->type) {
 	case FNON:
@@ -59,9 +59,8 @@ sys_close(struct trapframe *tf, int *errno, int fd)
 		/* TODO REPLACE */
 		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 		vput(vnode);
+		FRELE(&current_proc->fd[fd]);
 
-		file->vnode = NULL;
-		file->type = FNON;
 		*errno = 0;
 		spin_unlock_irq_restore(&current_proc->fdlock, flags);
 		return 0;

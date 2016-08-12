@@ -81,8 +81,11 @@ pid_t sys_fork(struct trapframe *tf, int *errno)
 	memcpy(&child->fd, &current_proc->fd, sizeof(child->fd));
 	/* increase file vnode ref counts but do not lock them */
 	for (int i = 0; i < OPEN_MAX; ++i) {
-		if (child->fd[i].vnode != NULL)
-			vref(child->fd[i].vnode);
+		if (child->fd[i] != NULL) {
+			FREF(child->fd[i]);
+			if (child->fd[i]->type == FVNODE)
+				vref(child->fd[i]->vnode);
+		}
 	}
 
 	pid = child->pid;

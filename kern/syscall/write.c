@@ -32,7 +32,7 @@
 ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
     size_t count)
 {
-	struct file *file = &current_proc->fd[fd];
+	struct file *file = current_proc->fd[fd];
 	int err;
 	size_t len;
 
@@ -58,6 +58,7 @@ ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
 		return -1;
 	}
 
+	FLOCK(file);
 	vlock(file->vnode);
 	err = vn_write(file->vnode, file->offset, count, buf, file->ioflags,
 	    UIO_USER, current_proc, NULL, NOCRED, &len); /* TODO REPLACE */
@@ -66,12 +67,14 @@ ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
 		vunlock(file->vnode);
 		/* TODO REPLACE */
 		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
+		FUNLOCK(file);
 		return -1;
 	}
 	file->offset += len;
 	vunlock(file->vnode);
 	/* TODO REPLACE */
 	VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
+	FUNLOCK(file);
 	*errno = 0;
 	return len;
 }

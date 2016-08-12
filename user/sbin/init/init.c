@@ -31,13 +31,11 @@ int main(int argc, char *argv[], char *envp[])
 	 * Replace it with your own job for now.
 	 */
 	printf("INIT: now init\n");
-	memset(buf, 0, sizeof(buf));
-	fd = open("/etc/hostname", O_WRONLY, 0);
+	fd = open("/etc/hostname", O_RDONLY, 0);
 	if (fd != -1) {
-		write(fd, "good\n", 5);
-		lseek(fd, 10000, SEEK_SET);
-		write(fd, "wow\n", 4);
-		close(fd);
+		lseek(fd, 0, SEEK_SET);
+		read(fd, buf, 20);
+		puts(buf);
 	}
 
 	for (;;) {

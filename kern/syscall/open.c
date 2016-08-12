@@ -50,7 +50,7 @@ sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags,
 	spin_lock_irq_save(&current_proc->fdlock, intr_flags);
 
 	for (i = 0; i < OPEN_MAX; ++i) {
-		if (current_proc->fd[i].type == FNON)
+		if (current_proc->fd[i] == NULL)
 			goto found;
 	}
 	/* no idle descriptor found :( */
@@ -108,10 +108,8 @@ found:
 	}
 
 	/* Succeeded, put the vnode into file descriptor table */
-	current_proc->fd[i].type = FVNODE;
-	current_proc->fd[i].vnode = nd.vp;
-	current_proc->fd[i].openflags = openflags;
-	current_proc->fd[i].ioflags = ioflags;
+	current_proc->fd[i] = FNEW();
+	FINIT_VNODE(current_proc->fd[i], nd.vp, 0, ioflags, openflags);
 
 	VFS_SYNC(nd.vp->mount, nd.cred, nd.proc);
 
