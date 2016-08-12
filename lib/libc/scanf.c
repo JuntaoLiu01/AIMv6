@@ -19,8 +19,17 @@ int getchar(void)
 char *gets(char *s)
 {
 	int c;
-	for (c = getchar(); c != EOF && c != '\n'; c = getchar())
-		*(s++) = (char)c;
+
+	for (c = getchar(); c != EOF && c != '\n'; c = getchar()) {
+		switch (c) {
+		case '\b':
+			*(--s) = '\0';
+			break;
+		default:
+			*(s++) = (char)c;
+			break;
+		}
+	}
 	*s = '\0';
 	return s;
 }

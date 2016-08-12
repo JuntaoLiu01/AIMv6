@@ -76,11 +76,29 @@ static int __kbdintr(int irq)
 static int __kbdgetc(dev_t devno)
 {
 	struct chr_device *kbd;
+	int c;
 
 	/* XXX I'm assuming there's only one keyboard */
 	kbd = (struct chr_device *)dev_from_id(makedev(MSIM_KBD_MAJOR, 0));
 	assert(kbd != NULL);
-	return cons_getc(kbd);
+	c = cons_getc(kbd);
+	/*
+	 * XXX
+	 * Ordinarily, the driver SHOULD send raw characters (or character
+	 * sequences) to user space, and leave the conversion work (such
+	 * as conversion from DEL to BS here) to external user-space
+	 * libraries such as terminfo(5).
+	 *
+	 * Here, we do the job in kernel drivers so that we do not need
+	 * to implement a wholly new terminfo(5).  But do remember that
+	 * the trick here is usually a *BAD* practice.
+	 *
+	 * See also:
+	 * __getc() in uart-ns16550-kernel.c
+	 *
+	 * FIXME: maybe someone else could implement a mini terminfo?
+	 */
+	return (c == 127 ? '\b' : c);
 }
 
 static int __lpputc(dev_t devno, int c)
