@@ -20,10 +20,6 @@
 #include <file.h>
 #include <proc.h>
 #include <percpu.h>
-#include <fs/vnode.h>
-#include <fs/uio.h>
-#include <fs/vfs.h>
-#include <ucred.h>
 #include <syscall.h>
 #include <libc/syscalls.h>
 #include <errno.h>
@@ -35,26 +31,18 @@ ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
 	struct file *file;
 	int err;
 	size_t len;
+	loff_t oldoff;
 
 	if (fd < 0 || fd >= OPEN_MAX) {
 		*errno = EBADF;
 		return -1;
 	}
 	file = current_proc->fd[fd];
-	if (file->type == FNON) {
+	if (file == NULL || !(file->openflags & FWRITE)) {
 		*errno = EBADF;
 		return -1;
 	}
-	if (file->type != FVNODE) {
-		/* pipe NYI */
-		*errno = ENOTSUP;
-		return -1;
-	}
-	if (file->vnode->type == VDIR) {
-		*errno = EISDIR;
-		return -1;
-	}
-	if (!(file->openflags & FWRITE)) {
+	if (file->type == FNON) {
 		*errno = EBADF;
 		return -1;
 	}
@@ -63,23 +51,13 @@ ssize_t sys_write(struct trapframe *tf, int *errno, int fd, void *buf,
 		return -1;
 	}
 
-	FLOCK(file);
-	vlock(file->vnode);
-	err = vn_write(file->vnode, file->offset, count, buf, file->ioflags,
-	    UIO_USER, current_proc, NULL, NOCRED, &len); /* TODO REPLACE */
+	oldoff = file->offset;
+	err = FILE_WRITE(file, buf, count, &file->offset);
+	len = file->offset - oldoff;
 	if (err) {
 		*errno = -err;
-		vunlock(file->vnode);
-		/* TODO REPLACE */
-		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
-		FUNLOCK(file);
 		return -1;
 	}
-	file->offset += len;
-	vunlock(file->vnode);
-	/* TODO REPLACE */
-	VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
-	FUNLOCK(file);
 	*errno = 0;
 	return len;
 }

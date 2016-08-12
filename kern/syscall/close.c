@@ -26,15 +26,11 @@
 #include <file.h>
 #include <proc.h>
 #include <percpu.h>
-#include <ucred.h>
 #include <errno.h>
-#include <fs/vnode.h>
-#include <fs/vfs.h>
 
 int
 sys_close(struct trapframe *tf, int *errno, int fd)
 {
-	struct vnode *vnode;
 	unsigned long flags;
 	int err;
 	struct file *file;
@@ -43,36 +39,20 @@ sys_close(struct trapframe *tf, int *errno, int fd)
 		*errno = EBADF;
 		return -1;
 	}
+
+	spin_lock_irq_save(&current_proc->fdlock, flags);
 	file = current_proc->fd[fd];
-	switch (file->type) {
-	case FNON:
-		*errno = EBADF;
-		return -1;
-	case FVNODE:
-		spin_lock_irq_save(&current_proc->fdlock, flags);
-		vnode = file->vnode;
-		vlock(vnode);
-		/* TODO REPLACE */
-		err = VOP_CLOSE(vnode, file->openflags, NOCRED, current_proc);
-		if (err) {
-			vunlock(vnode);
-			spin_unlock_irq_restore(&current_proc->fdlock, flags);
-			*errno = -err;
-			return -1;
-		}
-
-		/* TODO REPLACE */
-		VFS_SYNC(vnode->mount, NOCRED, current_proc);
-		vput(vnode);
-		FRELE(&current_proc->fd[fd]);
-
-		*errno = 0;
+	err = FILE_CLOSE(file, current_proc);
+	if (err) {
 		spin_unlock_irq_restore(&current_proc->fdlock, flags);
-		return 0;
-	default:
-		*errno = ENOTSUP;
+		*errno = -err;
 		return -1;
 	}
+	FRELE(&current_proc->fd[fd]);
+	spin_unlock_irq_restore(&current_proc->fdlock, flags);
+
+	*errno = 0;
+	return 0;
 }
 ADD_SYSCALL(sys_close, NRSYS_close);
 

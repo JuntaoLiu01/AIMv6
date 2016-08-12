@@ -23,6 +23,7 @@ SUBDIRS = \
 	init \
 	dev \
 	debug \
+	file \
 	lib \
 	mm \
 	proc \
@@ -54,6 +55,7 @@ KERNEL_LIBS = \
 	timer/libtimer.la \
 	proc/sched/libsched.la \
 	$(top_builddir)/fs/libfs.la \
+	file/libfile.la \
 	dev/libdev.la \
 	mm/libmm.la \
 	smp/libsmp.la \

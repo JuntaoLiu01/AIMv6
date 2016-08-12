@@ -23,12 +23,27 @@
 #include <fs/vnode.h>
 #include <aim/sync.h>
 #include <atomic.h>
+#include <pipe.h>
 
 enum ftype {
 	FNON,
 	FVNODE,
 	FSOCKET,
 	FPIPE,
+};
+
+struct file;
+struct proc;
+struct ucred;
+struct uio;
+
+/*
+ * A higher level of operations including those to vnodes and pipes.
+ */
+struct file_ops {
+	int (*close)(struct file *, struct proc *);
+	int (*read)(struct file *, void *, size_t, loff_t *);
+	int (*write)(struct file *, void *, size_t, loff_t *);
 };
 
 /*
@@ -39,17 +54,26 @@ struct file {
 	enum ftype	type;
 	union {
 		struct vnode *vnode;
+		struct pipe *pipe;
 #if 0
 		struct socket *socket;
-		struct pipe *pipe;
 #endif
 	};
-	off_t		offset;
+	struct file_ops	*ops;
+	loff_t		offset;
 	int		ioflags;
 	int		openflags;
 	atomic_t	refs;
 	lock_t		lock;
+	struct ucred	*cred;
 };
+
+#define FILE_CLOSE(f, p) \
+	(((f)->ops->close)((f), (p)))
+#define FILE_READ(f, off, uio, cred) \
+	(((f)->ops->read)((f), (off), (uio), (cred)))
+#define FILE_WRITE(f, off, uio, cred) \
+	(((f)->ops->write)((f), (off), (uio), (cred)))
 
 #define FNEW() \
 	({ \
@@ -57,6 +81,7 @@ struct file {
 		do { \
 			_f = kmalloc(sizeof(*_f), GFP_ZERO); \
 			_f->refs = 1; \
+			_f->cred = NOCRED; \
 			spinlock_init(&_f->lock); \
 		} while (0); \
 	 	_f; \
@@ -75,6 +100,8 @@ struct file {
 	} while (0)
 #define FLOCK(f)	spin_lock(&(f)->lock)
 #define FUNLOCK(f)	spin_unlock(&(f)->lock)
+
+extern struct file_ops vnops;
 #define FINIT_VNODE(fd, vn, off, iof, of) \
 	do { \
 		(fd)->type = FVNODE; \
@@ -82,6 +109,7 @@ struct file {
 		(fd)->offset = (off); \
 		(fd)->ioflags = (iof); \
 		(fd)->openflags = (of); \
+		(fd)->ops = &vnops; \
 	} while (0)
 
 #if 0

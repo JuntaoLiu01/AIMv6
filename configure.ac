@@ -427,6 +427,7 @@ AC_CONFIG_FILES([
 	kern/dev/Makefile
 	kern/dev/index/Makefile
 	kern/debug/Makefile
+	kern/file/Makefile
 	kern/mm/Makefile
 	kern/mm/kmmap/Makefile
 	kern/mm/pmm/Makefile
