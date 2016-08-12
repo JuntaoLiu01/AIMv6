@@ -30,11 +30,10 @@ int putchar(int c);
 int puts(const char *s);
 int snprintf(char *str, size_t size, const char *fmt, ...);
 int vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
-
-/*
- * The following functions are provided by libgcc (which is probably nice)
- */
 int printf(const char *fmt, ...);
 int vprintf(const char *fmt, va_list ap);
+
+int getchar(void);
+char *gets(char *s);
 
 #endif /* _LIBC_STDIO_H */

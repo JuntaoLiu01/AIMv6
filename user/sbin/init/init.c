@@ -23,39 +23,19 @@
 
 int main(int argc, char *argv[], char *envp[])
 {
-	char c;
-	char buf[50];
-	int fd, fd2;
+	char buf[512];
+	int fd;
 
 	/*
 	 * Replace it with your own job for now.
 	 */
 	printf("INIT: now init\n");
-	fd = open("/etc/hostname", O_RDONLY, 0);
-	fd2 = open("/sbin/init", O_RDONLY, 0);
-	if (fd != -1) {
-		lseek(fd, 0, SEEK_SET);
-		memset(buf, 0, sizeof(buf));
-		read(fd, buf, 2);
-		puts(buf);
-		dup2(fd, fd2);
-		memset(buf, 0, sizeof(buf));
-		read(fd2, buf, 2);
-		puts(buf);
-		close(fd2);
-		memset(buf, 0, sizeof(buf));
-		read(fd, buf, 2);
-		puts(buf);
-		close(fd);
-	}
+	fd = open("/dev/hda", O_RDONLY, 0);
+	read(fd, buf, 512);
+	printf("%02x %02x\n", buf[510], buf[511]);
 
 	for (;;) {
-		/* echo, since terminal echoing is NYI */
-		if (read(STDIN_FILENO, &c, 1) != 1)
-			break;
-		if (write(STDOUT_FILENO, &c, 1) != 1)
-			break;
+		gets(buf);
+		puts(buf);
 	}
-	for (;;)
-		;
 }

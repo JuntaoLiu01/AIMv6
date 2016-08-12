@@ -28,6 +28,7 @@ extern int __mach_setup_default_tty(struct tty_device *, int, struct proc *);
 int setup_default_tty(struct tty_device *tty, int mode, struct proc *p)
 {
 	/* Currently we are hardwiring */
+	tty->flags = TTY_ECHO;
 	return __mach_setup_default_tty(tty, mode, p);
 }
 

@@ -30,6 +30,7 @@ SRCS = \
 	memmove.c \
 	memset.c \
 	printf.c \
+	scanf.c \
 	snprintf.c \
 	strcmp.c \
 	strlcat.c \

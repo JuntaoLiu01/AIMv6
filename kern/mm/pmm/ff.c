@@ -46,9 +46,9 @@ static int __alloc(struct pages *pages)
 
 	/* check size alignment */
 	if (!IS_ALIGNED(pages->size, PAGE_SIZE))
-		return NULL;
+		return 0;
 	if (pages->size > __free_space)
-		return NULL;
+		return 0;
 
 	/* search for a first-fit */
 	for_each_entry(this, &__head, node) {
