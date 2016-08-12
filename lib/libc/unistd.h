@@ -37,5 +37,7 @@ off_t lseek(int fd, off_t offset, int whence);
 #define SEEK_SET	0
 #define SEEK_CUR	1
 #define SEEK_END	2
+int dup(int oldfd);
+int dup2(int oldfd, int newfd);
 
 #endif

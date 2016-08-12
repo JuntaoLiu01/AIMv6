@@ -25,17 +25,28 @@ int main(int argc, char *argv[], char *envp[])
 {
 	char c;
 	char buf[50];
-	int fd;
+	int fd, fd2;
 
 	/*
 	 * Replace it with your own job for now.
 	 */
 	printf("INIT: now init\n");
 	fd = open("/etc/hostname", O_RDONLY, 0);
+	fd2 = open("/sbin/init", O_RDONLY, 0);
 	if (fd != -1) {
 		lseek(fd, 0, SEEK_SET);
-		read(fd, buf, 20);
+		memset(buf, 0, sizeof(buf));
+		read(fd, buf, 2);
 		puts(buf);
+		dup2(fd, fd2);
+		memset(buf, 0, sizeof(buf));
+		read(fd2, buf, 2);
+		puts(buf);
+		close(fd2);
+		memset(buf, 0, sizeof(buf));
+		read(fd, buf, 2);
+		puts(buf);
+		close(fd);
 	}
 
 	for (;;) {

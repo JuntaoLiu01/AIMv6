@@ -57,7 +57,7 @@ sys_close(struct trapframe *tf, int *errno, int fd)
 		}
 
 		/* TODO REPLACE */
-		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
+		VFS_SYNC(vnode->mount, NOCRED, current_proc);
 		vput(vnode);
 		FRELE(&current_proc->fd[fd]);
 
