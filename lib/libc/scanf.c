@@ -19,18 +19,20 @@ int getchar(void)
 char *gets(char *s)
 {
 	int c;
+	char *_s = s;
 
 	for (c = getchar(); c != EOF && c != '\n'; c = getchar()) {
 		switch (c) {
 		case '\b':
-			*(--s) = '\0';
+			if (_s > s)
+				*(--_s) = '\0';
 			break;
 		default:
-			*(s++) = (char)c;
+			*(_s++) = (char)c;
 			break;
 		}
 	}
-	*s = '\0';
+	*_s = '\0';
 	return s;
 }
 
