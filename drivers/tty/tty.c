@@ -66,7 +66,6 @@ static int __open(dev_t devno, int mode, struct proc *p)
 	}
 
 	/* TODO FUTURE: check and fill sessions */
-	kprintf("DEV: tty opened\n");
 	return 0;
 }
 

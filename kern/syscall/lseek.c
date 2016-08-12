@@ -33,10 +33,15 @@
 int
 sys_lseek(struct trapframe *tf, int *errno, int fd, off_t offset, int whence)
 {
-	struct file *file = current_proc->fd[fd];
+	struct file *file;
 	struct vattr va;
 	int err;
 
+	if (fd < 0 || fd >= OPEN_MAX) {
+		*errno = EBADF;
+		return -1;
+	}
+	file = current_proc->fd[fd];
 	if (file->type == FNON) {
 		*errno = EBADF;
 		return -1;

@@ -37,8 +37,13 @@ sys_close(struct trapframe *tf, int *errno, int fd)
 	struct vnode *vnode;
 	unsigned long flags;
 	int err;
-	struct file *file = current_proc->fd[fd];
+	struct file *file;
 
+	if (fd < 0 || fd >= OPEN_MAX) {
+		*errno = EBADF;
+		return -1;
+	}
+	file = current_proc->fd[fd];
 	switch (file->type) {
 	case FNON:
 		*errno = EBADF;

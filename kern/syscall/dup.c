@@ -30,10 +30,13 @@
 static int do_dup(int oldfd, int newfd)
 {
 	unsigned long flags;
-	struct file *file = current_proc->fd[newfd];
+	struct file *file;
 	struct vnode *vnode;
 	int err;
 
+	if (oldfd < 0 || oldfd >= OPEN_MAX)
+		return -EBADF;
+	file = current_proc->fd[newfd];
 	if (current_proc->fd[oldfd] == NULL)
 		return -EBADF;
 	/* dup2(fd, fd) does nothing */
@@ -123,7 +126,7 @@ ADD_SYSCALL(sys_dup, NRSYS_dup);
 
 int sys_dup2(struct trapframe *tf, int *errno, int oldfd, int newfd)
 {
-	if (newfd >= OPEN_MAX) {
+	if (newfd < 0 || newfd >= OPEN_MAX) {
 		*errno = EBADF;
 		return -1;
 	}

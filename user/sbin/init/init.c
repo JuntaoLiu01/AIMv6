@@ -24,15 +24,20 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	char buf[512];
-	int fd;
+	int fd, fdtty;
 
 	/*
 	 * Replace it with your own job for now.
 	 */
 	printf("INIT: now init\n");
-	fd = open("/dev/hda", O_RDONLY, 0);
-	read(fd, buf, 512);
-	printf("%02x %02x\n", buf[510], buf[511]);
+	fdtty = open("/dev/tty", O_WRONLY, 0);
+	fd = open("/etc/hostname", O_WRONLY | O_TRUNC | O_CREAT, 0);
+	dup2(fd, STDOUT_FILENO);
+	printf("REDIRECTION TEST\n");
+	dup2(fdtty, STDOUT_FILENO);
+	printf("redirecting back to terminal\n");
+	close(fd);
+	close(fdtty);
 
 	for (;;) {
 		gets(buf);

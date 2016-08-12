@@ -32,10 +32,15 @@
 ssize_t sys_read(struct trapframe *tf, int *errno, int fd, void *buf,
     size_t count)
 {
-	struct file *file = current_proc->fd[fd];
+	struct file *file;
 	int err;
 	size_t len;
 
+	if (fd < 0 || fd >= OPEN_MAX) {
+		*errno = EBADF;
+		return -1;
+	}
+	file = current_proc->fd[fd];
 	if (file->type == FNON) {
 		*errno = EBADF;
 		return -1;
