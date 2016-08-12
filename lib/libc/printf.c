@@ -4,6 +4,14 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+int putchar(int c)
+{
+	unsigned char _c = (unsigned char)c;
+	if (write(STDOUT_FILENO, &_c, 1) < 0)
+		return EOF;
+	return _c;
+}
+
 int puts(const char *s)
 {
 	char buf[BUFSIZ];

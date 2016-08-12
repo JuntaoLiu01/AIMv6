@@ -34,6 +34,8 @@
 
 #ifndef __ASSEMBLER__
 
+#include <libc/stddef.h>
+
 /* 
  * Type usage should be unified across AIMv6.
  * When a foreign module is imported, it MUST either apply AIMv6 type naming, 
@@ -59,8 +61,6 @@ typedef unsigned int bool;
 #define false	0
 #define true	1
 
-#define EOF	-1
-
 /* For in-memory objects, same as POSIX */
 typedef unsigned long size_t;
 typedef signed long ssize_t;
@@ -73,7 +73,6 @@ typedef int pid_t;
 typedef int uid_t, gid_t, mode_t;
 
 typedef void *uintptr_t;
-#define	NULL	0
 
 /*
  * For use with other address space, like physical address space,

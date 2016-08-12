@@ -24,6 +24,10 @@
 #define NULL	(void *)0
 #endif
 
+#ifndef EOF
+#define EOF	(-1)
+#endif
+
 #ifndef BUFSIZ
 #define BUFSIZ		1024
 #endif

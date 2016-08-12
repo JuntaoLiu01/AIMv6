@@ -32,12 +32,11 @@ int main(int argc, char *argv[], char *envp[])
 	 */
 	printf("INIT: now init\n");
 	memset(buf, 0, sizeof(buf));
-	fd = open("/etc/hostname", O_RDONLY, 0);
+	fd = open("/etc/hostname", O_WRONLY, 0);
 	if (fd != -1) {
-		if (read(fd, buf, 30) != -1)
-			printf("/etc/hostname content: %s\n", buf);
-		if (read(fd, buf, 30) != -1)
-			printf("/etc/hostname content: %s\n", buf);
+		write(fd, "good\n", 5);
+		lseek(fd, 10000, SEEK_SET);
+		write(fd, "wow\n", 4);
 		close(fd);
 	}
 
