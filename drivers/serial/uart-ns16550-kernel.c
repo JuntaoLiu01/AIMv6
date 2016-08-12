@@ -88,7 +88,7 @@ static int __getc(dev_t devno)
 	 * XXX
 	 * Ordinarily, the driver SHOULD send raw characters (or character
 	 * sequences) to user space, and leave the conversion work (such
-	 * as conversion from DEL to BS here) to external user-space
+	 * as conversion from CR to LF here) to external user-space
 	 * libraries such as terminfo(5).
 	 *
 	 * Here, we do the job in kernel drivers so that we do not need
