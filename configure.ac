@@ -255,6 +255,8 @@ AIM_ARG_WITH([root-partition-id], [ROOT_PARTITION_ID],
 AIM_ARG_WITH([max-processes], [MAX_PROCESSES], [maximum number of processes],
 	[65536])
 
+AIM_ARG_WITH([pipe-size], [PIPE_SIZE], [pipe size], [16384])
+
 AIM_ARG_WITH([fwstack-order], [FWSTACKORDER],
 	[order of firmware stack per CPU (size=1<<order)])
 

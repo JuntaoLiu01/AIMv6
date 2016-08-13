@@ -45,6 +45,7 @@ sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags,
 	int openflags, ioflags;
 	struct nameidata nd;
 	struct vattr va;
+	struct file *file;
 	unsigned long intr_flags;
 
 	spin_lock_irq_save(&current_proc->fdlock, intr_flags);
@@ -61,6 +62,13 @@ found:
 	if (strlcpy(path, ufilename, PATH_MAX) == PATH_MAX) {
 		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
 		*errno = ENAMETOOLONG;
+		return -1;
+	}
+
+	file = FNEW();
+	if (file == NULL) {
+		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
+		*errno = ENOMEM;
 		return -1;
 	}
 
@@ -81,6 +89,7 @@ found:
 		break;
 	default:
 		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
+		FRELE(&file);
 		*errno = EINVAL;
 		return -1;
 	}
@@ -94,6 +103,7 @@ found:
 	err = vn_open(path, openflags, mode, &nd);
 	if (err) {
 		spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
+		FRELE(&file);
 		*errno = -err;
 		return -1;
 	}
@@ -108,8 +118,8 @@ found:
 	}
 
 	/* Succeeded, put the vnode into file descriptor table */
-	current_proc->fd[i] = FNEW();
-	FINIT_VNODE(current_proc->fd[i], nd.vp, 0, ioflags, openflags);
+	FINIT_VNODE(file, nd.vp, 0, ioflags, openflags);
+	current_proc->fd[i] = file;
 
 	VFS_SYNC(nd.vp->mount, nd.cred, nd.proc);
 
@@ -120,6 +130,7 @@ found:
 rollback_vp:
 	vput(nd.vp);
 	spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);
+	FRELE(&file);
 	*errno = -err;
 	return -1;
 }

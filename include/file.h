@@ -78,12 +78,12 @@ struct file {
 #define FNEW() \
 	({ \
 		struct file *_f; \
-		do { \
-			_f = kmalloc(sizeof(*_f), GFP_ZERO); \
+		_f = kmalloc(sizeof(*_f), GFP_ZERO); \
+		if (_f) { \
 			_f->refs = 1; \
 			_f->cred = NOCRED; \
 			spinlock_init(&_f->lock); \
-		} while (0); \
+		} \
 	 	_f; \
 	})
 #define FREF(f) \
@@ -101,7 +101,7 @@ struct file {
 #define FLOCK(f)	spin_lock(&(f)->lock)
 #define FUNLOCK(f)	spin_unlock(&(f)->lock)
 
-extern struct file_ops vnops;
+extern struct file_ops vnops, pipeops;
 #define FINIT_VNODE(fd, vn, off, iof, of) \
 	do { \
 		(fd)->type = FVNODE; \
@@ -110,6 +110,15 @@ extern struct file_ops vnops;
 		(fd)->ioflags = (iof); \
 		(fd)->openflags = (of); \
 		(fd)->ops = &vnops; \
+	} while (0)
+#define FINIT_PIPE(fd, p, of) \
+	do { \
+		(fd)->type = FPIPE; \
+		(fd)->pipe = (p); \
+		(fd)->offset = 0; \
+		(fd)->ioflags = 0; \
+		(fd)->openflags = (of); \
+		(fd)->ops = &pipeops; \
 	} while (0)
 
 #if 0
