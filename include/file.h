@@ -24,6 +24,7 @@
 #include <aim/sync.h>
 #include <atomic.h>
 #include <pipe.h>
+#include <ucred.h>
 
 enum ftype {
 	FNON,
@@ -44,6 +45,7 @@ struct file_ops {
 	int (*close)(struct file *, struct proc *);
 	int (*read)(struct file *, void *, size_t, loff_t *);
 	int (*write)(struct file *, void *, size_t, loff_t *);
+	void (*ref)(struct file *);
 };
 
 /*
@@ -89,6 +91,7 @@ struct file {
 #define FREF(f) \
 	do { \
 		atomic_inc(&(f)->refs); \
+		(f)->ops->ref(f); \
 	} while (0)
 #define FRELE(fp) \
 	do { \

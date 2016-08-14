@@ -93,13 +93,6 @@ static int do_dup(int oldfd, int newfd)
 	 */
 	current_proc->fd[newfd] = current_proc->fd[oldfd];
 	FREF(current_proc->fd[newfd]);
-	switch (current_proc->fd[oldfd]->type) {
-	case FVNODE:
-		vref(current_proc->fd[newfd]->vnode);
-		break;
-	default:
-		break;
-	}
 	spin_unlock_irq_restore(&current_proc->fdlock, flags);
 	return 0;
 

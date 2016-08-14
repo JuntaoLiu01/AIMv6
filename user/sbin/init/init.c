@@ -24,21 +24,24 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	char buf[512];
-	int fd, fdtty;
+	int pipefd[2];
 
 	/*
 	 * Replace it with your own job for now.
 	 */
-	printf("INIT: now init\n");
-	fdtty = open("/dev/tty", O_WRONLY, 0);
-	fd = open("/etc/hostname", O_WRONLY | O_TRUNC | O_CREAT, 0);
-	dup2(fd, STDOUT_FILENO);
-	printf("REDIRECTION TEST\n");
-	dup2(fdtty, STDOUT_FILENO);
-	printf("redirecting back to terminal\n");
-	close(fd);
-	close(fdtty);
-
+	pipe(pipefd);
+	printf("%d %d\n", pipefd[0], pipefd[1]);
+	if (fork() == 0) {
+		/* Child reads from pipe and writes to terminal */
+		close(pipefd[1]);
+		dup2(pipefd[0], STDIN_FILENO);
+		close(pipefd[0]);
+	} else {
+		/* Parent reads from terminal and writes to pipe */
+		close(pipefd[0]);
+		dup2(pipefd[1], STDOUT_FILENO);
+		close(pipefd[1]);
+	}
 	for (;;) {
 		gets(buf);
 		puts(buf);

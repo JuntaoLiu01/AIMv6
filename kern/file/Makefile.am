@@ -19,4 +19,4 @@ include $(top_srcdir)/env.am
 
 noinst_LTLIBRARIES = libfile.la
 
-libfile_la_SOURCES = vnode.c
+libfile_la_SOURCES = vnode.c pipe.c

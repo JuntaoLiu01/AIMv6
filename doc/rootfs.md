@@ -10,20 +10,40 @@ Right now, our system can read and `execve` the `init` program in
 user mode, located at `/sbin/init`, on an ext2 file system with revision
 number 0.
 
-`init` process forks a child process, then starts echoing user input.
+`/sbin/init` does the following now:
 
-That's it.  :(
+1. Create a pipe
+2. Fork a child process
+3. Close the write end on child process and read end on parent process.
+4. Duplicate the file descriptor of read end in child process to standard input.
+5. Duplicate the file descriptor of write end in parent process to
+  standard output.
+6. Close the original read end and write end on both processes respectively.
+7. Parent reads from terminal a line and writes to the pipe.
+8. Child reads from pipe and echoes the line read onto the terminal.
 
-Although the infrastructures except file system framework are finished,
-Currently our system only supports `fork(2)`, `execve(2)`,
-`getpid(2)`, and `read(2)` or `write(2)` on a terminal (that is, with
-`fd` argument `STDIN_FILENO` and `STDOUT_FILENO` respectively, without
-`open(2)`).  This is largely due to our unfinished file system, as
-porting ext2 onto our system involves a lot of work.
+We have implemented the following system calls:
 
-Also, note that `getpid(2)` prints a kernel message indicating current
-PID and current CPU the process is running on.  This is for debugging
-and will be removed in future.
+* `fork`
+* `execve`
+* `open`
+* `close`
+* `read`
+* `write`
+* `getpid`
+* `dup`
+* `dup2`
+* `sched_yield`
+* `lseek`
+* `pipe`
+
+Also the following C library functions are implemented or partially implemented:
+
+* `printf`
+* `putchar`
+* `puts`
+* `getchar`
+* `gets`
 
 ### Loongson 3A
 

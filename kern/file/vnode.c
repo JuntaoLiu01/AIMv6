@@ -87,9 +87,17 @@ vn_file_close(struct file *file, struct proc *p)
 	return 0;
 }
 
+void
+vn_file_ref(struct file *file)
+{
+	assert(file->type == FVNODE);
+	vref(file->vnode);
+}
+
 struct file_ops vnops = {
 	.read = vn_file_read,
 	.write = vn_file_write,
 	.close = vn_file_close,
+	.ref = vn_file_ref,
 };
 

@@ -5,6 +5,8 @@
 #include <libc/string.h>
 #include <libc/stddef.h>
 #include <sched.h>
+#include <percpu.h>
+#include <proc.h>
 #include <fs/uio.h>
 
 int cons_open(struct chr_device *dev, int mode, struct proc *p)
@@ -52,8 +54,13 @@ int cons_getc(struct chr_device *dev)
 	struct cbuf *cbuf = &dev->cbuf;
 
 	spin_lock_irq_save(&cbuf->lock, flags);
-	while (cbuf->head == cbuf->tail)
+	while (cbuf->head == cbuf->tail) {
+		if (current_proc->flags & PF_SIGNALED) {
+			spin_unlock_irq_restore(&cbuf->lock, flags);
+			return 0;
+		}
 		sleep_with_lock(cbuf, &cbuf->lock);
+	}
 	c = cbuf->buf[cbuf->head++];
 	cbuf->head %= BUFSIZ;
 	spin_unlock_irq_restore(&cbuf->lock, flags);

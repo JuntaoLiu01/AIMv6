@@ -27,8 +27,6 @@
  * We will indicate to what extent each system call has been implemented.
  */
 
-#define NR_SYSCALLS	20	/* number of system calls */
-
 /*
  * int fork(void)
  */
@@ -171,5 +169,7 @@
  * Feel free to expand this list.
  * Don't forget to add the corresponding entry in syscall-list.S!
  */
+
+#define NR_SYSCALLS	50	/* number of system calls */
 
 #endif
