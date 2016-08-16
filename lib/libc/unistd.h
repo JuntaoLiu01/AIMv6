@@ -41,5 +41,6 @@ int dup(int oldfd);
 int dup2(int oldfd, int newfd);
 int pipe(int pipefd[]);
 int link(const char *oldpath, const char *newpath);
+int unlink(const char *path);
 
 #endif

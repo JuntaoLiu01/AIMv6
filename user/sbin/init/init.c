@@ -28,7 +28,8 @@ int main(int argc, char *argv[], char *envp[])
 	/*
 	 * Replace it with your own job for now.
 	 */
-	printf("%d\n", link("/etc/hostname", "/hostname"));
+	printf("%d\n", unlink("/etc/hostname"));
+	printf("%d\n", unlink("/hostname"));
 	for (;;) {
 		gets(buf);
 		puts(buf);

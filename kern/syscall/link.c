@@ -24,6 +24,8 @@
 #include <percpu.h>
 #include <proc.h>
 #include <ucred.h>
+#include <panic.h>
+#include <limits.h>
 #include <fs/namei.h>
 #include <fs/vnode.h>
 
@@ -82,6 +84,10 @@ sys_link(struct trapframe *tf, int *errno, char *old, char *new)
 		goto rollback_new;
 	}
 
+	namei_cleanup(&ndnew);
+	namei_putparent(&ndnew);
+	namei_cleanup(&ndold);
+	vput(ndold.vp);
 	*errno = 0;
 	return 0;
 
