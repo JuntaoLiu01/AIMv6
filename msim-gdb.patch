@@ -1,0 +1,74 @@
+--- a/src/debug/gdb.c	2016-08-16 17:03:44.111276308 +0800
++++ b/src/debug/gdb.c	2016-08-16 17:04:00.301741443 +0800
+@@ -622,6 +622,26 @@
+ 		gdb_send_reply("T0");
+ 		return;
+ 	}
++
++	if (strcmp(query, "fThreadInfo") == 0) {
++		/* TODO set a better boundary */
++		char reply[128];
++		snprintf(reply, 128, "m");
++		for (int i = 0; i <= MAX_CPU; ++i) {
++			if (dcpu_find_no(i))
++				snprintf(reply + strlen(reply),
++					 128 - strlen(reply),
++					 "%02x,",
++					 i);
++		}
++		reply[strlen(reply) - 1] = '\0';
++		gdb_send_reply(reply);
++		return;
++	}
++	if (strcmp(query, "sThreadInfo") == 0) {
++		gdb_send_reply("l");
++		return;
++	}
+ 	
+ 	/* Unsupported query */
+ 	gdb_send_reply(GDB_NOT_SUPPORTED);
+@@ -629,6 +649,7 @@
+ 
+ static unsigned int gdb_decode_threadid(char *threadid)
+ {
++	int id;
+ 	if ((strcmp(threadid, "-1") == 0)
+ 	    || (strcmp(threadid, "0") == 0)) {
+ 		gdb_send_reply(GDB_REPLY_OK);
+@@ -636,13 +657,24 @@
+ 	}
+ 	
+ 	// TODO: decode specific threadids
+-	gdb_send_reply(GDB_NOT_SUPPORTED);
+-	return 0;
++	id = atoi(threadid);
++	if (dcpu_find_no(id)) {
++		gdb_send_reply(GDB_REPLY_OK);
++		return id;
++	} else {
++		gdb_send_reply(GDB_NOT_SUPPORTED);
++		return 0;
++	}
+ }
+ 
+ /** Process debugger thread selection
+  *
+  */
++static void gdb_check_thread(char *req)
++{
++	gdb_decode_threadid(req + 1);
++}
++
+ static void gdb_process_thread(char *req)
+ {
+ 	char *query = req + 1;
+@@ -840,6 +872,9 @@
+ 		}
+ 		
+ 		switch (req[0]) {
++		case 'T':  /* Thread status query */
++			gdb_check_thread(req);
++			break;
+ 		case 'H':  /* Thread selection */
+ 			gdb_process_thread(req);
+ 			break;
