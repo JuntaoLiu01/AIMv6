@@ -34,7 +34,9 @@ MODULES += $(top_builddir)/kern/syscall/fork.o \
 	   $(top_builddir)/kern/syscall/dup.o \
 	   $(top_builddir)/kern/syscall/pipe.o \
 	   $(top_builddir)/kern/syscall/link.o \
-	   $(top_builddir)/kern/syscall/unlink.o
+	   $(top_builddir)/kern/syscall/unlink.o \
+	   $(top_builddir)/kern/syscall/chdir.o \
+	   $(top_builddir)/kern/syscall/sync.o
 
 # For each module capable for compiling into the kernel,
 # add its entry here.

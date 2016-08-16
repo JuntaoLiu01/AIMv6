@@ -24,15 +24,11 @@ vn_file_read(struct file *file, void *buf, size_t len, loff_t *off)
 	    current_proc, NULL, file->cred, &done);
 	if (err) {
 		vunlock(file->vnode);
-		/* TODO REPLACE */
-		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 		FUNLOCK(file);
 		return err;
 	}
 	*off += done;
 	vunlock(file->vnode);
-	/* TODO REPLACE */
-	VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 	FUNLOCK(file);
 
 	return 0;
@@ -53,15 +49,11 @@ vn_file_write(struct file *file, void *buf, size_t len, loff_t *off)
 	    current_proc, NULL, file->cred, &done);
 	if (err) {
 		vunlock(file->vnode);
-		/* TODO REPLACE */
-		VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 		FUNLOCK(file);
 		return err;
 	}
 	*off += done;
 	vunlock(file->vnode);
-	/* TODO REPLACE */
-	VFS_SYNC(file->vnode->mount, NOCRED, current_proc);
 	FUNLOCK(file);
 
 	return 0;
@@ -81,8 +73,6 @@ vn_file_close(struct file *file, struct proc *p)
 		return err;
 	}
 
-	/* TODO REPLACE */
-	VFS_SYNC(vnode->mount, NOCRED, p);
 	vput(vnode);
 	return 0;
 }

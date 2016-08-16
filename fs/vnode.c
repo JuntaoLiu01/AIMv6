@@ -22,7 +22,7 @@
 struct allocator_cache vnodepool = {
 	.size = sizeof(struct vnode),
 	.align = 1,
-	.flags = 0,
+	.flags = GFP_ZERO,
 	.create_obj = NULL,
 	.destroy_obj = NULL
 };
@@ -187,16 +187,6 @@ void
 vput(struct vnode *vp)
 {
 	kpdebug("vput %p refs %d\n", vp, vp->refs);
-	/*
-	 * Since we are not periodically syncing all vnodes like other Unixes
-	 * do, and VFS_SYNC() is not iterating over all vnodes to sync the
-	 * metadata into storage, the metadata for root vnode won't be stored
-	 * back into storage because its ref count is always above 0.
-	 *
-	 * So here's a little hack.
-	 */
-	if (vp == rootvnode)
-		VOP_FSYNC(rootvnode, NOCRED, current_proc);
 	atomic_dec(&(vp->refs));
 	if (vp->refs > 0) {
 		vunlock(vp);

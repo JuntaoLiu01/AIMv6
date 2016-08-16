@@ -242,7 +242,6 @@ struct vops {
 	((vp)->ops->getattr((vp), (va), (cred), (p)))
 #define VOP_SETATTR(vp, va, cred, p) \
 	((vp)->ops->setattr((vp), (va), (cred), (p)))
-/* We do not need this because currently all operations are sync. */
 #define VOP_FSYNC(vp, cred, p) \
 	((vp)->ops->fsync((vp), (cred), (p)))
 

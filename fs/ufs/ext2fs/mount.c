@@ -159,7 +159,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		goto rollback_open;
 
 	sb = kmalloc(sizeof(*sb), 0);
-	ump = kmalloc(sizeof(*ump), 0);
+	ump = kmalloc(sizeof(*ump), GFP_ZERO);
 	if (sb == NULL || ump == NULL)
 		goto rollback_buf;
 	fs = bp->data;

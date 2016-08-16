@@ -14,7 +14,7 @@
 struct allocator_cache mountpool = {
 	.size = sizeof(struct mount),
 	.align = 1,
-	.flags = 0,
+	.flags = GFP_ZERO,
 	.create_obj = NULL,
 	.destroy_obj = NULL
 };

@@ -78,6 +78,8 @@ pid_t sys_fork(struct trapframe *tf, int *errno)
 	child->heapbase = current_proc->heapbase;
 	child->cwd = current_proc->cwd;
 	child->rootd = current_proc->rootd;
+	vref(child->cwd);
+	vref(child->rootd);
 	memcpy(&child->fd, &current_proc->fd, sizeof(child->fd));
 	/* increase file vnode ref counts but do not lock them */
 	for (int i = 0; i < OPEN_MAX; ++i) {

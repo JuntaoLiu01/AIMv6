@@ -50,7 +50,7 @@ sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags,
 	unsigned long intr_flags;
 
 	if (!is_user(ufilename)) {
-		*errno = -EFAULT;
+		*errno = EFAULT;
 		return -1;
 	}
 
@@ -126,8 +126,6 @@ found:
 	/* Succeeded, put the vnode into file descriptor table */
 	FINIT_VNODE(file, nd.vp, 0, ioflags, openflags);
 	current_proc->fd[i] = file;
-
-	VFS_SYNC(nd.vp->mount, nd.cred, nd.proc);
 
 	vunlock(nd.vp);
 	spin_unlock_irq_restore(&current_proc->fdlock, intr_flags);

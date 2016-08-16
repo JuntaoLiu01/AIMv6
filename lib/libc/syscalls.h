@@ -128,6 +128,10 @@
  * int getdents(int fd, struct dirent *dirp, unsigned int count)
  */
 #define NRSYS_getdents	24
+/*
+ * void sync(void)
+ */
+#define NRSYS_sync	25
 
 /*
  * The following system calls would probably be supported in future or left
@@ -137,19 +141,19 @@
 /*
  * int stat(const char *path, struct stat *buf)
  */
-#define NRSYS_stat	25
+#define NRSYS_stat	26
 /*
  * int mknod(const char *path, int mode, dev_t dev)
  */
-#define NRSYS_mknod	26
+#define NRSYS_mknod	27
 /*
  * int chroot(const char *path)
  */
-#define NRSYS_chroot	27
+#define NRSYS_chroot	28
 /*
  * int truncate(const char *path, off_t length)
  */
-#define NRSYS_truncate	28
+#define NRSYS_truncate	29
 
 /*
  * These system calls may be implemented only if multi-user is properly
@@ -159,11 +163,11 @@
 /*
  * int chmod(const char *path, int mode)
  */
-#define NRSYS_chmod	29
+#define NRSYS_chmod	30
 /*
  * int chown(const char *path, uid_t owner, gid_t group)
  */
-#define NRSYS_chown	30
+#define NRSYS_chown	31
 
 /*
  * Feel free to expand this list.

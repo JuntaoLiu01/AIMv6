@@ -21,7 +21,7 @@ static struct list_head specinfo_list = EMPTY_LIST(specinfo_list);
 struct allocator_cache specinfopool = {
 	.size = sizeof(struct specinfo),
 	.align = 1,
-	.flags = 0,
+	.flags = GFP_ZERO,
 	.create_obj = NULL,
 	.destroy_obj = NULL
 };

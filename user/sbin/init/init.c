@@ -24,14 +24,39 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	char buf[512];
+	int fd;
 
 	/*
 	 * Replace it with your own job for now.
 	 */
-	printf("%d\n", unlink("/etc/hostname"));
-	printf("%d\n", unlink("/hostname"));
+	printf("%d\n", chdir("etc"));
+	fd = open("hostname", O_WRONLY | O_CREAT | O_TRUNC, 0755);
+	printf("%d\n", fd);
+	if (fd != -1) {
+		write(fd, "localhost\n", 10);
+		close(fd);
+	}
+	if (fork() == 0) {
+		fd = open("profile", O_WRONLY | O_CREAT | O_TRUNC, 0755);
+		printf("%d %d\n", getpid(), fd);
+		if (fd != -1)
+			close(fd);
+		sync();
+		for (;;) ;
+	}
+	printf("%d\n", chdir(".."));
+	fd = open("etc/hostname", O_RDONLY, 0);
+	printf("%d\n", fd);
+	if (fd != -1) {
+		memset(buf, 0, sizeof(buf));
+		printf("%d\n", (int)read(fd, buf, 50));
+		puts(buf);
+		close(fd);
+	}
+	sync();
 	for (;;) {
 		gets(buf);
 		puts(buf);
 	}
 }
+

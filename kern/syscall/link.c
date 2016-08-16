@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <fs/namei.h>
 #include <fs/vnode.h>
+#include <fs/vfs.h>
 
 int
 sys_link(struct trapframe *tf, int *errno, char *old, char *new)
@@ -55,7 +56,7 @@ sys_link(struct trapframe *tf, int *errno, char *old, char *new)
 	}
 
 	NDINIT(&ndold, oldpath, NAMEI_LOOKUP, NAMEI_FOLLOW, NOCRED,
-	    current_proc);
+	    current_proc);		/* TODO REPLACE */
 	if ((err = namei(&ndold)) != 0) {
 		*errno = -err;
 		return -1;
@@ -66,7 +67,7 @@ sys_link(struct trapframe *tf, int *errno, char *old, char *new)
 	}
 
 	NDINIT(&ndnew, newpath, NAMEI_CREATE, NAMEI_FOLLOW | NAMEI_PARENT,
-	    NOCRED, current_proc);
+	    NOCRED, current_proc);	/* TODO REPLACE */
 	if ((err = namei(&ndnew)) != 0) {
 		*errno = -err;
 		goto rollback_old;
@@ -79,7 +80,7 @@ sys_link(struct trapframe *tf, int *errno, char *old, char *new)
 	}
 
 	if ((err = VOP_LINK(ndnew.parentvp, ndnew.seg, ndold.vp, NOCRED,
-	    current_proc)) != 0) {
+	    current_proc)) != 0) {	/* TODO REPLACE */
 		*errno = -err;
 		goto rollback_new;
 	}

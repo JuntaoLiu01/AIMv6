@@ -102,7 +102,9 @@ void initproc_entry(void)
 	kpdebug("TTY initialized\n");
 
 	current_proc->cwd = rootvnode;
+	vref(rootvnode);
 	current_proc->rootd = rootvnode;
+	vref(rootvnode);
 
 	execve("/sbin/init", initargv, initenvp);
 

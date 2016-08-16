@@ -116,7 +116,7 @@ retry:
 		return err;
 	}
 
-	if ((ip = kmalloc(sizeof(*ip), 0)) == NULL) {
+	if ((ip = kmalloc(sizeof(*ip), GFP_ZERO)) == NULL) {
 		vrele(vp);
 		return -ENOMEM;
 	}

@@ -24,18 +24,17 @@
 #include <percpu.h>
 #include <proc.h>
 #include <ucred.h>
-#include <panic.h>
 #include <limits.h>
+#include <fcntl.h>
 #include <fs/namei.h>
 #include <fs/vnode.h>
-#include <fs/vfs.h>
 
 int
-sys_unlink(struct trapframe *tf, int *errno, char *upath)
+sys_chdir(struct trapframe *tf, int *errno, char *upath)
 {
-	struct nameidata nd;
-	char path[PATH_MAX];
 	int err;
+	char path[PATH_MAX];
+	struct nameidata nd;
 
 	if (!is_user(upath)) {
 		*errno = EFAULT;
@@ -45,29 +44,25 @@ sys_unlink(struct trapframe *tf, int *errno, char *upath)
 		*errno = ENAMETOOLONG;
 		return -1;
 	}
-	if (namei_trim_slash(path)) {
-		*errno = EPERM;
-		return -1;
-	}
+	NDINIT_EMPTY(&nd, NOCRED, current_proc);	/* TODO REPLACE */
 
-	NDINIT(&nd, path, NAMEI_LOOKUP, NAMEI_FOLLOW | NAMEI_PARENT, NOCRED,
-	    current_proc);		/* TODO REPLACE */
-	if ((err = namei(&nd)) != 0) {
+	/* TODO: proper permission */
+	err = vn_open(path, FREAD | FWRITE, 0, &nd);
+	if (err) {
 		*errno = -err;
 		return -1;
 	}
-	assert(nd.parentvp != NULL);
-	assert(nd.seg != NULL);
-	assert(nd.vp != NULL);
+	if (nd.vp->type != VDIR) {
+		*errno = ENOTDIR;
+		vput(nd.vp);
+		return -1;
+	}
 
-	/* TODO REPLACE */
-	err = VOP_REMOVE(nd.parentvp, nd.seg, nd.vp, NOCRED, current_proc);
-
-	namei_cleanup(&nd);
-	namei_putparent(&nd);
-	vput(nd.vp);
-	*errno = -err;
-	return err ? -1 : 0;
+	vrele(current_proc->cwd);
+	current_proc->cwd = nd.vp;
+	vunlock(current_proc->cwd);
+	*errno = 0;
+	return 0;
 }
-ADD_SYSCALL(sys_unlink, NRSYS_unlink);
+ADD_SYSCALL(sys_chdir, NRSYS_chdir);
 

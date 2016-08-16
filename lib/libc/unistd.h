@@ -42,5 +42,7 @@ int dup2(int oldfd, int newfd);
 int pipe(int pipefd[]);
 int link(const char *oldpath, const char *newpath);
 int unlink(const char *path);
+int chdir(const char *path);
+void sync(void);
 
 #endif

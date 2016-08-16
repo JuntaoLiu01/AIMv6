@@ -68,8 +68,6 @@ static int do_dup(int oldfd, int newfd)
 				return err;
 			}
 
-			/* TODO REPLACE */
-			VFS_SYNC(vnode->mount, NOCRED, current_proc);
 			vput(vnode);
 			FRELE(&current_proc->fd[newfd]);
 			break;

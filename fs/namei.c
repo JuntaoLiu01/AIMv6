@@ -42,6 +42,8 @@ namei_trim_slash(char *path)
  * Assumes that there are no trailing slashes (except for root directory
  * "/").  If the path name contains trailing slashes, the caller must
  * strip them.
+ *
+ * The root directory or process working directory MUST NOT be locked.
  */
 int
 namei(struct nameidata *nd)

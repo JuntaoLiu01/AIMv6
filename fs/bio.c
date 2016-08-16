@@ -18,7 +18,7 @@ struct buf *buf_get(struct vnode *vp, off_t lblkno, size_t nbytes);
 struct allocator_cache bufpool = {
 	.size = sizeof(struct buf),
 	.align = 1,
-	.flags = 0,
+	.flags = GFP_ZERO,
 	.create_obj = NULL,
 	.destroy_obj = NULL
 };

@@ -16,8 +16,10 @@ ext2fs_sbupdate(struct ufsmount *ump)
 	struct buf *bp;
 	int err;
 
-	bp = bget(ump->devvp, SBLOCK, SBSIZE);
-	e2fs_sbsave(&fs->e2fs, (struct ext2fs *)bp->data);
+	bp = bget(ump->devvp, fsbtodb(fs, (fs->bsize > 1024 ? 0 : 1)),
+	    fs->bsize);
+	e2fs_sbsave(&fs->e2fs,
+	    (struct ext2fs *)(bp->data + (fs->bsize > 1024 ? SBOFF : 0)));
 	err = bwrite(bp);
 	brelse(bp);
 	return err;
@@ -54,24 +56,22 @@ ext2fs_sync(struct mount *mp, struct ucred *cred, struct proc *p)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct m_ext2fs *fs = ump->superblock;
+	struct vnode *vp;
 	int err;
 
 	/*
 	 * Typically, a file system sync operation involves:
 	 * 1. Writing back all modified inodes.
-	 * 2. Flush all dirty buf's of the block device onto the storage.
+	 * 2. Flush all dirty buf's of the block device onto the storage
+	 *    (unnecessary since our system does everything in sync).
 	 * 3. Write back the superblock and update the cylinder group
 	 *    descriptors.
 	 * 4. Copy the superblock and cylinder group descriptors to
 	 *    backup locations if you want.
-	 *
-	 * Because in our system all file operations are already sync'ed,
-	 * and we do not care for consistency (for now), we do not do the
-	 * fourth step.  Also, the first and second step are unnecessary
-	 * because all file I/O are sync in AIMv6, and all inodes are
-	 * updated as long as the kernel is no longer using it (root
-	 * vnode becoming an exception, see vput() and vrele()).
 	 */
+
+	for_each_entry (vp, &mp->vnode_head, mount_node)
+		VOP_FSYNC(vp, cred, p);
 
 	kpdebug("syncing fs\n");
 	if (fs->fmod != 0) {

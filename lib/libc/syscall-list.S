@@ -44,6 +44,7 @@ DEFINE_SYSCALL(mkdir)
 DEFINE_SYSCALL(chdir)
 DEFINE_SYSCALL(rmdir)
 DEFINE_SYSCALL(getdents)
+DEFINE_SYSCALL(sync)
 
 /* Will be supported in future or by yourself */
 DEFINE_SYSCALL(stat)

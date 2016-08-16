@@ -30,7 +30,9 @@ noinst_DATA = sched_yield.o \
 	      dup.o \
 	      pipe.o \
 	      link.o \
-	      unlink.o
+	      unlink.o \
+	      chdir.o \
+	      sync.o
 
 libsyscall_la_SOURCES = \
 	syscall.c
