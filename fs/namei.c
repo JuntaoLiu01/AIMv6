@@ -19,9 +19,22 @@ namei_putparent(struct nameidata *nd)
 	return 0;
 }
 
+bool
+namei_trim_slash(char *path)
+{
+	size_t len = strlen(path);
+	char *p;
+	bool result = false;
+
+	for (p = path + len - 1; p != path && *p == '/'; --p) {
+		result = true;
+		*p = '\0';
+	}
+	return result;
+}
+
 /*
  * Translates a path into a vnode.
- * This will be a HUUUUUGE subroutine.
  *
  * Currently NAMEI_DELETE and NAMEI_LOOKUP are identical as there is no
  * additional job neede for deletion here.

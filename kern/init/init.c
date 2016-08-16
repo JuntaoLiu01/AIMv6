@@ -165,7 +165,7 @@ void __noreturn master_init(void)
 	init_IRQ();
 
 	/* startup smp */
-	smp_startup();
+	//smp_startup();
 
 	/* initialize or cleanup namespace */
 

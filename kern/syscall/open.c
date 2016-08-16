@@ -30,6 +30,7 @@
 #include <percpu.h>
 #include <ucred.h>
 #include <proc.h>
+#include <mm.h>
 #include <fcntl.h>
 #include <fs/vnode.h>
 #include <fs/namei.h>
@@ -47,6 +48,11 @@ sys_open(struct trapframe *tf, int *errno, char *ufilename, int flags,
 	struct vattr va;
 	struct file *file;
 	unsigned long intr_flags;
+
+	if (!is_user(ufilename)) {
+		*errno = -EFAULT;
+		return -1;
+	}
 
 	spin_lock_irq_save(&current_proc->fdlock, intr_flags);
 

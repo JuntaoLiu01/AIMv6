@@ -24,24 +24,11 @@
 int main(int argc, char *argv[], char *envp[])
 {
 	char buf[512];
-	int pipefd[2];
 
 	/*
 	 * Replace it with your own job for now.
 	 */
-	pipe(pipefd);
-	printf("%d %d\n", pipefd[0], pipefd[1]);
-	if (fork() == 0) {
-		/* Child reads from pipe and writes to terminal */
-		close(pipefd[1]);
-		dup2(pipefd[0], STDIN_FILENO);
-		close(pipefd[0]);
-	} else {
-		/* Parent reads from terminal and writes to pipe */
-		close(pipefd[0]);
-		dup2(pipefd[1], STDOUT_FILENO);
-		close(pipefd[1]);
-	}
+	printf("%d\n", link("/etc/hostname", "/hostname"));
 	for (;;) {
 		gets(buf);
 		puts(buf);

@@ -53,5 +53,6 @@ struct nameidata {
 int namei_putparent(struct nameidata *nd);
 int namei(struct nameidata *);
 void namei_cleanup(struct nameidata *);	/* each namei() should end with this */
+bool namei_trim_slash(char *path);
 
 #endif
