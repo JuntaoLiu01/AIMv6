@@ -20,6 +20,8 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#define __LDSCRIPT__
+
 #include <mm.h>
 
 #define KERN_PHYSBASE	RAM_PHYSBASE

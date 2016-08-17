@@ -20,6 +20,7 @@
 #define _ARCH_IRQ_H
 
 #include <sys/types.h>
+#include <regs.h>
 
 /*
  * This file contains ASM statements without the VOLATILE modifier.
@@ -29,32 +30,7 @@
  * at the same time.
  */
 
-#define ARM_IRQ_MASK	0x80
-#define ARM_FIQ_MASK	0x40
-#define ARM_INTERRUPT_MASK	(ARM_IRQ_MASK | ARM_FIQ_MASK)
-
 #ifndef __ASSEMBLER__
-
-#define arm_read_psr(psr) \
-({ \
-	register uint32_t tmp; \
-	asm ( \
-		"mrs	%[tmp], " #psr ";" \
-		: [tmp] "=r" (tmp) \
-	); \
-	tmp; \
-})
-
-#define arm_write_psr(psr, val) \
-	do { \
-		register uint32_t tmp = (val); \
-		asm ( \
-			"msr	" #psr ", %[tmp];" \
-			: /* no output */ \
-			: [tmp] "r" (tmp) \
-			: "cc" \
-		); \
-	} while (0)
 
 static inline void local_irq_enable()
 {

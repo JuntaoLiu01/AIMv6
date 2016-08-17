@@ -44,7 +44,7 @@ void userinit(void)
 	 * (4) scheduler
 	 */
 /* MIPS */
-#if 1
+#if 0
 	asm volatile (
 		"	li	$2, 1;"		/* fork() */
 		"	syscall;"
@@ -62,7 +62,7 @@ void userinit(void)
 #endif
 
 /* ARM */
-#if 0
+#if 1
 	asm volatile (
 		"1:	ldr	r3, =#100000;"
 		"2:	subs	r3, r3, #1;"

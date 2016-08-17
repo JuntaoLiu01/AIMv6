@@ -25,11 +25,13 @@
 #define ARM_STREX_FAIL		1
 #define ARM_STREX_CORRUPT	-1
 
+#define UNLOCKED	0
+#define LOCKED		1
+
 #ifndef __ASSEMBLER__
 
 typedef unsigned int lock_t;
-#define UNLOCKED	0
-#define LOCKED		1
+#define EMPTY_LOCK(lock)	(UNLOCKED)
 
 #define SMP_DMB() \
 	asm volatile ("dmb")

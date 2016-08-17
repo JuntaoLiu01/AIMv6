@@ -17,44 +17,7 @@
 
 include $(top_srcdir)/env.am
 
-SUBDIRS = $(PREFIXED_MACH) $(PREFIXED_CORE)
-DIST_SUBDIRS = \
-	core-cortexa9 \
-	mach-zynq
+noinst_LTLIBRARIES = libcortexa9.la
 
-noinst_LTLIBRARIES = \
-	libentry.la \
-	libarmv7a.la \
-	libarmv7atrap.la \
-	libarmv7asyscall.la
-noinst_DATA = vmaim.lds
-
-CLEANFILES = vmaim.lds
-
-libentry_la_SOURCES = \
-	entry.S
-
-libarmv7a_la_SOURCES = \
-	arch_init.c \
-	mm.c \
-	jump.c \
-	proc.c \
-	smp.c \
-	sync.c
-libarmv7a_la_LIBADD = \
-	$(PREFIXED_MACH)/lib$(MACH).la \
-	$(PREFIXED_CORE)/lib$(CORE).la
-
-# libsyscall.la depends on this, containing system call arguments retrieval
-# etc.
-libarmv7asyscall_la_SOURCES = syscall.c
-
-# depends on libtimer.la (handle_timer_interrupt)
-libarmv7atrap_la_SOURCES = \
-	trap.c \
-	traptest.c \
-	vector.S
-
-vmaim.lds: vmaim.lds.S
-	$(COMPILE) -E -P $^ -o $@
+libcortexa9_la_SOURCES = interrupt.c
 

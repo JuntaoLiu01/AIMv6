@@ -23,8 +23,9 @@
  * gfp.h provides various flags controlling behaviors or providing constraints
  * for allocating/freeing.
  */
-
+#ifndef __ASSEMBLER__
 typedef uint32_t gfp_t;
+#endif /* !__ASSEMBLER__ */
 
 #define GFP_UNSAFE	0x1	/* Do not fill in junk before freeing */
 #define GFP_ZERO	0x2	/* Zero out the buffer after allocation */

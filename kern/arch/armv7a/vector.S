@@ -104,9 +104,18 @@ trap_entry:
 	ldmia	r2, {r2, r3} /* kstack and kstack_size */
 	add	sp, r2, r3
 
-	/* call the C handler */
 trap_entry_j1:
+	/* leave a space for trapframe */
+	sub	sp, sp, #TRAPFRAME_SIZE
 	mov	fp, sp
+	/* save the trapframe */
+	mov	r4, r0	/* old trapframe */
+	mov	r5, r1	/* type */
+	mov	r0, sp
+	mov	r1, r4
+	bl	arm_copy_trapframe	/* (dest, src) -> dest */
+	/* call the C handler */
+	mov	r1, r5
 	bl	arm_handle_trap
 	/* arm_handle_svc(struct regs *, uint32_t) */
 

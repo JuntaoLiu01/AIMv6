@@ -127,6 +127,8 @@ AS_CASE([$ARCH],
 
 AS_CASE([$MACH],
 	[zynq], [
+		AC_SUBST([CORE], [cortexa9])
+		AC_SUBST([PREFIXED_CORE], [core-cortexa9])
 		AS_VAR_SET([__with_ram_physbase], [0x00100000])
 		AS_VAR_SET([__with_kern_start], [0x00100000])
 
@@ -384,6 +386,7 @@ AC_CONFIG_FILES([
 	kern/Makefile
 	kern/arch/Makefile
 	kern/arch/armv7a/Makefile
+	kern/arch/armv7a/core-cortexa9/Makefile
 	kern/arch/armv7a/mach-zynq/Makefile
 	kern/arch/i386/Makefile
 	kern/arch/mips/Makefile

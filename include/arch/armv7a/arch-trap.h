@@ -30,6 +30,8 @@
 #define	ARM_IRQ		6
 #define ARM_FIQ		7
 
+#define TRAPFRAME_SIZE	0x44
+
 #ifndef __ASSEMBLER__
 
 struct trapframe {
@@ -39,8 +41,11 @@ struct trapframe {
 static inline bool from_kernel(struct trapframe *tf)
 {
 	/* USR mode is user, everything else is kernel. */
-	return ((tf->psr & 0xF) != 0x0);
+	return ((tf->psr & ARM_MODE_MASK) != ARM_MODE_USR);
 }
+
+__noreturn
+void trap_return(struct trapframe *tf);
 
 #endif	/* !__ASSEMBLER__ */
 

@@ -51,7 +51,7 @@ void pmemset(addr_t paddr, unsigned char b, lsize_t size)
 	assert(IS_ALIGNED(size, PAGE_SIZE));
 	assert(IS_ALIGNED(paddr, PAGE_SIZE));
 	for (; size > 0; size -= PAGE_SIZE, paddr += PAGE_SIZE)
-		memset(pa2kva(paddr), b, PAGE_SIZE);
+		memset((void *)pa2kva(paddr), b, PAGE_SIZE);
 }
 
 int alloc_pages(struct pages *pages)

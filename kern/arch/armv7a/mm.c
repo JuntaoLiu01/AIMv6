@@ -35,6 +35,8 @@
 #include <panic.h>
 #include <libc/string.h>
 
+pgindex_t *pgdir_slots[MAX_CPUS];
+
 static struct allocator_cache *pt_l1_cache = NULL, *pt_l2_cache = NULL;
 
 bool early_mapping_valid(struct early_mapping *entry)

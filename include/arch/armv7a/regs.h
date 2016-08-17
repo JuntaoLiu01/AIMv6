@@ -19,6 +19,20 @@
 #ifndef _ARCH_REGS_H
 #define _ARCH_REGS_H
 
+#define ARM_IRQ_MASK	0x80
+#define ARM_FIQ_MASK	0x40
+#define ARM_INTERRUPT_MASK	(ARM_IRQ_MASK | ARM_FIQ_MASK)
+
+#define ARM_MODE_MASK	0x1F
+#define ARM_MODE_USR	0x10
+#define ARM_MODE_FIQ	0x11
+#define ARM_MODE_IRQ	0x12
+#define ARM_MODE_SVC	0x13
+#define ARM_MODE_MON	0x16
+#define ARM_MODE_ABT	0x17
+#define ARM_MODE_UND	0x1B
+#define ARM_MODE_SYS	0x1F
+
 #ifndef __ASSEMBLER__
 
 struct regs {
@@ -41,6 +55,29 @@ struct regs {
 	uint32_t r12;
 	uint32_t pc;
 };
+
+#define arm_read_psr(psr) \
+({ \
+	register uint32_t tmp; \
+	asm ( \
+		"mrs	%[tmp], " #psr ";" \
+		: [tmp] "=r" (tmp) \
+	); \
+	tmp; \
+})
+
+#define arm_write_psr(psr, val) \
+	do { \
+		register uint32_t tmp = (val); \
+		asm ( \
+			"msr	" #psr ", %[tmp];" \
+			: /* no output */ \
+			: [tmp] "r" (tmp) \
+			: "cc" \
+		); \
+	} while (0)
+
+#define arm_read_cpsr() arm_read_psr(cpsr)
 
 #endif	/* !__ASSEMBLER__ */
 

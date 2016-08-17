@@ -16,42 +16,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _PANIC_H
-#define _PANIC_H
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#endif
+#endif /* HAVE_CONFIG_H */
 
-#ifndef __ASSEMBLER__
+#include <sys/types.h>
+#include <arch-trap.h>
+#include <errno.h>
+#include <io.h>
+#include <mp.h>
 
-/*
- * Internal arch-independent code for panicking current processor.
- * May be called from arch code.
- */
-__noreturn
-void __local_panic(void);
+#define NR_INTS	256
 
-__noreturn
-void panic(const char *fmt, ...);
+static int (*__dispatch[NR_INTS])(struct trapframe *);
 
-/* Arch/mach-dependent code */
-void panic_other_cpus(void);
-
-#define assert(condition) \
-	do { \
-		if (!(condition)) \
-			panic("Assertion failed in %s (%s:%d): %s\n", \
-			    __func__, __FILE__, __LINE__, #condition); \
-	} while (0)
-
-#ifdef DEBUG
-#define kpdebug(fmt, ...) kprintf("DEBUG: " fmt, __VA_ARGS__)
-#else
-#define kpdebug(fmt, ...)
-#endif
-
-#endif /* !__ASSEMBLER__ */
-
-#endif
+int handle_interrupt(struct trapframe *regs)
+{
+	/* NOTREACHED */
+	return -EINVAL;
+}
 

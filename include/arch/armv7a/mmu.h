@@ -100,6 +100,8 @@ typedef uint32_t arm_pte_l2_t;
 
 typedef arm_pte_l1_t pgindex_t;
 
+extern pgindex_t *pgdir_slots[MAX_CPUS];
+
 void page_index_clear(pgindex_t * index);
 int page_index_early_map(pgindex_t * index, addr_t paddr, void *vaddr,
 	size_t length);

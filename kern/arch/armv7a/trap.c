@@ -124,34 +124,28 @@ static void dump_regs(struct trapframe *tf)
 	kprintf("DEBUG: lr = 0x%08x\n", tf->lr);
 }
 
+struct trapframe *arm_copy_trapframe(struct trapframe *dest, struct trapframe *src)
+{
+	*dest = *src;
+	return dest;
+}
+
 __noreturn
 void arm_handle_trap(struct trapframe *tf, uint32_t type)
 {
-	/*
-	 * We're here in SYS mode with IRQ disabled.
-	 * type contains the trap type, see arm-trap.h for details
-	 * tf is stored in per-CPU per-MODE storage.
-	 * you MUST store it somewhere else before you can turn on
-	 * IRQ again - a further exception will reuse that.
-	 * you MUST NOT try to free that memory.
-	 * you are RECOMMENDED to store tf on stack and not on heap.
-	 * see trap_return for details.
-	 */
-	struct trapframe saved_tf = *tf;
-
 	kprintf("DEBUG: Enter vector slot %d handler!\n", type);
-	dump_regs(&saved_tf);
+	dump_regs(tf);
 
 	switch (type) {
 	case ARM_SVC:
-		handle_syscall(&saved_tf);
+		handle_syscall(tf);
 		break;
 	case ARM_IRQ:
-		handle_interrupt(&saved_tf);
+		handle_interrupt(tf);
 		break;
 	default:
 		panic("Unexpected trap\n");
 	}
-	trap_return(&saved_tf);
+	trap_return(tf);
 }
 

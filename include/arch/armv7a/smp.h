@@ -48,6 +48,7 @@ static inline unsigned int __cpuid(void)
 #define cpuid()		__cpuid()
 
 #else	/* __ASSEMBLER__ */
+#ifndef __LDSCRIPT__
 /*
  * The header is included by an assembly header/source.
  */
@@ -78,7 +79,15 @@ static inline unsigned int __cpuid(void)
 	mov	\result, #0x0
 	.endm
 
+#endif /* !__LDSCRIPT__ */
 #endif /* !__ASSEMBLER__ */
+
+#ifndef __ASSEMBLER__
+#include <mmu.h>
+extern unsigned long kernelsp[MAX_CPUS];
+#define current_kernelsp	kernelsp[cpuid()]
+#define current_pgdir		pgdir_slots[cpuid()]
+#endif	/* !__ASSEMBLER__ */
 
 #endif /* _ARCH_SMP_H */
 

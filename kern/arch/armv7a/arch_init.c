@@ -26,6 +26,8 @@
 #include <mm.h>
 #include <drivers/io/io-mem.h>
 
+unsigned long kernelsp[MAX_CPUS];
+
 void early_arch_init(void)
 {
 	io_mem_init(&early_memory_bus);
