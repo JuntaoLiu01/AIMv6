@@ -17,14 +17,21 @@
 
 include $(top_srcdir)/env.am
 
-noinst_LTLIBRARIES = libblock-raw.la
+noinst_LTLIBRARIES = libblock-raw.la libblock.la
+noinst_DATA =
 
-libblock_raw_la_SOURCES = hd.h
+libblock_raw_la_SOURCES =
 libblock_raw_la_CPPFLAGS = $(AM_CPPFLAGS_NOPIC) -DRAW
 libblock_raw_la_CFLAGS = $(AM_CFLAGS_NOPIC)
 libblock_raw_la_CCASFLAGS = $(AM_CCASFLAGS_NOPIC)
 libblock_raw_la_LDFLAGS = $(AM_LDFLAGS_NOPIC)
 
+libblock_la_SOURCES =
+
 if BLOCK_MSIM
 libblock_raw_la_SOURCES += msim-ddisk.c msim-ddisk.h
+libblock_raw_la_DEPENDENCIES = $(libblock_raw_la_SOURCES) msim-ddisk-raw.c
+noinst_DATA += msim-ddisk.o
+msim-ddisk.o: msim-ddisk.c msim-ddisk.h msim-ddisk-kernel.c
 endif
+

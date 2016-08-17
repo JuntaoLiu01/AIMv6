@@ -22,7 +22,7 @@
 
 /* from kernel */
 #include <sys/types.h>
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 #include <pmm.h>
 #include <vmm.h>
@@ -57,8 +57,7 @@ static void __noreturn rest_percpu_init(void)
  */
 static void __noreturn rest_init(void)
 {
-	/* TODO: temporary test, will be removed.  Will spawn initproc here. */
-	proc_test();
+	spawn_initproc();
 	percpu_blocked = false;
 	rest_percpu_init();
 }
@@ -160,15 +159,13 @@ void __noreturn master_init(void)
 	a = cache_alloc(&cache);
 	kpdebug("a = 0x%08x\n", a);
 
+	probe_devices();
+	kprintf("KERN: probe device done\n");
+
+	init_IRQ();
+
 	/* startup smp */
 	smp_startup();
-
-	/*
-	 * do initcalls, one by one.
-	 * They may fork or sleep or reschedule.
-	 * In case any initcalls issue a fork, there MUST be EXACTLY one return
-	 * from each initcall.
-	 */
 
 	/* initialize or cleanup namespace */
 

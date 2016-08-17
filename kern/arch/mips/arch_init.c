@@ -21,7 +21,7 @@
 #endif
 
 #include <init.h>
-#include <console.h>
+#include <aim/console.h>
 #include <drivers/io/io-mem.h>
 
 unsigned long kernelsp[MAX_CPUS];

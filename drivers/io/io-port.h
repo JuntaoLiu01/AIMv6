@@ -36,7 +36,7 @@
  * Every machine have at most one port I/O bus.
  */
 __attribute__((visibility("hidden")))
-extern struct bus_device portio_bus;
+extern struct bus_device early_portio_bus;
 
 /* Connect Port I/O bus to another bus. */
 void portio_bus_connect(struct bus_device *portio,

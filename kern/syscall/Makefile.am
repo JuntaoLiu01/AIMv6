@@ -20,7 +20,19 @@ include $(top_srcdir)/env.am
 noinst_LTLIBRARIES = libsyscall.la
 noinst_DATA = sched_yield.o \
 	      fork.o \
-	      getpid.o
+	      execve.o \
+	      getpid.o \
+	      read.o \
+	      write.o \
+	      open.o \
+	      close.o \
+	      lseek.o \
+	      dup.o \
+	      pipe.o \
+	      link.o \
+	      unlink.o \
+	      chdir.o \
+	      sync.o
 
 libsyscall_la_SOURCES = \
 	syscall.c

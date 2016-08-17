@@ -26,7 +26,7 @@
 #include <smp.h>
 #include <util.h>
 #include <drivers/serial/uart.h>
-#include <drivers/block/hd.h>
+#include <drivers/hd/hd.h>
 #include <drivers/block/msim-ddisk.h>
 #include <drivers/io/io-mem.h>
 

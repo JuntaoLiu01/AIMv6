@@ -178,5 +178,6 @@ BEGIN(load_slave_sp)
 	ADDU	t0, t1
 	LOAD	sp, (t0)
 	ADDU	sp, IO_CAC_BASE
+	ADDU	sp, KSTACKSIZE - 32
 	jr	ra
 END(load_slave_sp)

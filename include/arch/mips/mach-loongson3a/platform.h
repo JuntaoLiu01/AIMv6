@@ -31,7 +31,6 @@
 
 /*
  * Loongson 3A address space router 
- * TODO: shall we make it a device?  We'd better not modify them.
  */
 #define LOONGSON3A_CORE_WIN_BASE	0x3ff02000
 #define LOONGSON3A_CPU_WIN_BASE		0x3ff00000
@@ -49,6 +48,9 @@
 #define LOONGSON3A_NUMA_MASK		0xf00000000000
 #define LOONGSON3A_HT0_BASE		0x0c0000000000
 #define LOONGSON3A_HT1_BASE		0x0e0000000000
+#define LOONGSON3A_HT1_CFG_BASE		0x0efdfb000000
+#define LOONGSON3A_HT1_PORTIO_BASE	0x0efdfc000000
+#define LOONGSON3A_HT1_PCICFG_BASE	0x0efdfe000000
 /* 32-bit compatibility spaces */
 #define LOONGSON3A_HTIO32		0x18000000
 #define LOONGSON3A_HTMEM32		0x1e000000
@@ -73,5 +75,27 @@
 #define LOONGSON3A_COREx_IPI_MB1(x)	(LOONGSON3A_COREx_IPI_BASE(x) + 0x28)
 #define LOONGSON3A_COREx_IPI_MB2(x)	(LOONGSON3A_COREx_IPI_BASE(x) + 0x30)
 #define LOONGSON3A_COREx_IPI_MB3(x)	(LOONGSON3A_COREx_IPI_BASE(x) + 0x38)
+
+/* Interrupt router registers and values */
+#define LOONGSON3A_INTROUTER_BASE	0x3ff01400
+#define LOONGSON3A_INTROUTER_LPC	0x0a
+#define LOONGSON3A_INTROUTER_HT1(x)	(0x18 + (x))
+#define LOONGSON3A_INTROUTER_ISR	0x20
+#define LOONGSON3A_INTROUTER_INTEN	0x24
+#define LOONGSON3A_INTROUTER_INTENSET	0x28
+#define LOONGSON3A_INTROUTER_INTENCLR	0x2c
+/* IP 2-5 */
+#define LOONGSON3A_INTROUTER_IP(x)	(1 << ((x) + 2))
+#define LOONGSON3A_INTROUTER_CORE(x)	(1 << (x))
+
+/*
+ * HyperTransport registers
+ * TODO: make this into driver framework.
+ */
+#define LOONGSON3A_HT_ISR0		0x80	/* IRQ 0-31 status */
+#define LOONGSON3A_HT_IEN0		0xa0	/* IRQ 0-31 enable */
+
+/* Intel 8259 configurations */
+#define I8259_IRQ_BASE			0
 
 #endif

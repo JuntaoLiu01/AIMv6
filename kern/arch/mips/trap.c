@@ -26,7 +26,7 @@
 #include <mipsregs.h>
 #include <cp0regdef.h>
 #include <trap.h>
-#include <console.h>
+#include <aim/console.h>
 #include <arch-trap.h>
 #include <syscall.h>
 #include <decode.h>
@@ -229,6 +229,7 @@ static void __skip_victim(struct trapframe *tf)
 
 void trap_handler(struct trapframe *regs)
 {
+	//kprintf("#%d Handling trap\n", cpuid());
 	switch (EXCCODE(regs->cause)) {
 	case EC_sys:
 		__skip_victim(regs);

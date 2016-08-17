@@ -28,7 +28,7 @@
 #include <aim/device.h>
 #include <aim/initcalls.h>
 #include <aim/early_kmmap.h>
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 #include <panic.h>
 
@@ -47,65 +47,65 @@ static struct chr_device __early_uart_zynq;
 static inline void __uart_zynq_enable(struct chr_device * inst)
 {
 	struct bus_device * bus = inst->bus;
-	bus_write_fp bus_write32 = bus->get_write_fp(bus, 32);
+	bus_write_fp bus_write32 = bus->bus_driver.get_write_fp(bus, 32);
 
 	/* Enable TX and RX */
-	bus_write32(bus, inst->base + UART_OFFSET_CR,
+	bus_write32(bus, inst->base, UART_OFFSET_CR,
 		UART_CR_TX_EN | UART_CR_RX_EN);
 }
 
 static inline void __uart_zynq_disable(struct chr_device * inst)
 {
 	struct bus_device * bus = inst->bus;
-	bus_write_fp bus_write32 = bus->get_write_fp(bus, 32);
+	bus_write_fp bus_write32 = bus->bus_driver.get_write_fp(bus, 32);
 
 	/* Disable TX and RX */
-	bus_write32(bus, inst->base + UART_OFFSET_CR,
+	bus_write32(bus, inst->base, UART_OFFSET_CR,
 		UART_CR_TX_DIS | UART_CR_RX_DIS);
 }
 
 static inline void __uart_zynq_init(struct chr_device * inst)
 {
 	struct bus_device * bus = inst->bus;
-	bus_write_fp bus_write32 = bus->get_write_fp(bus, 32);
+	bus_write_fp bus_write32 = bus->bus_driver.get_write_fp(bus, 32);
 
 	/* Disable interrupts */
-	bus_write32(bus, inst->base + UART_OFFSET_IDR, UART_IXR_MASK);
+	bus_write32(bus, inst->base, UART_OFFSET_IDR, UART_IXR_MASK);
 	/* Disable TX and RX */
 	__uart_zynq_disable(inst);
 	/* Reset TX and RX, Clear FIFO */
-	bus_write32(bus, inst->base + UART_OFFSET_CR,
+	bus_write32(bus, inst->base, UART_OFFSET_CR,
 		UART_CR_TXRST | UART_CR_RXRST);
 	/* Clear Flags */
-	bus_write32(bus, inst->base + UART_OFFSET_ISR, UART_IXR_MASK);
+	bus_write32(bus, inst->base, UART_OFFSET_ISR, UART_IXR_MASK);
 	/* Mode Reset to Normal/8-N-1 */
-	bus_write32(bus, inst->base + UART_OFFSET_MR,
+	bus_write32(bus, inst->base, UART_OFFSET_MR,
 		UART_MR_CHMODE_NORM | UART_MR_CHARLEN_8_BIT |
 		UART_MR_PARITY_NONE | UART_MR_STOPMODE_1_BIT);
 	/* Trigger Reset */
-	bus_write32(bus, inst->base + UART_OFFSET_RXWM, UART_RXWM_RESET_VAL);
-	bus_write32(bus, inst->base + UART_OFFSET_TXWM, UART_TXWM_RESET_VAL);
+	bus_write32(bus, inst->base, UART_OFFSET_RXWM, UART_RXWM_RESET_VAL);
+	bus_write32(bus, inst->base, UART_OFFSET_TXWM, UART_TXWM_RESET_VAL);
 	/* Disable RX timeout */
-	bus_write32(bus, inst->base + UART_OFFSET_RXTOUT, UART_RXTOUT_DISABLE);
+	bus_write32(bus, inst->base, UART_OFFSET_RXTOUT, UART_RXTOUT_DISABLE);
 	/* Reset baud rate generator and divider to genetate 115200 */
-	bus_write32(bus, inst->base + UART_OFFSET_BAUDGEN, 0x3E);
-	bus_write32(bus, inst->base + UART_OFFSET_BAUDDIV, 0x06);
+	bus_write32(bus, inst->base, UART_OFFSET_BAUDGEN, 0x3E);
+	bus_write32(bus, inst->base, UART_OFFSET_BAUDDIV, 0x06);
 	/* Set CR Value */
-	bus_write32(bus, inst->base + UART_OFFSET_CR,
+	bus_write32(bus, inst->base, UART_OFFSET_CR,
 		UART_CR_RX_DIS | UART_CR_TX_DIS | UART_CR_STOPBRK);
 }
 
 static inline unsigned char __uart_zynq_getchar(struct chr_device * inst)
 {
 	struct bus_device * bus = inst->bus;
-	bus_read_fp bus_read8 = bus->get_read_fp(bus, 8);
-	bus_read_fp bus_read32 = bus->get_read_fp(bus, 32);
+	bus_read_fp bus_read8 = bus->bus_driver.get_read_fp(bus, 8);
+	bus_read_fp bus_read32 = bus->bus_driver.get_read_fp(bus, 32);
 	uint64_t tmp;
 
 	do {
-		bus_read32(bus, inst->base + UART_OFFSET_SR, &tmp);
+		bus_read32(bus, inst->base, UART_OFFSET_SR, &tmp);
 	} while (tmp & UART_SR_RXEMPTY);
-	bus_read8(bus, inst->base + UART_OFFSET_FIFO, &tmp);
+	bus_read8(bus, inst->base, UART_OFFSET_FIFO, &tmp);
 
 	return (unsigned char)tmp;
 	/* if anything goes wrong, this routine should return EOF */
@@ -117,14 +117,14 @@ static inline unsigned char __uart_zynq_getchar(struct chr_device * inst)
 static inline int __uart_zynq_putchar(struct chr_device * inst, unsigned char c)
 {
 	struct bus_device * bus = inst->bus;
-	bus_read_fp bus_read32 = bus->get_read_fp(bus, 32);
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, 8);
+	bus_read_fp bus_read32 = bus->bus_driver.get_read_fp(bus, 32);
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 	uint64_t tmp;
 
 	do {
-		bus_read32(bus, inst->base + UART_OFFSET_SR, &tmp);
+		bus_read32(bus, inst->base, UART_OFFSET_SR, &tmp);
 	} while (tmp & UART_SR_TXFULL);
-	bus_write8(bus, inst->base + UART_OFFSET_FIFO, c);
+	bus_write8(bus, inst->base, UART_OFFSET_FIFO, c);
 
 	return 0;
 }

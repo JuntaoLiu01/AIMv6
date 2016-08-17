@@ -52,7 +52,6 @@ struct blockhdr {
 
 static struct list_head __bootstrap_head;
 static struct list_head __head;
-//static lock_t lock;
 
 /*
  * TODO: we probably need to explain the algorithm and data structure here
@@ -67,9 +66,23 @@ static inline void *__alloc(struct list_head *head, size_t size, gfp_t flags)
 	size = ALIGN_ABOVE(size, ALLOC_ALIGN);
 	allocsize = size + sizeof(struct blockhdr);
 
+#if 0
+	{
+		struct blockhdr *this;
+		kpdebug("ALLOC: kmalloc: before alloc: free list begin from head %p\n", head);
+		for_each_entry (this, head, node) {
+			kpdebug("ALLOC: kmalloc: this:%p size:%ld(%ld) free:%d flags:%x next:%p prev:%p\n",
+			    this, this->size, this->size - sizeof(struct blockhdr), this->free, this->flags, this->node.next, this->node.prev);
+		}
+		kpdebug("ALLOC: kmalloc: before alloc: free list end\n");
+	}
+#endif
+
 	/* Search for a first fit */
 	for_each_entry(this, head, node) {
-		if (this->size >= allocsize) { break; }
+		if (this->size >= allocsize) {
+			break;
+		}
 	}
 
 	/* No fit found, ask for pages */
@@ -110,6 +123,17 @@ static inline void *__alloc(struct list_head *head, size_t size, gfp_t flags)
 	}
 	this->free = false;
 	list_del(&this->node);
+#if 0
+	{
+		struct blockhdr *this;
+		kpdebug("ALLOC: kmalloc: after alloc: free list begin from head %p\n", head);
+		for_each_entry (this, head, node) {
+			kpdebug("ALLOC: kmalloc: this:%p size:%ld(%ld) free:%d flags:%x next:%p prev:%p\n",
+			    this, this->size, this->size - sizeof(struct blockhdr), this->free, this->flags, this->node.next, this->node.prev);
+		}
+		kpdebug("ALLOC: kmalloc: after alloc: free list end\n");
+	}
+#endif
 	return PAYLOAD(this);
 }
 
@@ -124,6 +148,17 @@ static inline void __free(struct list_head *head, void *obj)
 
 	this->free = true;
 
+#if 0
+	{
+		struct blockhdr *this;
+		kpdebug("ALLOC: kfree: before free: free list begin from head %p\n", head);
+		for_each_entry (this, head, node) {
+			kpdebug("ALLOC: kfree: this:%p size:%ld(%ld) free:%d flags:%x next:%p prev:%p\n",
+			    this, this->size, this->size - sizeof(struct blockhdr), this->free, this->flags, this->node.next, this->node.prev);
+		}
+		kpdebug("ALLOC: kfree: before free: free list end\n");
+	}
+#endif
 	/* insert to list */
 	for_each_entry(tmp, head, node) {
 		if (tmp >= this) { break; }
@@ -183,6 +218,17 @@ static inline void __free(struct list_head *head, void *obj)
 		/* really free pages */
 		free_pages(&pages);
 	}
+#if 0
+	{
+		struct blockhdr *this;
+		kpdebug("ALLOC: kfree: after free: free list begin from head %p\n", head);
+		for_each_entry (this, head, node) {
+			kpdebug("ALLOC: kfree: this:%p size:%ld(%ld) free:%d flags:%x next:%p prev:%p\n",
+			    this, this->size, this->size - sizeof(struct blockhdr), this->free, this->flags, this->node.next, this->node.prev);
+		}
+		kpdebug("ALLOC: kfree: after free: free list end\n");
+	}
+#endif
 }
 
 static size_t __size(void *obj)
@@ -219,6 +265,7 @@ int simple_allocator_bootstrap(void *pt, size_t size)
 	struct blockhdr *block = pt;
 	block->size = size;
 	block->free = true;
+	block->flags = 0;
 	list_init(&__bootstrap_head);
 	list_add_after(&block->node, &__bootstrap_head);
 

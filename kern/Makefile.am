@@ -23,6 +23,7 @@ SUBDIRS = \
 	init \
 	dev \
 	debug \
+	file \
 	lib \
 	mm \
 	proc \
@@ -43,7 +44,8 @@ vmaim_elf_SOURCES =
 # that is, callers go first, and callees go last.
 # NO circular reference is allowed.
 KERNEL_INTERNAL_LIBS = \
-	lib/libbitmap/libbitmap.la
+	lib/libbitmap/libbitmap.la \
+	lib/libkern.la
 
 KERNEL_LIBS = \
 	arch/$(ARCH)/libentry.la \
@@ -52,6 +54,8 @@ KERNEL_LIBS = \
 	arch/$(ARCH)/lib$(ARCH)trap.la \
 	timer/libtimer.la \
 	proc/sched/libsched.la \
+	$(top_builddir)/fs/libfs.la \
+	file/libfile.la \
 	dev/libdev.la \
 	mm/libmm.la \
 	smp/libsmp.la \

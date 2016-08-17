@@ -19,6 +19,10 @@
 #ifndef _AIM_INIT_H
 #define _AIM_INIT_H
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 typedef int (*initcall_t)(void);
 
 #ifndef __ASSEMBLER__
@@ -50,6 +54,7 @@ typedef int (*initcall_t)(void);
 
 #define INITCALL_SYSCALLS(fn)	INITCALL_SUBSYS(fn)
 #define INITCALL_SCHED(fn)	INITCALL_SUBSYS(fn)
+#define INITCALL_DRIVER(fn)	INITCALL_SUBSYS(fn)
 
 int do_early_initcalls();
 int do_initcalls();

@@ -22,6 +22,7 @@
 
 /* from kernel */
 #include <sys/types.h>
+#include <sys/param.h>	/* SECTOR_SIZE */
 #include <util.h>
 /* from libc */
 #include <libc/string.h>
@@ -34,11 +35,9 @@
 #include <drivers/sd/sd.h>
 #include <drivers/sd/sd-zynq.h>
 
-#define SECTOR_SIZE	512
-
 char fw_stack[4096];
 
-void sleep(uint32_t s)
+void delay(uint32_t s)
 {
 	uint64_t time, time1;
 	time = timer_read();
@@ -48,7 +47,7 @@ void sleep(uint32_t s)
 	} while (time1 < time);
 }
 
-void usleep(uint32_t us)
+void delay(uint32_t us)
 {
 	uint64_t time, time1;
 	time = timer_read();
@@ -94,7 +93,7 @@ void fw_main(void)
 	io_mem_init(&early_memory_bus);
 
 	/* Wait for UART fifo to flush */
-	sleep(1);
+	delay(1);
 	
 	/* Initialize and enable UART */
 	uart_init();

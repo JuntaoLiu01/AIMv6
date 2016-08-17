@@ -4,6 +4,8 @@ AIMv6 project builds an operating system for teaching purposes.
 This system should seperate kernel logic from platform-dependent implementation,
 thus should work across platforms.
 
+For now, the system itself is certainly very buggy and vulnerable.
+
 ## Supported platforms
 
 * ARMv7A
@@ -211,6 +213,14 @@ to connect to the gdb server brought up by MSIM.
 You should prepare a SATA-to-USB converter or something to enable you to upload
 your kernel image into the hard disk inside Loongson 3A box.
 
+Also, you probably need to use a machine with serial port (which is,
+unfortunately, unavailable on most laptops), or a serial-to-USB converter.
+Currently we are only using serial consoles for input/output, as VGA and
+USB keyboard is too complicated for a teaching operating system.
+
+You need a modem connector program such as "minicom" to work.  **Make sure you
+turn off Hardware Flow Control!**
+
 Replace the `boot/vmlinux` file with the kernel image you compiled, and you're
 done.
 
@@ -381,13 +391,13 @@ Feel free to add features here
 * Page allocator
 * Arbitrary size allocator
 * Trap handler
+* User memory mapping
+* Scheduler
+* SMP
 
 ### Work in progress
 
-* User memory mapping
-* Scheduler
 * File system
-* SMP
 
 ### Currently skipping
 
@@ -404,7 +414,6 @@ These features may be put into the "work in progress" section, or "currently
 skipping" section.
 
 * User-side exceptions as signals
-* I/O scheduler
 * Multiple-user
 * Access control
 
@@ -416,6 +425,7 @@ they are often quite complicated.
 * Implicit dynamic linking
 * Explicit dynamic loading
 * Signal handler registration
+* I/O scheduler
 
 ## BUGS
 

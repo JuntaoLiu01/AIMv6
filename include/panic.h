@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include <aim/console.h>
+
 #ifndef __ASSEMBLER__
 
 /*
@@ -46,9 +48,9 @@ void panic_other_cpus(void);
 	} while (0)
 
 #ifdef DEBUG
-#define kpdebug(fmt, ...) kprintf("DEBUG: " fmt, __VA_ARGS__)
+#define kpdebug(...) kprintf("DEBUG: " __VA_ARGS__)
 #else
-#define kpdebug(fmt, ...)
+#define kpdebug(...)
 #endif
 
 #endif /* !__ASSEMBLER__ */

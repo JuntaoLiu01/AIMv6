@@ -25,7 +25,7 @@
 #include <aim/initcalls.h>
 #include <aim/sync.h>
 #include <vmm.h>
-#include <console.h>
+#include <aim/console.h>
 
 #include <libc/string.h>
 #include <list.h>
@@ -103,6 +103,21 @@ ret:
 	return retval;
 }
 
+static struct device *__next(struct device *dev, void **savep)
+{
+	if (dev == NULL) {
+		*savep = list_first_entry(&__head, struct device_entry, node);
+	} else {
+		assert(((struct device_entry *)(*savep))->dev == dev);
+		*savep = list_next_entry((struct device_entry *)(*savep),
+		    struct device_entry, node);
+	}
+	if (*savep == &__head)
+		return NULL;
+	else
+		return ((struct device_entry *)(*savep))->dev;
+}
+
 static struct device *__from_id(dev_t devno)
 {
 	struct device_entry *tmp;
@@ -156,6 +171,7 @@ static int __init(void)
 	struct device_index this = {
 		.add		= __add,
 		.remove		= __remove,
+		.next		= __next,
 		.from_id	= __from_id,
 		.from_name	= __from_name
 	};

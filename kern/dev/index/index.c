@@ -37,6 +37,7 @@
 
 static int __add(struct device *dev) { return EOF; }
 static int __remove(struct device *dev) { return EOF; }
+static struct device *__next(struct device *dev, void **savep) { return NULL; }
 static struct device *__from_id(dev_t devno) { return NULL; }
 static struct device *__from_name(char *name) { return NULL; }
 
@@ -44,6 +45,7 @@ static struct device *__from_name(char *name) { return NULL; }
 static struct device_index __index = {
 	.add		= __add,
 	.remove		= __remove,
+	.next		= __next,
 	.from_id	= __from_id,
 	.from_name	= __from_name
 };
@@ -61,6 +63,11 @@ int dev_add(struct device *dev)
 int dev_remove(struct device *dev)
 {
 	return __index.remove(dev);
+}
+
+struct device *dev_next(struct device *dev, void **savep)
+{
+	return __index.next(dev, savep);
 }
 
 struct device *dev_from_id(dev_t devno)

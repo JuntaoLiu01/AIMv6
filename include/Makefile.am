@@ -24,7 +24,7 @@ nobase_noinst_HEADERS = \
 
 noinst_HEADERS = \
 	bootsect.h \
-	console.h \
+	aim/console.h \
 	elf.h \
 	file.h \
 	init.h \

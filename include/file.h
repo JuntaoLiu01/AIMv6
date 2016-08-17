@@ -20,20 +20,116 @@
 #define _FILE_H
 
 #include <sys/types.h>
+#include <fs/vnode.h>
+#include <aim/sync.h>
+#include <atomic.h>
+#include <pipe.h>
+#include <ucred.h>
 
-/* FIXME */
-typedef signed long loff_t;
-
-struct inode {
-	/* TODO */
-	int dummy;
+enum ftype {
+	FNON,
+	FVNODE,
+	FSOCKET,
+	FPIPE,
 };
 
+struct file;
+struct proc;
+struct ucred;
+struct uio;
+
+/*
+ * A higher level of operations including those to vnodes and pipes.
+ */
+struct file_ops {
+	int (*close)(struct file *, struct proc *);
+	int (*read)(struct file *, void *, size_t, loff_t *);
+	int (*write)(struct file *, void *, size_t, loff_t *);
+	void (*ref)(struct file *);
+};
+
+/*
+ * This is the "file" structure used by processes, and serves as the
+ * highest-level object where syscalls like read(2) and write(2) takes place.
+ */
 struct file {
-	loff_t pos;
-	struct inode * inode;
-	struct file_ops * file_ops;
+	enum ftype	type;
+	union {
+		struct vnode *vnode;
+		struct pipe *pipe;
+#if 0
+		struct socket *socket;
+#endif
+	};
+	struct file_ops	*ops;
+	loff_t		offset;
+	int		ioflags;
+	int		openflags;
+	atomic_t	refs;
+	lock_t		lock;
+	struct ucred	*cred;
 };
+
+#define FILE_CLOSE(f, p) \
+	(((f)->ops->close)((f), (p)))
+#define FILE_READ(f, off, uio, cred) \
+	(((f)->ops->read)((f), (off), (uio), (cred)))
+#define FILE_WRITE(f, off, uio, cred) \
+	(((f)->ops->write)((f), (off), (uio), (cred)))
+
+#define FNEW() \
+	({ \
+		struct file *_f; \
+		_f = kmalloc(sizeof(*_f), GFP_ZERO); \
+		if (_f) { \
+			_f->refs = 1; \
+			_f->cred = NOCRED; \
+			spinlock_init(&_f->lock); \
+		} \
+	 	_f; \
+	})
+#define FREF(f) \
+	do { \
+		atomic_inc(&(f)->refs); \
+		(f)->ops->ref(f); \
+	} while (0)
+#define FRELE(fp) \
+	do { \
+		atomic_dec(&(*(fp))->refs); \
+		if ((*(fp))->refs == 0) { \
+			kfree(*(fp)); \
+			*(fp) = NULL; \
+		} \
+	} while (0)
+#define FLOCK(f)	spin_lock(&(f)->lock)
+#define FUNLOCK(f)	spin_unlock(&(f)->lock)
+
+extern struct file_ops vnops, pipeops;
+#define FINIT_VNODE(fd, vn, off, iof, of) \
+	do { \
+		(fd)->type = FVNODE; \
+		(fd)->vnode = (vn); \
+		(fd)->offset = (off); \
+		(fd)->ioflags = (iof); \
+		(fd)->openflags = (of); \
+		(fd)->ops = &vnops; \
+	} while (0)
+#define FINIT_PIPE(fd, p, of) \
+	do { \
+		(fd)->type = FPIPE; \
+		(fd)->pipe = (p); \
+		(fd)->offset = 0; \
+		(fd)->ioflags = 0; \
+		(fd)->openflags = (of); \
+		(fd)->ops = &pipeops; \
+	} while (0)
+
+#if 0
+
+/*
+ * [OBSOLETE]:
+ * The actual file and file system operations are inside fs/ directory.
+ */
 
 /* All devices are files, all files accept file_ops */
 struct file_ops {
@@ -61,6 +157,8 @@ struct blk_ops {
 	ssize_t (*readblk)(struct file *, char *, size_t, loff_t *);
 	ssize_t (*writeblk)(struct file *, const char *, size_t, loff_t *);
 };
+
+#endif
 
 #endif /* _FILE_H */
 

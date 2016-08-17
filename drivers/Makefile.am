@@ -18,7 +18,18 @@
 
 include $(top_srcdir)/env.am
 
-SUBDIRS = io block sd serial timer
+SUBDIRS = io \
+	  interrupt-controller \
+	  block \
+	  pci \
+	  sd \
+	  serial \
+	  timer \
+	  hd \
+	  tty \
+	  common \
+	  console \
+	  ata
 
 noinst_LTLIBRARIES = libdrivers-raw.la libdrivers.la
 
@@ -37,5 +48,9 @@ libdrivers_raw_la_LDFLAGS = $(AM_LDFLAGS_NOPIC)
 libdrivers_la_SOURCES =
 libdrivers_la_LIBADD = \
 	$(builddir)/io/libio.la \
-	$(builddir)/serial/libserial.la
-
+	$(builddir)/serial/libserial.la \
+	$(builddir)/hd/libhd.la \
+	$(builddir)/pci/libpci.la \
+	$(builddir)/common/libcommon.la \
+	$(builddir)/tty/libtty.la \
+	$(builddir)/console/libcons.la

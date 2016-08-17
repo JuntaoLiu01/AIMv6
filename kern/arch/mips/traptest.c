@@ -3,7 +3,7 @@
  * Temporary trap test, will be removed.
  */
 
-#include <console.h>
+#include <aim/console.h>
 #include <panic.h>
 
 void empty_routine(void)

@@ -24,7 +24,7 @@
 #include <aim/early_kmmap.h>
 #include <aim/kmmap.h>
 #include <aim/sync.h>
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 #include <panic.h>
 

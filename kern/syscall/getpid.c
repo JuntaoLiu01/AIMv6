@@ -21,12 +21,10 @@
 #include <percpu.h>
 #include <proc.h>
 #include <mp.h>
-#include <console.h>
+#include <aim/console.h>
 
 int sys_getpid(struct trapframe *tf, int *errno)
 {
-	/* TODO: a quick test to enable printing from user space. */
-	kprintf("PID %d CPU %d\n", current_proc->pid, cpuid());
 	*errno = 0;
 	return current_proc->pid;
 }

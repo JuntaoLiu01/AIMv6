@@ -93,7 +93,7 @@ abs_jump(void *addr)
 void early_arch_init(void)
 {
 	//early_mach_init();
-	portio_bus_init(&portio_bus);
+	portio_bus_init(&early_portio_bus);
 
 	probe_memory();
 }

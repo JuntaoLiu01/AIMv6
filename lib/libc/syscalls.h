@@ -27,8 +27,6 @@
  * We will indicate to what extent each system call has been implemented.
  */
 
-#define NR_SYSCALLS	20	/* number of system calls */
-
 /*
  * int fork(void)
  */
@@ -70,5 +68,112 @@
  * void exit(int status)
  */
 #define NRSYS_exit	9
+/*
+ * int open(const char *pathname, int flags, int mode)
+ */
+#define NRSYS_open	10
+/*
+ * void close(int fd)
+ */
+#define NRSYS_close	11
+/*
+ * ssize_t read(int fd, void *buf, size_t count)
+ */
+#define NRSYS_read	12
+/*
+ * ssize_t write(int fd, const void *buf, size_t count)
+ */
+#define NRSYS_write	13
+/*
+ * off_t lseek(int fd, off_t offset, int whence)
+ */
+#define NRSYS_lseek	14
+/*
+ * int dup(int oldfd)
+ */
+#define NRSYS_dup	15
+/*
+ * int dup2(int oldfd, int newfd)
+ */
+#define NRSYS_dup2	16
+/*
+ * int link(const char *old, const char *new)
+ */
+#define NRSYS_link	17
+/*
+ * int unlink(const char *path)
+ */
+#define NRSYS_unlink	18
+/*
+ * void *sbrk(ssize_t increment)
+ */
+#define NRSYS_sbrk	19
+/*
+ * int pipe(int pipefd[2])
+ */
+#define NRSYS_pipe	20
+/*
+ * int mkdir(const char *path, int mode)
+ */
+#define NRSYS_mkdir	21
+/*
+ * int chdir(const char *path)
+ */
+#define NRSYS_chdir	22
+/*
+ * int rmdir(const char *path)
+ */
+#define NRSYS_rmdir	23
+/*
+ * int getdents(int fd, struct dirent *dirp, unsigned int count)
+ */
+#define NRSYS_getdents	24
+/*
+ * void sync(void)
+ */
+#define NRSYS_sync	25
+
+/*
+ * The following system calls would probably be supported in future or left
+ * as exercises to students, as they should be easy to implement.
+ */
+
+/*
+ * int stat(const char *path, struct stat *buf)
+ */
+#define NRSYS_stat	26
+/*
+ * int mknod(const char *path, int mode, dev_t dev)
+ */
+#define NRSYS_mknod	27
+/*
+ * int chroot(const char *path)
+ */
+#define NRSYS_chroot	28
+/*
+ * int truncate(const char *path, off_t length)
+ */
+#define NRSYS_truncate	29
+
+/*
+ * These system calls may be implemented only if multi-user is properly
+ * supported.
+ */
+
+/*
+ * int chmod(const char *path, int mode)
+ */
+#define NRSYS_chmod	30
+/*
+ * int chown(const char *path, uid_t owner, gid_t group)
+ */
+#define NRSYS_chown	31
+
+/*
+ * Feel free to expand this list.
+ * Don't forget to add the corresponding entry in syscall-list.S!
+ */
+
+#define NR_SYSCALLS	50	/* number of system calls */
 
 #endif

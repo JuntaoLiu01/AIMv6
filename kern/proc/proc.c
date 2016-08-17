@@ -115,11 +115,18 @@ struct proc *proc_new(struct namespace *ns)
 	proc->mm = NULL;
 	memset(&(proc->context), 0, sizeof(proc->context));
 	proc->heapsize = 0;
-	proc->ustacktop = 0;
-	proc->progtop = 0;
+	proc->heapbase = NULL;
 	memset(&(proc->name), 0, sizeof(proc->name));
+	proc->cwd = proc->rootd = NULL;
+	memset(&proc->fd, 0, sizeof(proc->fd));
+	spinlock_init(&proc->fdlock);
 
-	proc->leader = NULL;
+	proc->tty = NULL;
+	proc->ttyvnode = NULL;
+
+	proc->mainthread = NULL;
+	proc->groupleader = NULL;
+	proc->sessionleader = NULL;
 	proc->parent = NULL;
 	proc->first_child = NULL;
 	proc->next_sibling = NULL;

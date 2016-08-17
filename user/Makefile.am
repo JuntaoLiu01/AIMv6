@@ -17,3 +17,5 @@
 
 include $(top_srcdir)/env.am
 
+SUBDIRS = sbin
+

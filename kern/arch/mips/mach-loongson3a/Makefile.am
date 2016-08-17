@@ -18,9 +18,8 @@
 include $(top_srcdir)/env.am
 
 noinst_LTLIBRARIES = libloongson3a.la libloongson3aintr.la
-noinst_DATA = timer.o
+noinst_DATA = timer.o tty.o
 
 libloongson3a_la_SOURCES = mach-init.c memory.c smp.c
 
 libloongson3aintr_la_SOURCES = interrupt.c
-

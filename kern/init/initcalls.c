@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <aim/export.h>
 #include <aim/initcalls.h>
-#include <console.h>
+#include <aim/console.h>
 #include <panic.h>
 
 int do_early_initcalls()

@@ -26,7 +26,7 @@
 #include <aim/initcalls.h>
 #include <mm.h>
 #include <vmm.h>
-#include <console.h>
+#include <aim/console.h>
 #include <panic.h>
 #include <list.h>
 

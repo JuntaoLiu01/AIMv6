@@ -22,16 +22,19 @@
 #include <sys/types.h>
 
 /* This is a ticket lock */
-typedef union {
-	uint32_t	lock;
-	struct {
-		/* Assumes little-endian */
-		uint16_t	head;
-		uint16_t	tail;
+typedef struct {
+	union {
+		uint32_t lock;
+		struct {
+			/* Assumes little-endian */
+			uint16_t head;
+			uint16_t tail;
+		};
 	};
+	int		holder;
 } lock_t;
 
-#define EMPTY_LOCK(lk)	{ .lock = 0 }
+#define EMPTY_LOCK(lk) { .lock = 0, .holder = -1 }
 
 #define smp_mb() \
 	asm volatile ("sync" : : : "memory")

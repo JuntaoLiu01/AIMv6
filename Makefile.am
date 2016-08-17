@@ -17,10 +17,13 @@
 
 include $(top_srcdir)/env.am
 
+ACLOCAL_AMFLAGS = -I ./m4
+
 SUBDIRS = \
 	lib \
 	drivers \
 	firmware \
+	fs \
 	boot \
 	kern \
 	include \

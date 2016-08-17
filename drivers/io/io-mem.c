@@ -28,82 +28,75 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <sys/types.h>
-
+#include <sys/param.h>
 #include <io.h>
 #include <mm.h>
 #include <aim/device.h>
 #include <panic.h>
+#include <aim/initcalls.h>
+#include <asm-generic/funcs.h>
+#include <errno.h>
 
 #include <io-mem.h>
 
-static int __read8(struct bus_device * inst, addr_t addr, uint64_t *ptr)
+static int __read8(struct bus_device *inst, addr_t base, addr_t offset,
+    uint64_t *ptr)
 {
-	if (inst == &early_memory_bus) {
-		*ptr = (uint64_t)read8(addr);
-		return 0;
-	} else return EOF;
+	*ptr = (uint64_t)read8(base + offset);
+	return 0;
 }
 
-static int __read16(struct bus_device * inst, addr_t addr, uint64_t *ptr)
+static int __read16(struct bus_device *inst, addr_t base, addr_t offset,
+    uint64_t *ptr)
 {
-	if (inst == &early_memory_bus) {
-		*ptr = (uint64_t)read16(addr);
-		return 0;
-	} else return EOF;
+	*ptr = (uint64_t)read16(base + offset);
+	return 0;
 }
 
-static int __read32(struct bus_device * inst, addr_t addr, uint64_t *ptr)
+static int __read32(struct bus_device *inst, addr_t base, addr_t offset,
+    uint64_t *ptr)
 {
-	if (inst == &early_memory_bus) {
-		*ptr = (uint64_t)read32(addr);
-		return 0;
-	} else return EOF;
+	*ptr = (uint64_t)read32(base + offset);
+	return 0;
 }
 
-static int __write8(struct bus_device * inst, addr_t addr, uint64_t val)
+static int __write8(struct bus_device *inst, addr_t base, addr_t offset,
+    uint64_t val)
 {
-	if (inst == &early_memory_bus) {
-		write8(addr, (uint8_t)val);
-		return 0;
-	} else return EOF;
+	write8(base + offset, (uint8_t)val);
+	return 0;
 }
 
-static int __write16(struct bus_device * inst, addr_t addr, uint64_t val)
+static int __write16(struct bus_device *inst, addr_t base, addr_t offset,
+    uint64_t val)
 {
-	if (inst == &early_memory_bus) {
-		write16(addr, (uint16_t)val);
-		return 0;
-	} else return EOF;
+	write16(base + offset, (uint16_t)val);
+	return 0;
 }
 
-static int __write32(struct bus_device * inst, addr_t addr, uint64_t val)
+static int __write32(struct bus_device *inst, addr_t base, addr_t offset,
+    uint64_t val)
 {
-	if (inst == &early_memory_bus) {
-		write32(addr, (uint32_t)val);
-		return 0;
-	} else return EOF;
+	write32(base + offset, (uint32_t)val);
+	return 0;
 }
 
-static bus_read_fp __get_read_fp(struct bus_device * inst, int data_width)
+static bus_read_fp __get_read_fp(struct bus_device *inst, int data_width)
 {
-	if (inst == &early_memory_bus) {
-		switch (data_width) {
-			case 8: return __read8;
-			case 16: return __read16;
-			case 32: return __read32;
-		}
+	switch (data_width) {
+		case 8: return __read8;
+		case 16: return __read16;
+		case 32: return __read32;
 	}
 	return NULL;
 }
 
-static bus_write_fp __get_write_fp(struct bus_device * inst, int data_width)
+static bus_write_fp __get_write_fp(struct bus_device *inst, int data_width)
 {
-	if (inst == &early_memory_bus) {
-		switch (data_width) {
-			case 8: return __write8;
-			case 16: return __write16;
-			case 32: return __write32;
-		}
+	switch (data_width) {
+		case 8: return __write8;
+		case 16: return __write16;
+		case 32: return __write32;
 	}
 	return NULL;
 }
@@ -111,23 +104,55 @@ static bus_write_fp __get_write_fp(struct bus_device * inst, int data_width)
 #ifndef RAW
 static void __jump_handler(void)
 {
-	early_memory_bus.get_read_fp = __get_read_fp;
-	early_memory_bus.get_write_fp = __get_write_fp;
+	early_memory_bus.bus_driver.get_read_fp = __get_read_fp;
+	early_memory_bus.bus_driver.get_write_fp = __get_write_fp;
 }
 #endif
 
 /* Should only be used before memory management is initialized */
 struct bus_device early_memory_bus = {
-	.addr_width = 32
+	.addr_width = 32,
+	.class = DEVCLASS_BUS,
+	.name = "memory",
 };
 
 void io_mem_init(struct bus_device *memory_bus)
 {
-	memory_bus->get_read_fp = __get_read_fp;
-	memory_bus->get_write_fp = __get_write_fp;
+	memory_bus->bus_driver.get_read_fp = __get_read_fp;
+	memory_bus->bus_driver.get_write_fp = __get_write_fp;
 #ifndef RAW
 	if (jump_handlers_add((generic_fp)(size_t)postmap_addr(__jump_handler)) != 0)
 		panic("Memory IO driver cannot register JUMP handler.\n");
 #endif
 }
+
+#ifndef RAW
+
+static int __new(struct devtree_entry *entry)
+{
+	/* default implementation... */
+	return -EEXIST;
+}
+
+static struct bus_driver drv = {
+	.class = DEVCLASS_BUS,
+	.get_read_fp = __get_read_fp,
+	.get_write_fp = __get_write_fp,
+	.new = __new,
+};
+
+static int __driver_init(void)
+{
+	struct bus_device *memory_bus;
+	register_driver(NOMAJOR, &drv);
+#ifdef IO_MEM_ROOT
+	memory_bus = kmalloc(sizeof(*memory_bus), GFP_ZERO);
+	initdev(memory_bus, DEVCLASS_BUS, "memory", NODEV, &drv);
+	dev_add(memory_bus);
+#endif
+	return 0;
+}
+INITCALL_DRIVER(__driver_init);
+
+#endif
 

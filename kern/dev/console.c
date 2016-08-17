@@ -22,7 +22,7 @@
 
 /* from kernel */
 #include <sys/types.h>
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 /* from libc */
 #include <libc/stdio.h>

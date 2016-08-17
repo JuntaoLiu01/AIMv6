@@ -25,12 +25,18 @@ noinst_LTLIBRARIES = \
 
 SRCS = \
         errno.c \
+	memcmp.c \
 	memcpy.c \
 	memmove.c \
 	memset.c \
+	printf.c \
+	scanf.c \
 	snprintf.c \
 	strcmp.c \
+	strlcat.c \
 	strlcpy.c \
+	strlen.c \
+	strnlen.c \
 	$(top_srcdir)/include/sys/types.h \
 	stdarg.h \
 	stddef.h \

@@ -1,5 +1,4 @@
-/*
- * Copyright (C) 2016 Gan Quan <coin2028@hotmail.com>
+/* Copyright (C) 2016 Gan Quan <coin2028@hotmail.com>
  *
  * This file is part of AIMv6.
  *
@@ -17,30 +16,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _DRIVERS_ATA_ATA_TF_H
-#define _DRIVERS_ATA_ATA_TF_H
+#include <drivers/tty/tty.h>
+#include <proc.h>
+#include <panic.h>
+#include <mach-conf.h>
+#include <sys/types.h>
+#include <aim/device.h>
 
-/*
- * ATA task file, containing a register configuration for a command.
- */
-struct ata_tf {
-	uint8_t		data;	/* Data, recv only */
-	union {
-		uint8_t	error;
-		uint8_t	feature;
-	};
-	uint8_t		count;
-	uint8_t		lbal;
-	uint8_t		lbam;
-	uint8_t		lbah;
-	union {
-		uint8_t	devsel;
-		uint8_t	device;
-	};
-	union {
-		uint8_t	status;	/* recv only */
-		uint8_t	command;/* send only */
-	};
-};
+/* TODO: we should probably merge the TTY setup code... */
+int __mach_setup_default_tty(struct tty_device *tty, int mode, struct proc *p)
+{
+	unsigned int min = minor(tty->devno);
+	struct chr_driver *drv = (struct chr_driver *)devsw[UART_MAJOR];
+	dev_t devno = makedev(UART_MAJOR, min);
+	int err;
 
-#endif
+	assert(drv != NULL);
+
+	err = drv->open(devno, mode, p);
+	if (err)
+		return err;
+	tty->outdev = tty->indev = (struct chr_device *)dev_from_id(devno);
+	return 0;
+}
+

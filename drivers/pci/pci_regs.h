@@ -17,6 +17,10 @@
  * 	from http://www.hypertransport.org
  *
  *	The Hypertransport I/O Link Specification
+ *
+ *	AIMv6 Users:
+ *	This file is borrowed from Linux for completeness; most of the content
+ *	is not particularly helpful for our purpose.
  */
 
 #ifndef _DRIVERS_PCI_PCI_REGS_H
@@ -62,6 +66,8 @@
 #define PCI_REVISION_ID		0x08	/* Revision ID */
 #define PCI_CLASS_PROG		0x09	/* Reg. Level Programming Interface */
 #define PCI_CLASS_DEVICE	0x0a	/* Device class */
+#define  PCI_SUBCLASS_DEVICE	0x0a
+#define  PCI_MAJORCLASS_DEVICE	0x0b
 
 #define PCI_CACHE_LINE_SIZE	0x0c	/* 8 bits */
 #define PCI_LATENCY_TIMER	0x0d	/* 8 bits */

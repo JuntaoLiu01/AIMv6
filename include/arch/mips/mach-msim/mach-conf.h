@@ -16,9 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _DRIVERS_BLOCK_HD_H
-#define _DRIVERS_BLOCK_HD_H
+#ifndef _MACH_CONF_H
+#define _MACH_CONF_H
 
-#define SECTOR_SIZE	512
+#define TTY_MAJOR		0
+#define MSIM_DISK_MAJOR		1
+#define MSIM_LP_MAJOR		2
+#define MSIM_KBD_MAJOR		3
 
 #endif

@@ -23,7 +23,7 @@
 #include <mm.h>
 #include <vmm.h>
 #include <panic.h>
-#include <console.h>
+#include <aim/console.h>
 #include <regs.h>
 #include <trap.h>
 

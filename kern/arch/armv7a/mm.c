@@ -27,7 +27,7 @@
 #include <aim/kmmap.h>
 #include <list.h>
 #include <util.h>
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 #include <mmu.h>
 #include <pmm.h>

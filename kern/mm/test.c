@@ -20,7 +20,7 @@
 #include <config.h>
 #endif
 
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 #include <mmu.h>
 #include <panic.h>

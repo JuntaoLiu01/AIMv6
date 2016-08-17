@@ -20,3 +20,7 @@ include $(top_srcdir)/env.am
 SUBDIRS = \
 	  libbitmap
 
+noinst_LTLIBRARIES = libkern.la
+
+libkern_la_SOURCES = generic.c
+

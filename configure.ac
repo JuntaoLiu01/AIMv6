@@ -102,22 +102,26 @@ AS_CASE([$ARCH],
 	[arm*], [
 		AS_VAR_SET([__enable_io_mem], [yes])
 		AS_VAR_SET([__enable_io_port], [no])
+		AS_VAR_SET([__enable_io_mem_root], [yes])
+		AS_VAR_SET([__enable_io_port_root], [no])
 	],
 	[mips32], [
 		AC_DEFINE(USE_MIPS32, [], [MIPS32 ABI and instruction set])
-		AS_VAR_SET([__with_mips_gp_slot_base], [0xffffffff80000400])
-		AS_VAR_SET([__with_mips_pgdir_slot_base], [0xffffffff80000200])
 		AS_VAR_SET([__enable_io_mem], [yes])
 		AS_VAR_SET([__enable_io_port], [no])
+		AS_VAR_SET([__enable_io_mem_root], [yes])
+		AS_VAR_SET([__enable_io_port_root], [no])
 	],
 	[mips64], [
 		AC_DEFINE(USE_MIPS64, [], [MIPS64r2 ABI and instruction set])
-		AS_VAR_SET([__with_mips_gp_slot_base], [0xffffffff80000400])
-		AS_VAR_SET([__with_mips_pgdir_slot_base], [0xffffffff80000200])
 		AS_VAR_SET([__enable_io_mem], [yes])
 		AS_VAR_SET([__enable_io_port], [no])
+		AS_VAR_SET([__enable_io_mem_root], [yes])
+		AS_VAR_SET([__enable_io_port_root], [no])
 	],
 	[i386], [
+		AS_VAR_SET([__enable_io_mem], [yes])
+		AS_VAR_SET([__enable_io_port], [yes])
 		AS_VAR_SET([__enable_io_mem], [yes])
 		AS_VAR_SET([__enable_io_port], [yes])
 		AS_VAR_SET([__enable_uart_ns16550], [yes])
@@ -163,7 +167,7 @@ AS_CASE([$MACH],
 		AS_VAR_SET([__with_highram_base], [0x80000000])
 		AS_VAR_SET([__with_highram_size], [0x00000000])
 
-		AC_DEFINE([CPU_FREQ], [10000000], [CPU frequency])
+		AC_DEFINE([CPU_FREQ], [100000000], [CPU frequency])
 	], 
 	[pc], [
 		AS_VAR_SET([__with_fwstack_order], [12])
@@ -209,9 +213,11 @@ AIM_ARG_WITH([highram-size], [HIGHRAM_SIZE],
 
 # Loongson 3A
 AIM_ARG_ENABLE_FEATURE([loongson3a-ram-detection], [LOONGSON3A_RAM_DETECTION],
-	[RAM space detection on Loongson 3A port (EXPERIMENTAL)])
+	[RAM space detection on Loongson 3A port (RECOMMENDED)])
 AIM_ARG_ENABLE_FEATURE([pagesize-16k], [PAGESIZE_16K],
 	[16K pages (for Loongson 3A)])
+AIM_ARG_ENABLE_FEATURE([ide-bmdma], [IDE_BMDMA],
+	[PCI IDE Bus-mastering DMA])
 
 # target details
 AIM_ARG_WITH([ram-physbase], [RAM_PHYSBASE], [physical memory start point],
@@ -226,19 +232,32 @@ AIM_ARG_WITH([cpus], [NR_CPUS], [number of cores], [DETECT])
 AIM_ARG_WITH([max-cpus], [MAX_CPUS], [maximum number of cores], [NR_CPUS])
 
 # Kernel hyperparameters
-AIM_ARG_WITH([kern-base], [KERN_BASE], [start of kernel address], [0xffffffff80000000])
+# TODO: for addresses, make two default configurations for 32-bit and 64-bit
+# respectively.
+AIM_ARG_WITH([kern-base], [KERN_BASE], [start of kernel address], [0x80000000])
 
 AIM_ARG_WITH([kmmap-base], [KMMAP_BASE], [start of kernel dynamic mapping],
-	[0xfffffffff0000000])
+	[0xf0000000])
 
 AIM_ARG_WITH([reserved-base], [RESERVED_BASE], [start of reserved high address],
-	[0xfffffffffffff000])
+	[0xfffff000])
+
+AIM_ARG_WITH([usertop], [USERTOP],
+	[top of user program address space], [0x7ff00000])
+
+AIM_ARG_WITH([ustacksize], [USTACKSIZE],
+	[size of user stack], [32768])
 
 AIM_ARG_WITH([kstacksize], [KSTACKSIZE],
 	[size of kernel stack])
 
+AIM_ARG_WITH([root-partition-id], [ROOT_PARTITION_ID],
+	[root partition number], [4])
+
 AIM_ARG_WITH([max-processes], [MAX_PROCESSES], [maximum number of processes],
 	[65536])
+
+AIM_ARG_WITH([pipe-size], [PIPE_SIZE], [pipe size], [16384])
 
 AIM_ARG_WITH([fwstack-order], [FWSTACKORDER],
 	[order of firmware stack per CPU (size=1<<order)])
@@ -255,6 +274,10 @@ AIM_ARG_ENABLE([uart-ns16550], [UART_NS16550], [NS16550 UART driver])
 AIM_ARG_ENABLE([block-msim], [BLOCK_MSIM], [MSIM block device driver])
 AIM_ARG_ENABLE([sd-zynq], [SD_ZYNQ], [zynq SD driver])
 AIM_ARG_ENABLE([timer-a9], [TIMER_A9], [Cortex-A9 MPCore timer driver])
+AIM_ARG_ENABLE_FEATURE([io-mem-root], [IO_MEM_ROOT],
+	[memory-mapped IO bus as device tree root])
+AIM_ARG_ENABLE_FEATURE([io-port-root], [IO_PORT_ROOT],
+	[port IO bus as device tree root])
 
 # Debug
 AIM_ARG_ENABLE_FEATURE([debug], [DEBUG], [Debugging (kpdebug)])
@@ -372,17 +395,27 @@ AC_CONFIG_FILES([
 	boot/arch/mips/mach-msim/Makefile
 	doc/Makefile
 	drivers/Makefile
+	drivers/ata/Makefile
 	drivers/block/Makefile
+	drivers/common/Makefile
+	drivers/console/Makefile
+	drivers/hd/Makefile
+	drivers/interrupt-controller/Makefile
 	drivers/io/Makefile
+	drivers/pci/Makefile
 	drivers/sd/Makefile
 	drivers/serial/Makefile
 	drivers/timer/Makefile
+	drivers/tty/Makefile
 	firmware/Makefile
 	firmware/arch/Makefile
 	firmware/arch/armv7a/Makefile
 	firmware/arch/i386/Makefile
 	firmware/arch/mips/Makefile
 	firmware/arch/mips/mach-msim/Makefile
+	fs/Makefile
+	fs/ufs/Makefile
+	fs/ufs/ext2fs/Makefile
 	kern/Makefile
 	kern/arch/Makefile
 	kern/arch/armv7a/Makefile
@@ -399,6 +432,7 @@ AC_CONFIG_FILES([
 	kern/dev/Makefile
 	kern/dev/index/Makefile
 	kern/debug/Makefile
+	kern/file/Makefile
 	kern/mm/Makefile
 	kern/mm/kmmap/Makefile
 	kern/mm/pmm/Makefile
@@ -409,6 +443,7 @@ AC_CONFIG_FILES([
 	kern/syscall/Makefile
 	kern/timer/Makefile
 	lib/Makefile
+	lib/csu/Makefile
 	lib/libc/Makefile
 	lib/libc/arch/Makefile
 	lib/libc/arch/armv7a/Makefile
@@ -416,6 +451,8 @@ AC_CONFIG_FILES([
 	lib/libc/arch/mips/Makefile
 	tools/Makefile
 	user/Makefile
+	user/sbin/Makefile
+	user/sbin/init/Makefile
 ])
 AC_OUTPUT
 
@@ -451,6 +488,8 @@ Kernel
   KERN_BASE:	${with_kern_base}
   KMMAP_BASE:	${with_kmmap_base}
   RESERVED:	${with_reserved_base}
+  USERTOP:	${with_usertop}
+  USTACKSIZE:	${with_ustacksize}
   Timer freq:	${with_timer_freq}
   Kernel stack:	${with_kstacksize}
 

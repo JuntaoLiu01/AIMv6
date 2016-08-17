@@ -17,5 +17,5 @@
 
 include $(top_srcdir)/env.am
 
-SUBDIRS = libc
+SUBDIRS = libc csu
 

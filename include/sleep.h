@@ -19,8 +19,8 @@
 #ifndef _SLEEP_H
 #define _SLEEP_H
 
-void sleep(uint32_t s);
-void usleep(uint32_t us);
+void delay(uint32_t s);
+void udelay(uint32_t us);
 
 #endif /* _SLEEP_H */
 

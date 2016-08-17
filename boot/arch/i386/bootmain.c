@@ -12,6 +12,7 @@
 #include <elf.h>
 #include <bootsect.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <drivers/ata/ata.h>
 
 /* ELF buffer address for storing read headers */
@@ -20,7 +21,6 @@
 #define IDE_PORTBASE	0x1f0
 
 /* TODO: Should be merged into config.h? */
-#define SECTOR_SIZE	512
 #define PGSIZE		4096
 
 /* Convenient and readable macros instead of raw inb() and outb() */

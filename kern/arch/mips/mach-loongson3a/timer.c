@@ -23,6 +23,7 @@
 #include <timer.h>
 #include <mipsregs.h>
 #include <sys/types.h>
+#include <sleep.h>
 
 uint32_t inc;
 
@@ -40,11 +41,19 @@ void timer_init(void)
 
 void pre_timer_interrupt(void)
 {
-	uint32_t compare = read_c0_compare();
-	write_c0_compare(compare + inc);
 }
 
 void post_timer_interrupt(void)
 {
+	write_c0_compare(read_c0_count() + inc);
+}
+
+void udelay(unsigned int us)
+{
+	uint32_t count;
+
+	count = read_c0_count();
+	while (read_c0_count() < count + CPU_FREQ / 2 / 1000000 * us)
+		/* nothing */;
 }
 

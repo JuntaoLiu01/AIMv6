@@ -22,8 +22,8 @@ SUBDIRS = sched
 noinst_LTLIBRARIES = libproc.la
 
 libproc_la_SOURCES = \
+	initproc.c \
 	proc.c \
 	proctree.c \
-	test.c \
 	namespace.c
 

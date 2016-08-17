@@ -30,6 +30,8 @@
 
 #include <libc/string.h>
 
+#include <mp.h>
+
 /* dummy implementations */
 static void *__simple_alloc(size_t size, gfp_t flags) { return NULL; }
 static void __simple_free(void *obj) {}
@@ -48,11 +50,13 @@ void *kmalloc(size_t size, gfp_t flags)
 
 	if (size > PAGE_SIZE / 2)
 		panic("kmalloc: size %lu too large\n", size);
+	//kpdebug("ALLOC: kmalloc request %d bytes\n", size);
 	recursive_lock_irq_save(&memlock, intr_flags);
 	result = __simple_allocator.alloc(size, flags);
 	recursive_unlock_irq_restore(&memlock, intr_flags);
 	if (flags & GFP_ZERO)
 		memset(result, 0, size);
+	//kpdebug("ALLOC: kmalloc returning %p (%d bytes)\n", result, size);
 	return result;
 }
 
@@ -60,10 +64,12 @@ void kfree(void *obj)
 {
 	unsigned long flags;
 	if (obj != NULL) {
+		//kpdebug("ALLOC: kfree requesting %p (%d bytes)\n", obj, ksize(obj));
 		recursive_lock_irq_save(&memlock, flags);
 		/* Junk filling is in flff.c since we need the gfp flags */
 		__simple_allocator.free(obj);
 		recursive_unlock_irq_restore(&memlock, flags);
+		//kpdebug("ALLOC: kfree freed %p\n", obj);
 	}
 }
 
@@ -116,17 +122,22 @@ int cache_create(struct allocator_cache *cache)
 {
 	if (cache == NULL)
 		return EOF;
+	assert(cache->size < PAGE_SIZE / 2);
 	spinlock_init(&cache->lock);
+	//kpdebug("ALLOC: cache_create %p (%d bytes)\n", cache, cache->size);
 	return __caching_allocator.create(cache);
 }
 
 int cache_destroy(struct allocator_cache *cache)
 {
+	unsigned long flags;
+
 	if (cache == NULL)
 		return EOF;
-	spin_lock(&cache->lock);
+	//kpdebug("ALLOC: cache_destroy %p (%d bytes)\n", cache, cache->size);
+	spin_lock_irq_save(&cache->lock, flags);
 	int retval = __caching_allocator.destroy(cache);
-	spin_unlock(&cache->lock);
+	spin_unlock_irq_restore(&cache->lock, flags);
 	return retval;
 }
 
@@ -135,11 +146,13 @@ void *cache_alloc(struct allocator_cache *cache)
 	unsigned long flags;
 	if (cache == NULL)
 		return NULL;
+	//kpdebug("ALLOC: cache_alloc requesting %d bytes in %p\n", cache->size, cache);
 	spin_lock_irq_save(&cache->lock, flags);
 	void *retval = __caching_allocator.alloc(cache);
 	spin_unlock_irq_restore(&cache->lock, flags);
 	if (cache->flags & GFP_ZERO)
 		memset(retval, 0, cache->size);
+	//kpdebug("ALLOC: cache_alloc return %p (%d bytes in %p)\n", retval, cache->size, cache);
 	return retval;
 }
 
@@ -150,9 +163,11 @@ int cache_free(struct allocator_cache *cache, void *obj)
 		return EOF;
 	if (!(cache->flags & GFP_UNSAFE))
 		memset(obj, JUNKBYTE, cache->size);
+	//kpdebug("ALLOC: cache_free requesting %p (%d bytes in %p)\n", obj, cache->size, cache);
 	spin_lock_irq_save(&cache->lock, flags);
 	int retval = __caching_allocator.free(cache, obj);
 	spin_unlock_irq_restore(&cache->lock, flags);
+	//kpdebug("ALLOC: cache_free freed %p\n", obj);
 	return retval;
 }
 

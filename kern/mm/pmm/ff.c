@@ -39,7 +39,6 @@ struct block {
 
 static struct list_head __head;
 static addr_t __free_space;
-//static lock_t lock;
 
 static int __alloc(struct pages *pages)
 {
@@ -47,9 +46,9 @@ static int __alloc(struct pages *pages)
 
 	/* check size alignment */
 	if (!IS_ALIGNED(pages->size, PAGE_SIZE))
-		return NULL;
+		return 0;
 	if (pages->size > __free_space)
-		return NULL;
+		return 0;
 
 	/* search for a first-fit */
 	for_each_entry(this, &__head, node) {

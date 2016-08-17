@@ -21,11 +21,15 @@
 #include <io.h>
 #include <mp.h>
 #include <platform.h>
+#include <aim/device.h>
+#include <mach-conf.h>
+
+dev_t rootdev;
 
 void early_mach_init(void)
 {
 	/* XXX: maybe unnecessary... */
-	portio_bus_connect(&portio_bus,
+	portio_bus_connect(&early_portio_bus,
 			   &early_memory_bus,
 			   LOONGSON3A_PORTIO_BASE);
 }
@@ -38,5 +42,49 @@ void mach_init(void)
 		write32(LOONGSON3A_COREx_IPI_CLEAR(i), 0xffffffff);
 		write32(LOONGSON3A_COREx_IPI_ENABLE(i), 0xffffffff);
 	}
+
+	rootdev = makedev(IDE_DISK_MAJOR, ROOT_PARTITION_ID);
 }
+
+struct devtree_entry devtree[] = {
+	/* memory bus */
+	{
+		"memory",
+		"memory",
+		"",
+		0,
+		{0},
+		0,
+	},
+	/* LPC UART */
+	{
+		"ns16550",
+		"ns16550",
+		"memory",
+		1,
+		{LOONGSON3A_UART_BASE},
+		IRQ_UART,	/* coupled to IP2 */
+	},
+	/* Port I/O bus */
+	{
+		"portio",
+		"portio",
+		"memory",
+		1,
+		{LOONGSON3A_HT1_PORTIO_BASE},
+		0,
+	},
+	/* PCI */
+	{
+		"pci",
+		"pci",
+		"memory",
+		1,
+		{LOONGSON3A_HT1_PCICFG_BASE},
+		0,		/* coupled to IP3 */
+	},
+	/* See drivers/io/hypertransport.c for an overview of HyperTransport */
+};
+
+int ndevtree_entries = ARRAY_SIZE(devtree);
 

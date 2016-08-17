@@ -202,7 +202,7 @@ int sd_init_card()
 	state = read32(SD_BASE + SD_PRES_STATE_OFFSET);
 	if (!(state & SD_PSR_CARD_INSRT)) return -1;
 	/* wait 74 clocks (of sd controller). */
-	usleep(2000);
+	udelay(2000);
 	/* CMD0 */
 	ret = sd_send_cmd(SD_CMD0, 0, 0, 0);
 	if (ret) return -2;

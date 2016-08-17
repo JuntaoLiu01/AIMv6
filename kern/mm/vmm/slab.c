@@ -21,11 +21,12 @@
 #endif /* HAVE_CONFIG_H */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <aim/initcalls.h>
 #include <mm.h>
 #include <vmm.h>
 #include <pmm.h>
-#include <console.h>
+#include <aim/console.h>
 #include <list.h>
 #include <util.h>
 #include <bitops.h>
@@ -238,6 +239,8 @@ static int __free(struct allocator_cache *cache, void *obj)
 	/* apply the free */
 	if (cache->destroy_obj != NULL)
 		cache->destroy_obj(obj);
+	if (!(cache->flags & GFP_UNSAFE))
+		memset(obj, JUNKBYTE, cache->size);
 	int i = (obj - slab->vaddr) / cache->size;
 	int j = i % 8;
 	i /= 8;

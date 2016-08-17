@@ -25,7 +25,7 @@
 #include <trap.h>
 #include <asm.h>
 #include <regs.h>
-#include <console.h>
+#include <aim/console.h>
 #include <panic.h>
 
 #define MAX_IDT_ENTRIES	256

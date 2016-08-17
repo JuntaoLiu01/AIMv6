@@ -30,6 +30,8 @@
 
 #include <libc/string.h>
 
+#include <mp.h>
+
 /* dummy implementations */
 static int __alloc(struct pages *pages) { return EOF; }
 static void __free(struct pages *pages) {}
@@ -60,11 +62,13 @@ int alloc_pages(struct pages *pages)
 	unsigned long flags;
 	if (pages == NULL)
 		return EOF;
+	//kpdebug("ALLOC: alloc_pages requesting %d bytes\n", (unsigned long)pages->size);
 	recursive_lock_irq_save(&memlock, flags);
 	result = __allocator.alloc(pages);
 	if (pages->flags & GFP_ZERO)
 		pmemset(pages->paddr, 0, pages->size);
 	recursive_unlock_irq_restore(&memlock, flags);
+	//kpdebug("ALLOC: alloc_pages return %p (%d bytes)\n", (unsigned long)pages->paddr, (unsigned long)pages->size);
 	return result;
 }
 
@@ -73,9 +77,11 @@ void free_pages(struct pages *pages)
 	unsigned long flags;
 	if (!(pages->flags & GFP_UNSAFE))
 		pmemset(pages->paddr, JUNKBYTE, pages->size);
+	//kpdebug("ALLOC: free_pages requesting %p (%d bytes)\n", (unsigned long)pages->paddr, (unsigned long)pages->size);
 	recursive_lock_irq_save(&memlock, flags);
 	__allocator.free(pages);
 	recursive_unlock_irq_restore(&memlock, flags);
+	//kpdebug("ALLOC: free_pages freed %p\n", (unsigned long)pages->paddr);
 }
 
 addr_t get_free_memory(void)

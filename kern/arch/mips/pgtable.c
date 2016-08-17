@@ -58,6 +58,7 @@
 #include <util.h>
 #include <mp.h>
 #include <tlb.h>
+#include <aim/sync.h>
 
 pgindex_t *pgdir_slots[MAX_CPUS];
 
@@ -427,9 +428,20 @@ set_pages_perm(pgindex_t *pgindex, void *addr, size_t len, uint32_t flags)
 int
 switch_pgindex(pgindex_t *pgindex)
 {
+	unsigned long flags;
+
+	local_irq_save(flags);
 	current_pgdir = pgindex;
 	tlb_flush();
+	local_irq_restore(flags);
+
 	return 0;
+}
+
+pgindex_t *
+get_pgindex(void)
+{
+	return current_pgdir;
 }
 
 void *

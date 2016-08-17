@@ -23,6 +23,7 @@
 #include <aim/sync.h>
 #include <panic.h>
 #include <sys/types.h>
+#include <mp.h>
 
 void spinlock_init(lock_t *lock)
 {
@@ -65,6 +66,7 @@ void spin_lock(lock_t *lock)
 		  [head] "=&r" (head)
 		: [inc] "r" (inc)
 	);
+	lock->holder = cpuid();
 	smp_mb();
 }
 
@@ -72,6 +74,7 @@ void spin_unlock(lock_t *lock)
 {
 	unsigned int head = lock->head + 1;
 	smp_mb();
+	lock->holder = -1;
 	lock->head = (uint16_t)head;
 	smp_mb();
 }

@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <aim/early_kmmap.h>
 #include <init.h>
-#include <console.h>
+#include <aim/console.h>
 #include <mm.h>
 #include <panic.h>
 #include <smp.h>

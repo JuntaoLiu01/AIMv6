@@ -24,7 +24,19 @@ MODULES =
 
 MODULES += $(top_builddir)/kern/syscall/fork.o \
 	   $(top_builddir)/kern/syscall/sched_yield.o \
-	   $(top_builddir)/kern/syscall/getpid.o
+	   $(top_builddir)/kern/syscall/execve.o \
+	   $(top_builddir)/kern/syscall/getpid.o \
+	   $(top_builddir)/kern/syscall/read.o \
+	   $(top_builddir)/kern/syscall/write.o \
+	   $(top_builddir)/kern/syscall/open.o \
+	   $(top_builddir)/kern/syscall/close.o \
+	   $(top_builddir)/kern/syscall/lseek.o \
+	   $(top_builddir)/kern/syscall/dup.o \
+	   $(top_builddir)/kern/syscall/pipe.o \
+	   $(top_builddir)/kern/syscall/link.o \
+	   $(top_builddir)/kern/syscall/unlink.o \
+	   $(top_builddir)/kern/syscall/chdir.o \
+	   $(top_builddir)/kern/syscall/sync.o
 
 # For each module capable for compiling into the kernel,
 # add its entry here.
@@ -76,3 +88,57 @@ if MACH_LOONGSON3A
 MODULES += $(top_builddir)/kern/arch/$(ARCH)/mach-$(MACH)/timer.o
 endif
 
+###################
+# Disk partitions #
+###################
+
+MODULES += $(top_builddir)/drivers/hd/dos.o
+
+################
+# File systems #
+################
+
+MODULES += $(top_builddir)/fs/ufs/ext2fs/ext2fs.o
+
+##################
+# Terminal (TTY) #
+##################
+
+MODULES += $(top_builddir)/drivers/tty/tty.o
+
+if MACH_MSIM
+MODULES += $(top_builddir)/kern/arch/$(ARCH)/mach-$(MACH)/tty.o
+endif
+
+if MACH_LOONGSON3A
+MODULES += $(top_builddir)/kern/arch/$(ARCH)/mach-$(MACH)/tty.o
+endif
+
+###########
+# Storage #
+###########
+
+if BLOCK_MSIM
+MODULES += $(top_builddir)/drivers/block/msim-ddisk.o
+endif
+
+if MACH_LOONGSON3A
+MODULES += $(top_builddir)/drivers/ata/ata_ide.o
+endif
+
+########################
+# Interrupt controller #
+########################
+
+if MACH_LOONGSON3A
+MODULES += $(top_builddir)/drivers/interrupt-controller/i8259.o
+endif
+
+#######
+# PCI #
+#######
+
+if MACH_LOONGSON3A
+MODULES += $(top_builddir)/drivers/pci/pci-mem.o
+MODULES += $(top_builddir)/drivers/pci/sata_ide_pci.o
+endif

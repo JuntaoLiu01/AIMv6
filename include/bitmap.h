@@ -209,7 +209,8 @@ static inline void bitmap_shift_left(unsigned long *dst,
 
 static inline int bitmap_test_bit(int nr, const volatile unsigned long *addr)
 {
-	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+	assert(nr > 0);
+	return 1UL & (addr[BIT_WORD(nr)] >> ((nr - 1) & (BITS_PER_LONG-1)));
 }
 
 #endif

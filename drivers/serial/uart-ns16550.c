@@ -27,10 +27,10 @@
 #include <util.h>
 #include <io.h>
 #include <mm.h>
-#include <console.h>
+#include <aim/console.h>
 #include <platform.h>
 #include <aim/device.h>
-#include <console.h>
+#include <aim/console.h>
 #include <drivers/io/io-mem.h>
 #include <drivers/io/io-port.h>
 
@@ -41,28 +41,29 @@
 /* internal routines */
 
 static struct chr_device __early_uart_ns16550 = {
-	.base = UART_BASE
+	.base = UART_BASE,
+	.class = DEVCLASS_CHR,
 };
 
 static void __uart_ns16550_init(struct chr_device *inst)
 {
 	struct bus_device *bus = inst->bus;
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, widthof(uint8_t));
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 
 	if (bus_write8 == NULL)
 		return;		/* should panic? */
 
 	/* TODO: check if the following configuration works across all
 	 * UARTs */
-	bus_write8(bus, inst->base + UART_FIFO_CONTROL,
+	bus_write8(bus, inst->base, UART_FIFO_CONTROL,
 	    UART_FCR_RTB_4 | UART_FCR_RST_TRANSMIT | UART_FCR_RST_RECEIVER |
 	    UART_FCR_ENABLE);
-	bus_write8(bus, inst->base + UART_LINE_CONTROL, UART_LCR_DLAB);
-	bus_write8(bus, inst->base + UART_DIVISOR_LSB,
+	bus_write8(bus, inst->base, UART_LINE_CONTROL, UART_LCR_DLAB);
+	bus_write8(bus, inst->base, UART_DIVISOR_LSB,
 	    (UART_FREQ / UART_BAUDRATE) & 0xff);
-	bus_write8(bus, inst->base + UART_DIVISOR_MSB,
+	bus_write8(bus, inst->base, UART_DIVISOR_MSB,
 	    ((UART_FREQ / UART_BAUDRATE) >> 8) & 0xff);
-	bus_write8(bus, inst->base + UART_LINE_CONTROL,
+	bus_write8(bus, inst->base, UART_LINE_CONTROL,
 	    UART_LCR_DATA_8BIT |
 	    UART_LCR_STOP_1BIT |
 	    UART_LCR_PARITY_NONE);
@@ -71,79 +72,79 @@ static void __uart_ns16550_init(struct chr_device *inst)
 static void __uart_ns16550_enable(struct chr_device *inst)
 {
 	struct bus_device *bus = inst->bus;
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, widthof(uint8_t));
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 
 	if (bus_write8 == NULL)
 		return;		/* should panic? */
 
-	bus_write8(bus, inst->base + UART_MODEM_CONTROL,
+	bus_write8(bus, inst->base, UART_MODEM_CONTROL,
 	    UART_MCR_RTSC | UART_MCR_DTRC);
 }
 
 static void __uart_ns16550_disable(struct chr_device *inst)
 {
 	struct bus_device *bus = inst->bus;
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, widthof(uint8_t));
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 
 	if (bus_write8 == NULL)
 		return;		/* should panic? */
 
-	bus_write8(bus, inst->base + UART_MODEM_CONTROL, 0);
+	bus_write8(bus, inst->base, UART_MODEM_CONTROL, 0);
 }
 
 static void __uart_ns16550_enable_interrupt(struct chr_device *inst)
 {
 	struct bus_device *bus = inst->bus;
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, widthof(uint8_t));
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 
 	if (bus_write8 == NULL)
 		return;		/* should panic? */
 
-	bus_write8(bus, inst->base + UART_INTR_ENABLE, UART_IER_RBFI);
+	bus_write8(bus, inst->base, UART_INTR_ENABLE, UART_IER_RBFI);
 }
 
 static void __uart_ns16550_disable_interrupt(struct chr_device *inst)
 {
 	struct bus_device *bus = inst->bus;
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, widthof(uint8_t));
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 
 	if (bus_write8 == NULL)
 		return;		/* should panic? */
 
-	bus_write8(bus, inst->base + UART_INTR_ENABLE, 0);
+	bus_write8(bus, inst->base, UART_INTR_ENABLE, 0);
 }
 
 static unsigned char __uart_ns16550_getchar(struct chr_device *inst)
 {
 	struct bus_device *bus = inst->bus;
-	bus_read_fp bus_read8 = bus->get_read_fp(bus, widthof(uint8_t));
+	bus_read_fp bus_read8 = bus->bus_driver.get_read_fp(bus, 8);
 	uint64_t buf;
 
 	if (bus_read8 == NULL)
 		return 0;		/* should panic? */
 	do {
-		bus_read8(bus, inst->base + UART_LINE_STATUS, &buf);
+		bus_read8(bus, inst->base, UART_LINE_STATUS, &buf);
 	} while (!(buf & UART_LSR_DATA_READY));
 
-	bus_read8(bus, inst->base + UART_RCV_BUFFER, &buf);
+	bus_read8(bus, inst->base, UART_RCV_BUFFER, &buf);
 	return (unsigned char)buf;
 }
 
 static int __uart_ns16550_putchar(struct chr_device *inst, unsigned char c)
 {
 	struct bus_device *bus = inst->bus;
-	bus_read_fp bus_read8 = bus->get_read_fp(bus, widthof(uint8_t));
-	bus_write_fp bus_write8 = bus->get_write_fp(bus, widthof(uint8_t));
+	bus_read_fp bus_read8 = bus->bus_driver.get_read_fp(bus, 8);
+	bus_write_fp bus_write8 = bus->bus_driver.get_write_fp(bus, 8);
 	uint64_t buf;
 
 	if (bus_read8 == NULL || bus_write8 == NULL)
 		return EOF;
 
 	do {
-		bus_read8(bus, inst->base + UART_LINE_STATUS, &buf);
+		bus_read8(bus, inst->base, UART_LINE_STATUS, &buf);
 	} while (!(buf & UART_LSR_THRE));
 
-	bus_write8(bus, inst->base + UART_TRANS_HOLD, c);
+	bus_write8(bus, inst->base, UART_TRANS_HOLD, c);
 	return 0;
 }
 
@@ -169,7 +170,7 @@ static void __early_console_init_bus(void)
 {
 	/* select bus for NS16550 */
 #ifdef NS16550_PORTIO
-	__early_uart_ns16550.bus = &portio_bus;
+	__early_uart_ns16550.bus = &early_portio_bus;
 #else
 	__early_uart_ns16550.bus = &early_memory_bus;
 #endif
@@ -196,6 +197,8 @@ int early_console_init(void)
 		for (;;) ;	/* panic */
 	return 0;
 }
+
+#include "uart-ns16550-kernel.c"
 
 #endif /* RAW */
 

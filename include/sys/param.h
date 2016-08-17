@@ -26,8 +26,10 @@
  */
 
 #define NODEV	((dev_t)(-1))
+#define NOMAJOR	((unsigned int)(-1))
 #define MAJOR_MAX	16
-#define BLOCK_SIZE	512
+#define DEVICE_MAX	32
+#define SECTOR_SIZE	512
 #define JUNKBYTE	0x20
 
 #endif

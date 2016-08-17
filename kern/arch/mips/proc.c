@@ -103,7 +103,18 @@ void __proc_usetup(struct proc *proc, void *entry, void *stacktop, void *args)
 	__bootstrap_user(tf);
 }
 
-/******** User processes (TODO) *******/
+void __prepare_trapframe_and_stack(struct trapframe *tf, void *entry,
+    void *ustacktop, int argc, char *argv[], char *envp[])
+{
+	tf->gpr[_T9] = tf->epc = (unsigned long)entry;
+	tf->gpr[_SP] = (unsigned long)(ustacktop - 32);
+	tf->gpr[_A0] = argc;
+	tf->gpr[_A1] = (unsigned long)argv;
+	tf->gpr[_A2] = (unsigned long)envp;
+	/* Make sure we are in user mode */
+	tf->status &= ~ST_KSU;
+	tf->status |= KSU_USER;
+}
 
 void proc_trap_return(struct proc *proc)
 {

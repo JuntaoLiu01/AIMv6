@@ -24,10 +24,8 @@
 #include <mm.h>
 #include <list.h>
 #include <regs.h>
-
-#define PROC_NAME_LEN_MAX	256
-
-typedef int pid_t;
+#include <limits.h>
+#include <file.h>
 
 struct proc {
 	/* TODO: move thread-specific data into a separate structure */
@@ -69,15 +67,34 @@ struct proc {
 	 */
 	struct regs	context;	/* Context before switch */
 	size_t		heapsize;	/* Expandable heap size */
-
-	/* TODO: do we need these? */
-	uintptr_t	ustacktop;	/* User stack top */
-	uintptr_t	progtop; /* Top of all segments (page-aligned) */
+	void		*heapbase;	/* Expandable heap base */
 
 	char		name[PROC_NAME_LEN_MAX];
 
+	/* File system related */
+	struct vnode	*cwd;		/* current working directory */
+	struct vnode	*rootd;		/* root directory (chroot) */
+	union {
+		struct {
+			struct file *fstdin;	/* stdin */
+			struct file *fstdout;	/* stdout */
+			struct file *fstderr;	/* stderr */
+		};
+		struct file *fd[OPEN_MAX];	/* opened files */
+	};
+	lock_t		fdlock;		/* lock of file table */
+
+	/* TODO: POSIX process groups and sessions.  I'm not entirely sure
+	 * how they should look like. */
+	struct proc	*groupleader;	/* Process group leader */
+	struct proc	*sessionleader;	/* Session leader */
+
+	/* Session data */
+	struct tty_device *tty;		/* Controlling terminal */
+	struct vnode	*ttyvnode;	/* vnode of terminal */
+
 	/* Process tree related */
-	struct proc	*leader;	/* Main thread of the same process */
+	struct proc	*mainthread;	/* Main thread of the same process */
 	struct proc	*parent;
 	struct proc	*first_child;
 	struct proc	*next_sibling;
@@ -100,7 +117,7 @@ void proc_destroy(struct proc *proc);
 void proc_init(void);
 /* Setup per-CPU idle process */
 void idle_init(void);
-void initproc_init(void);
+void spawn_initproc(void);
 pid_t pid_new(pid_t kpid, struct namespace *ns);
 void pid_recycle(pid_t pid, struct namespace *ns);
 void proc_test(void);		/* temporary */

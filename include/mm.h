@@ -130,6 +130,8 @@ ssize_t invalidate_pages(pgindex_t *pgindex, void *vaddr, size_t size,
     addr_t *paddr);
 /* Switch page index to the given one */
 int switch_pgindex(pgindex_t *pgindex);
+/* Get the currently loaded page index structure */
+pgindex_t *get_pgindex(void);
 /* Trace a page index to convert from user address to kernel address */
 void *uva2kva(pgindex_t *pgindex, void *uaddr);
 
@@ -153,10 +155,11 @@ int set_uvm_perm(struct mm *mm, void *addr, size_t len, uint32_t flags);
  * Architecture-independent interfaces
  * Address need not be page-aligned.
  */
-/* Copy from kernel address @kvaddr to user space at @uvaddr */
-int copy_to_uvm(struct mm *mm, void *uvaddr, void *kvaddr, size_t len);
+/* Copy from address @vaddr in current memory mapping (including kernel's) to
+ * user space at @uvaddr */
+int copy_to_uvm(struct mm *mm, void *uvaddr, void *vaddr, size_t len);
 /* Does the reverse */
-int copy_from_uvm(struct mm *mm, void *uvaddr, void *kvaddr, size_t len);
+int copy_from_uvm(struct mm *mm, void *uvaddr, void *vaddr, size_t len);
 /* Fill a user space memory region with given byte */
 int fill_uvm(struct mm *mm, void *uvaddr, unsigned char c, size_t len);
 
