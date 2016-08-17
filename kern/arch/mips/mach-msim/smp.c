@@ -22,6 +22,7 @@
 
 #include <mp.h>
 #include <smp.h>
+#include <mipsregs.h>
 
 extern void slave_entry(void);
 

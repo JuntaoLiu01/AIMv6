@@ -80,6 +80,7 @@ setup_pic:
 #ifdef __LP64__
 	or	a0, ST_KX | ST_SX | ST_UX /* enable 64-bit address space */
 #endif
+	or	a0, ST_IM
 	MTC032	a0, CP0_STATUS
 	/*
 	 * The kernel is already inside RAM, so .text section, .rodata
@@ -150,6 +151,7 @@ BEGIN(slave_entry)
 #ifdef __LP64__
 	or	a0, ST_KX | ST_SX | ST_UX /* enable 64-bit address space */
 #endif
+	or	a0, ST_IM
 	MTC032	a0, CP0_STATUS
 	bal	load_slave_sp
 	jal	slave_early_init
