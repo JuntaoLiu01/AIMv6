@@ -92,7 +92,7 @@ static void __pt_l2_clear(void *pt)
 	f &= MAP_TYPE_MASK; \
 	switch(f) { \
 		case MAP_USER_MEM: (tex)=1; (c)=1; (b)=1; (s)=1; break; \
-		case MAP_KERN_MEM: (tex)=1; (c)=1; (b)=1; (s)=1; break; \
+		case MAP_KERN_MEM: (tex)=1; (c)=1; (b)=1; (s)=1; (xn)=0; break; \
 		case MAP_PRIV_DEV: (tex)=2; (c)=0; (b)=0; (s)=0; break; \
 		case MAP_SHARED_DEV: (tex)=0; (c)=0; (b)=1; (s)=0; break; \
 		default: (tex)=1; (c)=1; (b)=1; (s)=1; \
@@ -322,9 +322,10 @@ int map_pages(pgindex_t *pgindex, void *vaddr, addr_t paddr, size_t size,
 		IS_ALIGNED(paddr, ARM_PAGE_SIZE) &&
 		IS_ALIGNED(size, ARM_PAGE_SIZE)
 	)) return EOF;
-	kprintf("DEBUG: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", pgindex, vaddr, (size_t)paddr, size, flags);
+kprintf("DEBUG: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", pgindex, vaddr, (size_t)paddr, size, flags);
 	/* apply mappings */
 	while (size > 0) {
+kprintf("DEBUG: Inner 0x%08x, 0x%08x, 0x%08x\n", vaddr, (size_t)paddr, size);
 		if (
 			IS_ALIGNED((size_t)vaddr, ARM_SECT_SIZE) &&
 			IS_ALIGNED(paddr, ARM_SECT_SIZE) &&
@@ -399,6 +400,7 @@ int switch_pgindex(pgindex_t *pgindex)
 	/* normal routine */
 	SMP_ISB();
 	asm volatile (
+		"mcr	p15, 0, %[addr], c8, c3, 0;"
 		"mcr	p15, 0, %[addr], c2, c0, 0;"
         ::
         	[addr] "r" (kva2pa(pgindex))

@@ -56,6 +56,7 @@ mm_test(void)
 		assert(*(unsigned int *)(test_addr + i) == 0x40404040);
 	for (i = 0; i < PAGE_SIZE; i += sizeof(unsigned int))
 		*(unsigned int *)(test_addr + i) = 0xdeadbeef;
+	kprintf("yet another mm\n");
 	new_mm = mm_new();
 	kprintf("new pgindex: %p\n", new_mm->pgindex);
 	mm_clone(new_mm, mm);

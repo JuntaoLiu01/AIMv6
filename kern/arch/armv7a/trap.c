@@ -130,6 +130,19 @@ struct trapframe *arm_copy_trapframe(struct trapframe *dest, struct trapframe *s
 	return dest;
 }
 
+void handle_data_abort(tf)
+{
+	uint32_t status, addr;
+	asm volatile (
+		"mrc	p15, 0, %[status], c5, c0, 0;"
+		"mrc	p15, 0, %[addr], c6, c0, 0;"
+	:
+		[status] "=r" (status),
+		[addr] "=r" (addr)
+	);
+	panic("ARM Data Abort, DFSR=0x%08x, DFAR=0x%08x.", status, addr);
+}
+
 __noreturn
 void arm_handle_trap(struct trapframe *tf, uint32_t type)
 {
@@ -143,8 +156,11 @@ void arm_handle_trap(struct trapframe *tf, uint32_t type)
 	case ARM_IRQ:
 		handle_interrupt(tf);
 		break;
+	case ARM_DATA_ABT:
+		handle_data_abort(tf);
+		break;
 	default:
-		panic("Unexpected trap\n");
+		panic("Unexpected trap.\n");
 	}
 	trap_return(tf);
 }
