@@ -85,7 +85,12 @@ static int __extend(struct allocator_cache *cache)
 		.size	= head->slab_size,
 		.flags	= cache->flags
 	};
-	int ret = alloc_pages(&pages);
+	int ret;
+	if (cache->align > PAGE_SIZE){
+		ret = alloc_aligned_pages(&pages, cache->align);
+	} else {
+		ret = alloc_pages(&pages);
+	}
 	if (ret < 0) {
 		kfree(slab);
 		return EOF;
@@ -136,10 +141,10 @@ static int __create(struct allocator_cache *cache)
 
 	/* bitfield has length limit */
 	if (size < SLAB_MIN_SIZE) size = SLAB_MIN_SIZE;
+	/* if larger than half a page, use whole pages */
+	if (align > (PAGE_SIZE / 2)) align = ALIGN_ABOVE(align, PAGE_SIZE);
 	/* apply alignment */
 	size = ALIGN_ABOVE(size, align);
-	/* if larger than half a page, use whole pages */
-	if (size > (PAGE_SIZE / 2)) size = ALIGN_ABOVE(size, PAGE_SIZE);
 	/* fill in struct head */
 	head->slab_size = ALIGN_ABOVE(size * SLAB_ENTRIES, PAGE_SIZE);
 	list_init(&head->empty);

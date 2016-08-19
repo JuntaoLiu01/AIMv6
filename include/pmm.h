@@ -54,6 +54,7 @@ void set_page_allocator(struct page_allocator *allocator);
  * Returns 0 for success and EOF for failure.
  */
 int alloc_pages(struct pages *pages);
+int alloc_aligned_pages(struct pages *pages, lsize_t align);
 void free_pages(struct pages *pages);
 addr_t get_free_memory(void);
 

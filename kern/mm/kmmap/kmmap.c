@@ -71,11 +71,12 @@ void set_kmmap_keeper(struct kmmap_keeper *keeper)
 }
 
 /* Subsystem lock */
-static lock_t lock = EMPTY_LOCK(lock);
+static lock_t lock;
 
 /* Interfaces */
 void kmmap_init(void)
 {
+	spinlock_init(&lock);
 	__keeper.init();
 	__allocator.init(&__keeper);
 }
@@ -94,7 +95,7 @@ int kmmap_apply(pgindex_t *pgindex)
 {
 	struct kmmap_entry *entry;
 
-	kpdebug("Applying kmmap to: pgindex=0x%08x.\n", pgindex);
+	kprintf("KERN: Applying kmmap to: pgindex=0x%08x.\n", pgindex);
 
 	spin_lock(&lock);
 	for (
@@ -103,8 +104,12 @@ int kmmap_apply(pgindex_t *pgindex)
 	) {
 		int ret = map_pages(pgindex, entry->vaddr, 
 			entry->paddr, entry->size, entry->flags);
-		if (ret < 0) return EOF;
+		if (ret < 0) {
+			spin_unlock(&lock);
+			return EOF;
+		}
 	}
+	spin_unlock(&lock);
 	return 0;
 }
 

@@ -76,11 +76,6 @@ int set_pages_perm(pgindex_t *pgindex, void *vaddr, size_t size, uint32_t flags)
 	return -1;
 }
 
-void *uva2kva(pgindex_t *pgindex, void *uaddr)
-{
-	return NULL;
-}
-
 #include <regs.h>
 void switch_regs(struct regs *old, struct regs *new)
 {

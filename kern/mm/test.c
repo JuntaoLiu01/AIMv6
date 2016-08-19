@@ -29,7 +29,7 @@
 void
 mm_test(void)
 {
-	unsigned long test_addr = PAGE_SIZE;
+	unsigned long test_addr = 0x8000;
 	unsigned long i;
 
 	kprintf("==========mm_test()  started==========\n");

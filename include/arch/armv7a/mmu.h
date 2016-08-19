@@ -106,7 +106,7 @@ void page_index_clear(pgindex_t * index);
 int page_index_early_map(pgindex_t * index, addr_t paddr, void *vaddr,
 	size_t length);
 
-#define is_user(x)	((ULCAST(x) > NULL) && (ULCAST(x) < KERN_BASE))
+#define is_user(x)	((ULCAST(x) >= 0x8000) && (ULCAST(x) < KERN_BASE))
 
 #endif
 

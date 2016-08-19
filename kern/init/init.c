@@ -108,20 +108,20 @@ void __noreturn master_init(void)
 	/* temporary test */
 	extern void trap_test(void);
 	trap_test();
-
 	kputs("KERN: Traps test passed.\n");
 
 	/* do early initcalls, one by one */
 	do_early_initcalls();
+
+	/* init kernel mapping management */
+	kmmap_init();
+	kputs("KERN: kmmap subsystem ready.\n");
 
 	mm_init();
 	kputs("KERN: Memory management component initialized.\n");
 
 	extern void mm_test(void);
 	mm_test();
-
-	/* init kernel mapping management */
-	kmmap_init();
 
 	proc_init();
 	sched_init();

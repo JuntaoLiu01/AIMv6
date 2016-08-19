@@ -72,6 +72,33 @@ int alloc_pages(struct pages *pages)
 	return result;
 }
 
+int alloc_aligned_pages(struct pages *pages, lsize_t align)
+{
+	struct pages buf, padding;
+	int ret;
+
+	/* we allocate extra pages */
+	buf = *pages;
+	buf.size += align - PAGE_SIZE;
+	ret = alloc_pages(&buf);
+	if (ret < 0) return ret;
+	/* prepare return values */
+	pages->paddr = ALIGN_ABOVE(buf.paddr, align);
+	/* deal with padding */
+	padding.flags = buf.flags;
+	if (buf.paddr < pages->paddr){
+		padding.paddr = buf.paddr;
+		padding.size = pages->paddr - buf.paddr;
+		free_pages(&padding);
+	}
+	if (buf.paddr + buf.size > pages->paddr + pages->size){
+		padding.paddr = pages->paddr + pages->size;
+		padding.size = buf.paddr + buf.size - pages->paddr - pages->size;
+		free_pages(&padding);
+	}
+	return 0;
+}
+
 void free_pages(struct pages *pages)
 {
 	unsigned long flags;

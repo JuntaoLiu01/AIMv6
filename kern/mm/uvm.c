@@ -45,6 +45,7 @@ mm_new(void)
 			kfree(mm);
 			return NULL;
 		}
+		kmmap_apply(mm->pgindex);
 	}
 
 	return mm;

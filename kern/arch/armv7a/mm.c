@@ -288,7 +288,9 @@ void arch_mm_init(void)
 
 pgindex_t *init_pgindex(void)
 {
-	return (pgindex_t *)cache_alloc(pt_l1_cache);
+	pgindex_t *index = cache_alloc(pt_l1_cache);
+	page_index_clear(index);
+	return index;
 }
 
 void destroy_pgindex(pgindex_t *pgindex)
@@ -320,6 +322,7 @@ int map_pages(pgindex_t *pgindex, void *vaddr, addr_t paddr, size_t size,
 		IS_ALIGNED(paddr, ARM_PAGE_SIZE) &&
 		IS_ALIGNED(size, ARM_PAGE_SIZE)
 	)) return EOF;
+	kprintf("DEBUG: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", pgindex, vaddr, (size_t)paddr, size, flags);
 	/* apply mappings */
 	while (size > 0) {
 		if (
@@ -333,7 +336,7 @@ int map_pages(pgindex_t *pgindex, void *vaddr, addr_t paddr, size_t size,
 			paddr += ARM_SECT_SIZE;
 			size -= ARM_SECT_SIZE;
 		} else {
-			/* allowed and possible, map a section */
+			/* allowed and possible, map a page */
 			__arm_map_page(pgindex, paddr, vaddr, flags);
 			vaddr += ARM_PAGE_SIZE;
 			paddr += ARM_PAGE_SIZE;
@@ -405,5 +408,16 @@ int switch_pgindex(pgindex_t *pgindex)
 	SMP_DSB();
 
 	return 0;
+}
+
+void *uva2kva(pgindex_t *pgindex, void *uaddr)
+{
+	addr_t paddr;
+	size_t size;
+	get_mapped(pgindex, ULCAST(uaddr), paddr, size);
+	if (size == 0)
+		return NULL;
+	else
+		return (void *)pa2kva(paddr);
 }
 

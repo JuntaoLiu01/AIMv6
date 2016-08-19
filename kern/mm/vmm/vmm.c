@@ -122,7 +122,7 @@ int cache_create(struct allocator_cache *cache)
 {
 	if (cache == NULL)
 		return EOF;
-	assert(cache->size < PAGE_SIZE / 2);
+	//assert(cache->size < PAGE_SIZE / 2);
 	spinlock_init(&cache->lock);
 	//kpdebug("ALLOC: cache_create %p (%d bytes)\n", cache, cache->size);
 	return __caching_allocator.create(cache);
