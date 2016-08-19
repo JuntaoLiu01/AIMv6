@@ -48,12 +48,12 @@ void early_mapping_clear(void)
 	queue_size = 0;
 	mem_top = (void *)KERN_BASE;
 	kmmap_top = (void *)KMMAP_BASE;
-	debug_kprintf("Early mappings cleared.\n");
+	kpdebug("Early mappings cleared.\n");
 }
 
 int early_mapping_add(struct early_mapping *entry)
 {
-	debug_kprintf(
+	kpdebug(
 		"Adding early mapping: va=0x%08x, pa=0x%08x, size=0x%08x.\n",
 		entry->vaddr, (size_t)entry->paddr, entry->size
 	);

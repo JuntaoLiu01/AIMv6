@@ -33,6 +33,8 @@
 /* FIXME zedboard uses SD0 only */
 #define SD_BASE	SD0_PHYSBASE
 
+static int cardtype;
+
 void sd_init()
 {
 	uint16_t tmp16;
@@ -197,7 +199,7 @@ int sd_send_cmd(uint16_t cmd, uint16_t count, uint32_t arg, int mode)
 int sd_init_card()
 {
 	uint32_t state, resp;
-	int ret, cardtype;
+	int ret;
 	/* check card */
 	state = read32(SD_BASE + SD_PRES_STATE_OFFSET);
 	if (!(state & SD_PSR_CARD_INSRT)) return -1;
@@ -277,6 +279,10 @@ int sd_read(uint32_t pa, uint16_t count, uint32_t offset)
 	state32 = read32(SD_BASE + SD_PRES_STATE_OFFSET);
 	if (!(state32 & SD_PSR_CARD_INSRT)) return -1;
 	/* block size set to 512 during controller init, skipping check */
+	/* SD card uses byte addressing */
+	if (cardtype == 0) {
+		offset *= 512;
+	}
 	/* write address */
 	write32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET, pa);
 	/* CMD18 with auto_cmd12 */
@@ -327,6 +333,10 @@ int sd_write(uint32_t pa, uint16_t count, uint32_t offset)
 	state32 = read32(SD_BASE + SD_PRES_STATE_OFFSET);
 	if (!(state32 & SD_PSR_CARD_INSRT)) return -1;
 	/* block size set to 512 during controller init, skipping check */
+	/* SD card uses byte addressing */
+	if (cardtype == 0) {
+		offset *= 512;
+	}
 	/* write address */
 	write32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET, pa);
 	/* CMD18 with auto_cmd12 */

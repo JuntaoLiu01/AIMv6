@@ -13,6 +13,7 @@
 #include <sys/param.h>
 #include <errno.h>
 #include <drivers/pci/pci.h>
+#include <vmm.h>
 #include <libc/string.h>
 #include <libc/stdio.h>
 #include <panic.h>

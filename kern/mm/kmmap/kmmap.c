@@ -94,7 +94,7 @@ int kmmap_apply(pgindex_t *pgindex)
 {
 	struct kmmap_entry *entry;
 
-	debug_kprintf("Applying kmmap to: pgindex=0x%08x.\n", pgindex);
+	kpdebug("Applying kmmap to: pgindex=0x%08x.\n", pgindex);
 
 	spin_lock(&lock);
 	for (

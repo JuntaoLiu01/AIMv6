@@ -25,6 +25,7 @@
 #include <aim/early_kmmap.h>
 #include <aim/export.h>
 #include <aim/kmmap.h>
+#include <aim/sync.h>
 #include <list.h>
 #include <util.h>
 #include <aim/console.h>
@@ -386,5 +387,23 @@ ssize_t unmap_pages(pgindex_t *pgindex, void *vaddr, size_t size, addr_t *paddr)
 		}
 	}
 	return block_size;
+}
+
+int switch_pgindex(pgindex_t *pgindex)
+{
+	/* ARM errata 754322 */
+	SMP_DSB();
+	/* normal routine */
+	SMP_ISB();
+	asm volatile (
+		"mcr	p15, 0, %[addr], c2, c0, 0;"
+        ::
+        	[addr] "r" (kva2pa(pgindex))
+	);
+	SMP_ISB();
+	/* ARM errata 754322 */
+	SMP_DSB();
+
+	return 0;
 }
 

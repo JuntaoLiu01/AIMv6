@@ -19,7 +19,6 @@
 #include <libc/syscalls.h>
 #include <util.h>
 
-
 #ifdef ARM_OABI
 
 /* We don't want to mess with OABI right now. */
@@ -40,8 +39,10 @@
  *
  * We do not create a stack frame here.
  */
+#define __empty
 
 #define DEFINE_SYSCALL(name) \
+.globl	name; \
 name: \
 	mov	ip, sp; \
 	stmdb	ip!, {r4-r7}; \

@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Gan Quan <coin2028@hotmail.com>
+/* Copyright (C) 2016 David Gao <davidgao1001@gmail.com>
  *
  * This file is part of AIMv6.
  *
@@ -16,16 +16,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _MACH_CONF_H
-#define _MACH_CONF_H
-
-#define TTY_MAJOR		0
-#define UART_MAJOR		1
-#define IDE_DISK_MAJOR		2
-
-#define NR_IRQS		256
-
-/* Rather arbitrary */
-#define IRQ_UART	20
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
 #endif
+
+#define TARGET	"elf32-littlearm"
+
+#define USER_START	0x8000
+
+OUTPUT_FORMAT(TARGET)
+
+ENTRY(__start)
+
+SECTIONS {
+	. = USER_START;
+	.text : {
+		*(.text*);
+	}
+	. = ALIGN(32);
+	.rodata : {
+		*(.rodata*);
+	}
+	HIDDEN(_gp = ALIGN(16) + 0x7ff0);
+	.got : {
+		*(.got*);
+	}
+	.data : {
+		*(.data*);
+	}
+	.bss : {
+		*(.bss*);
+	}
+}
+

@@ -6,6 +6,7 @@
 #include <libc/string.h>
 #include <trap.h>
 #include <errno.h>
+#include <vmm.h>
 
 /* drivers with associated major number */
 struct driver *devsw[MAJOR_MAX];

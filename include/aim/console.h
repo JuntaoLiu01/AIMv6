@@ -19,6 +19,8 @@
 #ifndef _CONSOLE_H
 #define _CONSOLE_H
 
+#ifndef __ASSEMBLER__
+
 typedef int (*putchar_fp)(unsigned char c);
 typedef int (*puts_fp)(const char *s);
 
@@ -42,15 +44,13 @@ int kputs(const char *s);	/* Atomic */
 int __default_kputs(const char *s);
 #define DEFAULT_KPUTS __default_kputs
 
-#ifdef DEBUG_OUTPUT
-#define debug_kprintf(fmt, ...) \
-	do { \
-		kputs("DEBUG: "); \
-		kprintf(fmt, ##__VA_ARGS__); \
-	} while (0)
+#ifdef DEBUG
+#define kpdebug(...) kprintf("DEBUG: " __VA_ARGS__)
 #else
-#define debug_kprintf(fmt, ...)
-#endif /* DEBUG_OUTPUT */
+#define kpdebug(...)
+#endif
+
+#endif /* !__ASSEMBLER__ */
 
 #endif /* _CONSOLE_H */
 

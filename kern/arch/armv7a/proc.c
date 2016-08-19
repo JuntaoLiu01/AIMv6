@@ -97,7 +97,18 @@ void __proc_usetup(struct proc *proc, void *entry, void *stacktop, void *args)
 	__bootstrap_user(tf);
 }
 
-/******** User processes (TODO) *******/
+void __prepare_trapframe_and_stack(struct trapframe *tf, void *entry,
+    void *ustacktop, int argc, char *argv[], char *envp[])
+{
+	tf->pc = (unsigned long)entry;
+	tf->sp = (unsigned long)(ustacktop - 32);
+	tf->r0 = argc;
+	tf->r1 = (unsigned long)argv;
+	tf->r2 = (unsigned long)envp;
+	/* Make sure we are in user mode */
+	tf->psr &= ~ARM_MODE_MASK;
+	tf->psr |= ARM_MODE_USR;
+}
 
 void proc_trap_return(struct proc *proc)
 {

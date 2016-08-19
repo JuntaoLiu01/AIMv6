@@ -47,12 +47,6 @@ void panic_other_cpus(void);
 			    __func__, __FILE__, __LINE__, #condition); \
 	} while (0)
 
-#ifdef DEBUG
-#define kpdebug(...) kprintf("DEBUG: " __VA_ARGS__)
-#else
-#define kpdebug(...)
-#endif
-
 #endif /* !__ASSEMBLER__ */
 
 #endif

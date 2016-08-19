@@ -52,5 +52,60 @@ void early_arch_init(void)
 
 void arch_init(void)
 {
+
+}
+
+/* TODO */
+#include <mm.h>
+void init_IRQ(void)
+{
+
+}
+void timer_init(void)
+{
+
+}
+
+pgindex_t *get_pgindex(void)
+{
+	return NULL;
+}
+
+int set_pages_perm(pgindex_t *pgindex, void *vaddr, size_t size, uint32_t flags)
+{
+	return -1;
+}
+
+void *uva2kva(pgindex_t *pgindex, void *uaddr)
+{
+	return NULL;
+}
+
+#include <regs.h>
+void switch_regs(struct regs *old, struct regs *new)
+{
+
+}
+
+void arch_smp_startup(void)
+{
+
+}
+
+#include <aim/device.h>
+dev_t rootdev;
+
+int ndevtree_entries = 0;
+struct devtree_entry devtree[1];
+
+#include <proc.h>
+int __mach_setup_default_tty(struct tty_device *a, int b, struct proc *c)
+{
+	return -1;
+}
+
+void panic_other_cpus(void)
+{
+
 }
 

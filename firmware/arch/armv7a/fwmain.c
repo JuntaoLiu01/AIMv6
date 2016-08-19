@@ -47,7 +47,7 @@ void delay(uint32_t s)
 	} while (time1 < time);
 }
 
-void delay(uint32_t us)
+void udelay(uint32_t us)
 {
 	uint64_t time, time1;
 	time = timer_read();

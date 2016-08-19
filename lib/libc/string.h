@@ -21,6 +21,8 @@
 
 #include <sys/types.h>
 
+#ifndef __ASSEMBLER__
+
 void *memset(void *dst, int c, size_t n);
 int memcmp(const void *s1, const void *s2, size_t n);
 void *memcpy(void *dst, const void *src, size_t n);
@@ -30,6 +32,8 @@ size_t strlcat(char *dst, const char *src, size_t dsize);
 size_t strlcpy(char *dst, const char *src, size_t dsize);
 size_t strlen(const char *str);
 size_t strnlen(const char *str, size_t maxlen);
+
+#endif /* !__ASSEMBLER__ */
 
 #endif
 
