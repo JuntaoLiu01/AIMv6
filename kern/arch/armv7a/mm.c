@@ -171,7 +171,7 @@ static inline void __arm_map_page(arm_pte_l1_t *page_table, addr_t paddr,
 	/* get the L2 table */
 	t1 = page_table;
 	e1 = t1[(size_t)vaddr >> ARM_SECT_SHIFT];
-	t2 = (arm_pte_l2_t *)(e1 & ARM_PT_L1_TABLE_BASE_MASK);
+	t2 = (arm_pte_l2_t *)pa2kva(e1 & ARM_PT_L1_TABLE_BASE_MASK);
 	/* apply map */
 	e2 = ARM_PT_L2_PAGE;
 	e2 |= paddr;
@@ -302,8 +302,8 @@ void destroy_pgindex(pgindex_t *pgindex)
 	for (i = 0; i < ARM_PT_L1_LENGTH; i += 1) {
 		uint32_t type = table[i] & ARM_PT_L1_TYPE_MASK;
 		if (type == ARM_PT_L1_TABLE) {
-			uint32_t l2table =
-				table[i] & ARM_PT_L1_TABLE_BASE_MASK;
+			uint32_t l2table = pa2kva(
+				table[i] & ARM_PT_L1_TABLE_BASE_MASK);
 			cache_free(pt_l2_cache, (void *)l2table);
 		}
 	}
@@ -322,10 +322,8 @@ int map_pages(pgindex_t *pgindex, void *vaddr, addr_t paddr, size_t size,
 		IS_ALIGNED(paddr, ARM_PAGE_SIZE) &&
 		IS_ALIGNED(size, ARM_PAGE_SIZE)
 	)) return EOF;
-kprintf("DEBUG: 0x%08x, 0x%08x, 0x%08x, 0x%08x, 0x%08x\n", pgindex, vaddr, (size_t)paddr, size, flags);
 	/* apply mappings */
 	while (size > 0) {
-kprintf("DEBUG: Inner 0x%08x, 0x%08x, 0x%08x\n", vaddr, (size_t)paddr, size);
 		if (
 			IS_ALIGNED((size_t)vaddr, ARM_SECT_SIZE) &&
 			IS_ALIGNED(paddr, ARM_SECT_SIZE) &&
@@ -353,7 +351,7 @@ kprintf("DEBUG: Inner 0x%08x, 0x%08x, 0x%08x\n", vaddr, (size_t)paddr, size);
 	arm_pte_l2_t *t2, e2; \
 	switch (e1 & ARM_PT_L1_TYPE_MASK) { \
 		case ARM_PT_L1_TABLE: \
-			t2 = (arm_pte_l2_t *)(e1 & ARM_PT_L1_TABLE_BASE_MASK); \
+			t2 = (arm_pte_l2_t *)pa2kva(e1 & ARM_PT_L1_TABLE_BASE_MASK); \
 			e2 = t2[(vaddr >> ARM_PAGE_SHIFT) & 0xFF]; \
 			(paddr) = e2 & ARM_PT_L2_PAGE_BASE_MASK; \
 			(size) = ARM_PAGE_SIZE; \
