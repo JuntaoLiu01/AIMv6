@@ -131,34 +131,6 @@ void __noreturn master_init(void)
 	do_initcalls();
 	kputs("KERN: Initcalls done.\n");
 
-	/* temporary tests */
-	struct allocator_cache cache = {
-		.size = 1024,
-		.align = 1024,
-		.flags = 0,
-		.create_obj = NULL,
-		.destroy_obj = NULL
-	};
-	cache_create(&cache);
-	void *a, *b, *c;
-	a = cache_alloc(&cache);
-	kpdebug("a = 0x%08x\n", a);
-	b = cache_alloc(&cache);
-	kpdebug("b = 0x%08x\n", b);
-	c = cache_alloc(&cache);
-	kpdebug("c = 0x%08x\n", c);
-	cache_free(&cache, a);
-	cache_free(&cache, b);
-	cache_free(&cache, c);
-	a = cache_alloc(&cache);
-	kpdebug("a = 0x%08x\n", a);
-	cache_free(&cache, a);
-	int ret = cache_destroy(&cache);
-	kpdebug("cache_destroy returned %d.\n", ret);
-	cache_create(&cache);
-	a = cache_alloc(&cache);
-	kpdebug("a = 0x%08x\n", a);
-
 	probe_devices();
 	kprintf("KERN: probe device done\n");
 

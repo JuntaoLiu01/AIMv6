@@ -20,6 +20,8 @@
 #define _MACH_CONF_H
 
 #define TTY_MAJOR		0
+#define UART_MAJOR		1
+#define SD_MAJOR		2
 
 #endif
 

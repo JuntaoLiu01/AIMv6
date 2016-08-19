@@ -57,6 +57,8 @@ if ALGO_KMLIST
 MODULES += $(top_builddir)/kern/mm/kmmap/kmlist.o
 endif
 
+MODULES += $(top_builddir)/kern/mm/kmmap/ff.o
+
 # TODO: allow options
 MODULES += $(top_builddir)/kern/proc/sched/sched_plain.o
 

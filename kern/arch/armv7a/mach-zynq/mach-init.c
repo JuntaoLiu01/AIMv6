@@ -20,8 +20,74 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
+#include <aim/device.h>
+#include <mach.h>
+#include <mach-conf.h>
+
+dev_t rootdev;
+
 void early_mach_init(void)
 {
 
 }
+
+void mach_init(void)
+{
+	rootdev = makedev(SD_MAJOR, ROOT_PARTITION_ID);
+}
+
+struct devtree_entry devtree[] = {
+	/* memory bus */
+	{
+		"memory",
+		"memory",
+		"",
+		0,
+		{0},
+		0
+	},
+	/* Zynq UART */
+	{
+		"uart-zynq",
+		"uart-zynq",
+		"memory",
+		1,
+		{UART0_PHYSBASE},
+		UART0_IRQ
+	},
+	{
+		"uart-zynq",
+		"uart-zynq",
+		"memory",
+		1,
+		{UART1_PHYSBASE},
+		UART1_IRQ
+	},
+	{
+		"sd-zynq",
+		"sd-zynq",
+		"memory",
+		1,
+		{SD0_PHYSBASE},
+		SD0_IRQ
+	},
+	{
+		"sd-zynq",
+		"sd-zynq",
+		"memory",
+		1,
+		{SD1_PHYSBASE},
+		SD1_IRQ
+	},
+	{
+		"mpcore",
+		"cortex-a9",
+		"bus-mapper",
+		1,
+		{MPCORE_PHYSBASE},
+		0
+	}
+};
+
+int ndevtree_entries = ARRAY_SIZE(devtree);
 

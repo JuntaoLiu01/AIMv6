@@ -21,8 +21,9 @@ noinst_LTLIBRARIES = libkmmap.la
 noinst_DATA =
 
 if ALGO_KMLIST
-noinst_DATA += kmlist.o
+noinst_DATA += kmlist.o ff.o
 kmlist.o: kmlist.c
+ff.o: ff.c
 endif
 
 libkmmap_la_SOURCES = \

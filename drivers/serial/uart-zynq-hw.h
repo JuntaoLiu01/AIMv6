@@ -19,9 +19,7 @@
 #ifndef _DRIVERS_SERIAL_UART_ZYNQ_HW_H
 #define _DRIVERS_SERIAL_UART_ZYNQ_HW_H
 
-/* Base Address */
-#define UART0_PHYSBASE	0xE0000000
-#define UART1_PHYSBASE	0xE0001000
+#include <mach.h>
 
 /* Register Offset */
 #define UART_OFFSET_CR		0x00

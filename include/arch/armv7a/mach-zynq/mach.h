@@ -21,5 +21,20 @@
 
 #define MPCORE_PHYSBASE	0xF8F00000
 
+#define GTC_OFFSET	0x0200
+#define GTC_IRQ		27
+
+#define UART0_PHYSBASE	0xE0000000
+#define UART0_IRQ	59
+
+#define UART1_PHYSBASE	0xE0001000
+#define UART1_IRQ	82
+
+#define SD0_PHYSBASE	0xE0100000
+#define SD0_IRQ		56
+
+#define SD1_PHYSBASE	0xE0101000
+#define SD1_IRQ		79
+
 #endif /* _MACH_H */
 

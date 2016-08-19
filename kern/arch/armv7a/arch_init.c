@@ -52,7 +52,7 @@ void early_arch_init(void)
 
 void arch_init(void)
 {
-
+	mach_init();
 }
 
 /* TODO */
@@ -86,12 +86,6 @@ void arch_smp_startup(void)
 {
 
 }
-
-#include <aim/device.h>
-dev_t rootdev;
-
-int ndevtree_entries = 0;
-struct devtree_entry devtree[1];
 
 #include <proc.h>
 int __mach_setup_default_tty(struct tty_device *a, int b, struct proc *c)
