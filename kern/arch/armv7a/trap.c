@@ -105,23 +105,23 @@ void trap_return(struct trapframe *tf)
 
 static void dump_regs(struct trapframe *tf)
 {
-	kprintf("DEBUG: r0 = 0x%08x\n", tf->r0);
-	kprintf("DEBUG: r1 = 0x%08x\n", tf->r1);
-	kprintf("DEBUG: r2 = 0x%08x\n", tf->r2);
-	kprintf("DEBUG: r3 = 0x%08x\n", tf->r3);
-	kprintf("DEBUG: r4 = 0x%08x\n", tf->r4);
-	kprintf("DEBUG: r5 = 0x%08x\n", tf->r5);
-	kprintf("DEBUG: r6 = 0x%08x\n", tf->r6);
-	kprintf("DEBUG: r7 = 0x%08x\n", tf->r7);
-	kprintf("DEBUG: r8 = 0x%08x\n", tf->r8);
-	kprintf("DEBUG: r9 = 0x%08x\n", tf->r9);
-	kprintf("DEBUG: r10 = 0x%08x\n", tf->r10);
-	kprintf("DEBUG: r11 = 0x%08x\n", tf->r11);
-	kprintf("DEBUG: r12 = 0x%08x\n", tf->r12);
-	kprintf("DEBUG: pc = 0x%08x\n", tf->pc);
-	kprintf("DEBUG: psr = 0x%08x\n", tf->psr);
-	kprintf("DEBUG: sp = 0x%08x\n", tf->sp);
-	kprintf("DEBUG: lr = 0x%08x\n", tf->lr);
+	kpdebug("r0 = 0x%08x\n", tf->r0);
+	kpdebug("r1 = 0x%08x\n", tf->r1);
+	kpdebug("r2 = 0x%08x\n", tf->r2);
+	kpdebug("r3 = 0x%08x\n", tf->r3);
+	kpdebug("r4 = 0x%08x\n", tf->r4);
+	kpdebug("r5 = 0x%08x\n", tf->r5);
+	kpdebug("r6 = 0x%08x\n", tf->r6);
+	kpdebug("r7 = 0x%08x\n", tf->r7);
+	kpdebug("r8 = 0x%08x\n", tf->r8);
+	kpdebug("r9 = 0x%08x\n", tf->r9);
+	kpdebug("r10 = 0x%08x\n", tf->r10);
+	kpdebug("r11 = 0x%08x\n", tf->r11);
+	kpdebug("r12 = 0x%08x\n", tf->r12);
+	kpdebug("pc = 0x%08x\n", tf->pc);
+	kpdebug("psr = 0x%08x\n", tf->psr);
+	kpdebug("sp = 0x%08x\n", tf->sp);
+	kpdebug("lr = 0x%08x\n", tf->lr);
 }
 
 struct trapframe *arm_copy_trapframe(struct trapframe *dest, struct trapframe *src)

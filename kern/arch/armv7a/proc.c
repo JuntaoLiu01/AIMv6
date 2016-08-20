@@ -74,6 +74,7 @@ static void __bootstrap_context(struct regs *regs, struct trapframe *tf)
 	regs->psr &= ~ARM_IRQ_MASK;
 	/* Kernel stack pointer just below trap frame */
 	regs->sp = (unsigned long)tf;
+	regs->pc = (unsigned long)forkret;
 }
 
 static void __bootstrap_user(struct trapframe *tf)

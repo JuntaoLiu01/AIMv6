@@ -21,12 +21,80 @@
 #endif /* HAVE_CONFIG_H */
 
 /* from kernel */
+#include <aim/device.h>
+#include <aim/initcalls.h>
+#include <aim/kmmap.h>
 #include <io.h>
+#include <mm.h>
 #include <sleep.h>
+#include <errno.h>
+#include <mach-conf.h>
+#include <lib/libc/string.h>
+
+#include <drivers/hd/hd.h>
+#include <drivers/io/io-mem.h>
 
 /* from sd driver */
 #include <sd-zynq.h>
 #include <sd-zynq-hw.h>
+
+static struct hd_device __early_sd_zynq;
+
+void __sd_zynq_init(struct hd_device *hd)
+{
+	struct bus_device * bus = hd->bus;
+	bus_write_fp w8 = bus->bus_driver.get_write_fp(bus, 8);
+	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
+	bus_write_fp w32 = bus->bus_driver.get_write_fp(bus, 32);
+	bus_read_fp r8 = bus->bus_driver.get_read_fp(bus, 8);
+	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
+	bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
+
+	uint64_t tmp;
+	uint16_t tmp16;
+	uint8_t tmp8;
+	/* reset */
+	w8(bus, hd->base, SD_SW_RST_OFFSET, SD_SWRST_ALL_MASK);
+	do {
+		r8(bus, hd->base, SD_SW_RST_OFFSET, &tmp);
+	} while (tmp & SD_SWRST_ALL_MASK);
+
+	/* capabilities = r32(bus, hd->base, SD_CAPS_OFFSET, @tgt) */
+
+	/* enable internal clock */
+	tmp16 = SD_CC_SDCLK_FREQ_D128 | SD_CC_INT_CLK_EN;
+	w16(bus, hd->base, SD_CLK_CTRL_OFFSET, tmp16);
+	do {
+		r16(bus, hd->base, SD_CLK_CTRL_OFFSET, &tmp);
+	}
+	while (!(tmp & SD_CC_INT_CLK_STABLE));
+
+	/* enable SD clock */
+	r16(bus, hd->base, SD_CLK_CTRL_OFFSET, &tmp);
+	tmp |= SD_CC_SD_CLK_EN;
+	w16(bus, hd->base, SD_CLK_CTRL_OFFSET, tmp);
+	
+	/* enable bus power */
+	tmp8 = SD_PC_BUS_VSEL_3V3 | SD_PC_BUS_PWR;
+	w8(bus, hd->base, SD_POWER_CTRL_OFFSET, tmp8);
+	w8(bus, hd->base, SD_HOST_CTRL1_OFFSET, SD_HC_DMA_SDMA);
+	/*
+	 * Xilinx's driver uses ADMA2 by default, we use single-operation
+	 * DMA to avoid putting descriptors in memory.
+	 */
+
+	/* enable interrupt status except card */
+	tmp16 = SD_NORM_INTR_ALL & (~SD_INTR_CARD);
+	w16(bus, hd->base, SD_NORM_INTR_STS_EN_OFFSET, tmp16);
+	w16(bus, hd->base, SD_ERR_INTR_STS_EN_OFFSET, SD_ERR_INTR_ALL);
+
+	/* but disable all interrupt signals */
+	w16(bus, hd->base, SD_NORM_INTR_SIG_EN_OFFSET, 0x0);
+	w16(bus, hd->base, SD_ERR_INTR_SIG_EN_OFFSET, 0x0);
+
+	/* set block size to 512 */
+	w16(bus, hd->base, SD_BLK_SIZE_OFFSET, 512);
+}
 
 #ifdef RAW /* baremetal driver */
 
@@ -37,43 +105,9 @@ static int cardtype;
 
 void sd_init()
 {
-	uint16_t tmp16;
-	uint8_t tmp8;
-	/* reset */
-	write8(SD_BASE + SD_SW_RST_OFFSET, SD_SWRST_ALL_MASK);
-	while (read8(SD_BASE + SD_SW_RST_OFFSET) & SD_SWRST_ALL_MASK);
-
-	/* capabilities = read32(SD_BASE + SD_CAPS_OFFSET) */
-
-	/* enable internal clock */
-	tmp16 = SD_CC_SDCLK_FREQ_D128 | SD_CC_INT_CLK_EN;
-	write16(SD_BASE + SD_CLK_CTRL_OFFSET, tmp16);
-	while (!(read16(SD_BASE + SD_CLK_CTRL_OFFSET) & SD_CC_INT_CLK_STABLE));
-
-	/* enable SD clock */
-	tmp16 = read16(SD_BASE + SD_CLK_CTRL_OFFSET) | SD_CC_SD_CLK_EN;
-	write16(SD_BASE + SD_CLK_CTRL_OFFSET, tmp16);
-	
-	/* enable bus power */
-	tmp8 = SD_PC_BUS_VSEL_3V3 | SD_PC_BUS_PWR;
-	write8(SD_BASE + SD_POWER_CTRL_OFFSET, tmp8);
-	write8(SD_BASE + SD_HOST_CTRL1_OFFSET, SD_HC_DMA_SDMA);
-	/*
-	 * Xilinx's driver uses ADMA2 by default, we use single-operation
-	 * DMA to avoid putting descriptors in memory.
-	 */
-
-	/* enable interrupt status except card */
-	tmp16 = SD_NORM_INTR_ALL & (~SD_INTR_CARD);
-	write16(SD_BASE + SD_NORM_INTR_STS_EN_OFFSET, tmp16);
-	write16(SD_BASE + SD_ERR_INTR_STS_EN_OFFSET, SD_ERR_INTR_ALL);
-
-	/* but disable all interrupt signals */
-	write16(SD_BASE + SD_NORM_INTR_SIG_EN_OFFSET, 0x0);
-	write16(SD_BASE + SD_ERR_INTR_SIG_EN_OFFSET, 0x0);
-
-	/* set block size to 512 */
-	write16(SD_BASE + SD_BLK_SIZE_OFFSET, 512);
+	__early_sd_zynq.base = SD_BASE;
+	__early_sd_zynq.bus = &early_memory_bus;
+	__sd_zynq_init(&__early_sd_zynq);
 }
 
 /* add descriptions to a command */
@@ -357,6 +391,71 @@ int sd_write(uint32_t pa, uint16_t count, uint32_t offset)
 }
 
 #else /* not RAW, or kernel driver */
+
+#define DEVICE_MODEL "sd-zynq"
+
+/* forward */
+static struct blk_driver drv;
+
+static void init(struct hd_device *hd)
+{
+	kpdebug("initializing SD controller\n");
+	__sd_zynq_init(hd);
+	kpdebug("initialization done\n");
+}
+
+static int new(struct devtree_entry *entry)
+{
+	struct hd_device *hd;
+	int mapped = 0;
+
+	if (strcmp(entry->model, DEVICE_MODEL) != 0)
+		return -ENOTSUP;
+	if (strcmp(entry->name, "sd1") == 0)
+		return -ENOTSUP;
+	kpdebug("<sd-zynq> initializing device %s.\n", entry->name);
+	/* need to kmmap if parent is memory. */
+	void *vaddr;
+	if (strcmp(entry->parent, "memory") == 0) {
+		mapped = 1;
+		vaddr = kmmap(NULL, entry->regs[0], PAGE_SIZE, MAP_SHARED_DEV);
+		if (vaddr == NULL) return -ENOMEM;
+	} else {
+		vaddr = (void *)ULCAST(entry->regs[0]);
+	}
+	/* allocate */
+	hd = kmalloc(sizeof(*hd), GFP_ZERO);
+	if (hd == NULL) {
+		if (mapped) kmunmap(vaddr);
+		return -ENOMEM;
+	}
+	/* assuming only one card... */
+	initdev(hd, DEVCLASS_BLK, entry->name,
+	    make_hdbasedev(SD_MAJOR, 0), &drv);
+	hd->bus = (struct bus_device *)dev_from_name(entry->parent);
+	hd->base = entry->regs[0];
+	hd->nregs = entry->nregs;	/* assuming dev tree can't go wrong */
+	list_init(&(hd->bufqueue));
+	dev_add(hd);
+	init(hd);
+	//add_interrupt_handler(intr, entry->irq);
+	return 0;
+}
+
+static struct blk_driver drv = {
+	.class = DEVCLASS_BLK,
+/*	.open = open,
+	.close = __close,
+	.strategy = __strategy,*/
+	.new = new
+};
+
+static int __init(void)
+{
+	register_driver(SD_MAJOR, &drv);
+	return 0;
+}
+INITCALL_DRIVER(__init);
 
 #endif /* RAW */
 
