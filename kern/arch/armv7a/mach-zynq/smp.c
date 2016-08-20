@@ -20,35 +20,21 @@
 #include <config.h>
 #endif /* HAVE_CONFIG_H */
 
-/*
- * Needed to compare the NR_CPUS macro. Positive values reserved for
- * real cpu numbers and therefore can't be used.
- */
-#define DETECT	-1
+#include <aim/console.h>
+#include <aim/kmmap.h>
+#include <mm.h>
 
-static int __nr_cpus;
+static void *release_addr;
 
-void detect_cpus()
+void mach_smp_startup(void)
 {
-#if NR_CPUS == DETECT
-	/* TODO: detect is possible if MACH supports it, which is true
-	 * for A9, and can be read from the MPCore's SCU CPU Power Status
-	 * Register. Cores outside the cluster cannot be detected.
-	 * Avoid using THIS detection
-	 */
-#else
-	__nr_cpus = NR_CPUS;
-#endif
-}
-
-int nr_cpus()
-{
-	return __nr_cpus;
-}
-
-void arch_smp_startup(void)
-{
-	extern void mach_smp_startup(void);
-	mach_smp_startup();
+	extern uint32_t slave_entry;
+	void *entry;
+	release_addr = kmmap(NULL, 0xFFFFF000, PAGE_SIZE, MAP_SHARED_DEV);
+	assert(release_addr != NULL);
+	release_addr += 0xFF0;
+	entry = (void *)&slave_entry;
+	kpdebug("bring up using addr=0x%08x, entry=0x%08x\n", release_addr, entry);
+	*(void **)release_addr = entry;
 }
 

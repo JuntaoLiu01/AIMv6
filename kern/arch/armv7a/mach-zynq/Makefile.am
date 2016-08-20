@@ -19,5 +19,5 @@ include $(top_srcdir)/env.am
 
 noinst_LTLIBRARIES = libzynq.la
 
-libzynq_la_SOURCES = mach-init.c
+libzynq_la_SOURCES = mach-init.c smp.c
 

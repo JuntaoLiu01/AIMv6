@@ -23,6 +23,10 @@
 /* from kernel */
 #include <sys/types.h>
 #include <aim/console.h>
+#include <aim/device.h>
+#include <aim/initcalls.h>
+#include <aim/irq.h>
+#include <aim/kmmap.h>
 #include <mm.h>
 #include <pmm.h>
 #include <vmm.h>
@@ -34,9 +38,6 @@
 #include <sched.h>
 #include <mp.h>
 #include <timer.h>
-#include <aim/initcalls.h>
-#include <aim/irq.h>
-#include <aim/kmmap.h>
 
 #define BOOTSTRAP_POOL_SIZE	1024
 
@@ -132,12 +133,14 @@ void __noreturn master_init(void)
 	kputs("KERN: Initcalls done.\n");
 
 	probe_devices();
-	kprintf("KERN: probe device done\n");
+	kprintf("KERN: probe device done.\n");
 
 	init_IRQ();
+	kprintf("KERN: IRQ ready.\n");
 
 	/* startup smp */
 	smp_startup();
+	kprintf("KERN: SMP ready.\n");
 
 	/* initialize or cleanup namespace */
 

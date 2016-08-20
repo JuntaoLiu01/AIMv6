@@ -46,6 +46,15 @@ struct devtree_entry devtree[] = {
 		{0},
 		0
 	},
+	/* mpcore comes before anything with IRQ */
+	{
+		"mpcore",
+		"cortex-a9",
+		"memory",
+		1,
+		{MPCORE_PHYSBASE},
+		0
+	},
 	/* Zynq UART */
 	{
 		"uart0",
@@ -78,14 +87,6 @@ struct devtree_entry devtree[] = {
 		1,
 		{SD1_PHYSBASE},
 		SD1_IRQ
-	},
-	{
-		"mpcore",
-		"cortex-a9",
-		"memory",
-		1,
-		{MPCORE_PHYSBASE},
-		0
 	}
 };
 

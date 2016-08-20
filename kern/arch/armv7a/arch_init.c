@@ -78,11 +78,6 @@ void switch_regs(struct regs *old, struct regs *new)
 
 }
 
-void arch_smp_startup(void)
-{
-
-}
-
 #include <proc.h>
 int __mach_setup_default_tty(struct tty_device *a, int b, struct proc *c)
 {
