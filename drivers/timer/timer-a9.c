@@ -42,11 +42,6 @@
 
 uint64_t timer_read(void)
 {
-	return gt_read();
-}
-
-uint64_t gt_read(void)
-{
 	uint64_t time;
 	uint64_t hi, lo, tmp;
 	/* HI-LO-HI reading because GTC is 64bit */
@@ -77,7 +72,7 @@ static int intr(int irq)
 	return 0;
 }
 
-static inline uint64_t read_counter()
+static inline uint64_t timer_read()
 {
 	bus_read_fp read32 = mpcore->bus_driver.get_read_fp(mpcore, 32);
 	uint64_t time;
@@ -98,7 +93,7 @@ void timer_init(void)
 	uint64_t time;
 
 	/* read value */
-	time = read_counter();
+	time = timer_read();
 	/* calculate and apply increment */
 	uint32_t inc = GTC_TPS / TIMER_FREQ;
 	time += inc;
@@ -134,5 +129,25 @@ uint64_t gt_get_tps(void)
 {
 	// FIXME
 	return GTC_TPS;
+}
+
+void delay(uint32_t s)
+{
+	uint64_t time, time1;
+	time = timer_read();
+	time += gt_get_tps() * s;
+	do {
+		time1 = timer_read();
+	} while (time1 < time);
+}
+
+void udelay(uint32_t us)
+{
+	uint64_t time, time1;
+	time = timer_read();
+	time += gt_get_tpus() * us;
+	do {
+		time1 = timer_read();
+	} while (time1 < time);
 }
 

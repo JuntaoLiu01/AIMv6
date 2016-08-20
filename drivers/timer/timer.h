@@ -29,6 +29,8 @@ uint64_t timer_read(void);
 
 #endif /* RAW */
 
+void delay(uint32_t s);
+void udelay(uint32_t us);
 
 #endif /* _DRIVERS_TIMER_TIMER_H */
 

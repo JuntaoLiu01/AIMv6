@@ -37,26 +37,6 @@
 
 char fw_stack[4096];
 
-void delay(uint32_t s)
-{
-	uint64_t time, time1;
-	time = timer_read();
-	time += gt_get_tps() * s;
-	do {
-		time1 = timer_read();
-	} while (time1 < time);
-}
-
-void udelay(uint32_t us)
-{
-	uint64_t time, time1;
-	time = timer_read();
-	time += gt_get_tpus() * us;
-	do {
-		time1 = timer_read();
-	} while (time1 < time);
-}
-
 void fwpanic(const char *msg)
 {
 	uart_puts(msg);

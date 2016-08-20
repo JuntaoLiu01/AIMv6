@@ -38,17 +38,15 @@
 #include <sd-zynq.h>
 #include <sd-zynq-hw.h>
 
-static struct hd_device __early_sd_zynq;
+static int cardtype;
 
 void __sd_zynq_init(struct hd_device *hd)
 {
 	struct bus_device * bus = hd->bus;
 	bus_write_fp w8 = bus->bus_driver.get_write_fp(bus, 8);
 	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
-	bus_write_fp w32 = bus->bus_driver.get_write_fp(bus, 32);
 	bus_read_fp r8 = bus->bus_driver.get_read_fp(bus, 8);
 	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
-	bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
 
 	uint64_t tmp;
 	uint16_t tmp16;
@@ -96,22 +94,8 @@ void __sd_zynq_init(struct hd_device *hd)
 	w16(bus, hd->base, SD_BLK_SIZE_OFFSET, 512);
 }
 
-#ifdef RAW /* baremetal driver */
-
-/* FIXME zedboard uses SD0 only */
-#define SD_BASE	SD0_PHYSBASE
-
-static int cardtype;
-
-void sd_init()
-{
-	__early_sd_zynq.base = SD_BASE;
-	__early_sd_zynq.bus = &early_memory_bus;
-	__sd_zynq_init(&__early_sd_zynq);
-}
-
 /* add descriptions to a command */
-uint16_t sd_frame_cmd(uint16_t cmd)
+static inline uint16_t sd_frame_cmd(uint16_t cmd)
 {
 	switch (cmd) {
 		case SD_CMD0:
@@ -164,23 +148,30 @@ uint16_t sd_frame_cmd(uint16_t cmd)
  * -2 = command has data but data is inhibited
  * -3 = controller reported error
  */
-int sd_send_cmd(uint16_t cmd, uint16_t count, uint32_t arg, int mode)
+static int __sd_zynq_send_cmd(struct hd_device *hd, uint16_t cmd, uint16_t count,
+	uint32_t arg, int mode)
 {
-	uint32_t state;
-	uint16_t result, tmp16;
+	struct bus_device * bus = hd->bus;
+	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
+	bus_write_fp w32 = bus->bus_driver.get_write_fp(bus, 32);
+	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
+	bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
+
+	uint64_t tmp;
+	uint16_t tmp16;
 	/* frame the command */
 	cmd = sd_frame_cmd(cmd);
 	/* do a state check */
-	state = read32(SD_BASE + SD_PRES_STATE_OFFSET);
-	if (state & SD_PSR_INHIBIT_CMD) return -1;
-	if ((state & SD_PSR_INHIBIT_DAT) && (cmd & SD_DAT_PRESENT)) return -2;
+	r32(bus, hd->base, SD_PRES_STATE_OFFSET, &tmp);
+	if (tmp & SD_PSR_INHIBIT_CMD) return -1;
+	if ((tmp & SD_PSR_INHIBIT_DAT) && (cmd & SD_DAT_PRESENT)) return -2;
 	/* write block count */
-	write16(SD_BASE + SD_BLK_CNT_OFFSET, count);
-	write16(SD_BASE + SD_TIMEOUT_CTRL_OFFSET, 0xE);
+	w16(bus, hd->base, SD_BLK_CNT_OFFSET, count);
+	w16(bus, hd->base, SD_TIMEOUT_CTRL_OFFSET, 0xE);
 	/* write argument */
-	write32(SD_BASE + SD_ARGMT_OFFSET, arg);
-	write16(SD_BASE + SD_NORM_INTR_STS_OFFSET, SD_NORM_INTR_ALL);
-	write16(SD_BASE + SD_ERR_INTR_STS_OFFSET, SD_ERR_INTR_ALL);
+	w32(bus, hd->base, SD_ARGMT_OFFSET, arg);
+	w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_NORM_INTR_ALL);
+	w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, SD_ERR_INTR_ALL);
 	/* set transfer mode */
 	switch(mode) {
 		/* DMA read */
@@ -199,17 +190,17 @@ int sd_send_cmd(uint16_t cmd, uint16_t count, uint32_t arg, int mode)
 			tmp16 = SD_TM_DMA_EN;
 			break;
 	}
-	write16(SD_BASE + SD_XFER_MODE_OFFSET, tmp16);
+	w16(bus, hd->base, SD_XFER_MODE_OFFSET, tmp16);
 	/* write command */
-	write16(SD_BASE + SD_CMD_OFFSET, cmd);
+	w16(bus, hd->base, SD_CMD_OFFSET, cmd);
 	/* wait for result */
 	do {
-		result = read16(SD_BASE + SD_NORM_INTR_STS_OFFSET);
-		if (result & SD_INTR_ERR) return -3;
+		r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &tmp);
+		if (tmp & SD_INTR_ERR) return -3;
 		/* We don't read error states, and we dont't clear them. */
-	} while(!(result & SD_INTR_CC));
+	} while(!(tmp & SD_INTR_CC));
 	/* Clear */
-	write16(SD_BASE + SD_NORM_INTR_STS_OFFSET, SD_INTR_CC);
+	w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_CC);
 	return 0;
 }
 
@@ -229,53 +220,56 @@ int sd_send_cmd(uint16_t cmd, uint16_t count, uint32_t arg, int mode)
  * -8 = error sending CMD9
  * -9 = error sending CMD7
  */
-
-int sd_init_card()
+int __sd_zynq_init_card(struct hd_device *hd)
 {
-	uint32_t state, resp;
+	struct bus_device * bus = hd->bus;
+	bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
+
+	uint64_t state, resp;
 	int ret;
 	/* check card */
-	state = read32(SD_BASE + SD_PRES_STATE_OFFSET);
+	r32(bus, hd->base, SD_PRES_STATE_OFFSET, &state);
 	if (!(state & SD_PSR_CARD_INSRT)) return -1;
 	/* wait 74 clocks (of sd controller). */
 	udelay(2000);
 	/* CMD0 */
-	ret = sd_send_cmd(SD_CMD0, 0, 0, 0);
+	ret = __sd_zynq_send_cmd(hd, SD_CMD0, 0, 0, 0);
 	if (ret) return -2;
 	/* CMD8 */
-	ret = sd_send_cmd(SD_CMD8, 0, SD_CMD8_VOL_PATTERN, 0);
+	ret = __sd_zynq_send_cmd(hd, SD_CMD8, 0, SD_CMD8_VOL_PATTERN, 0);
 	if (ret) return -3;
-	resp = read32(SD_BASE + SD_RESP0_OFFSET);
+	r32(bus, hd->base, SD_RESP0_OFFSET, &resp);
 	if (resp != SD_CMD8_VOL_PATTERN) return -4;
 	/* CMD55 & ACMD41 */
 	do {
-		ret = sd_send_cmd(SD_CMD55, 0, 0, 0);
+		ret = __sd_zynq_send_cmd(hd, SD_CMD55, 0, 0, 0);
 		if (ret) return -5;
-		ret = sd_send_cmd(SD_ACMD41, 0, \
+		ret = __sd_zynq_send_cmd(hd, SD_ACMD41, 0, \
 			(SD_ACMD41_HCS | SD_ACMD41_3V3), 0);
 		if (ret) return -5;
-		resp = read32(SD_BASE + SD_RESP0_OFFSET);
+		r32(bus, hd->base, SD_RESP0_OFFSET, &resp);
 	} while (!(resp & SD_RESP_READY));
 	/* SD or SDHC? */
 	if (resp & SD_ACMD41_HCS) cardtype = 1; /* SDHC */
 	else cardtype = 0; /* SD(SC) */
 	/* assume S18A(OR) good and go on to CMD2 */
-	ret = sd_send_cmd(SD_CMD2, 0, 0, 0);
+	ret = __sd_zynq_send_cmd(hd, SD_CMD2, 0, 0, 0);
 	if (ret) return -6;
 	/* response0-3 contains cardID */
 	/* CMD3 */
 	do {
-		ret = sd_send_cmd(SD_CMD3, 0, 0, 0);
+		ret = __sd_zynq_send_cmd(hd, SD_CMD3, 0, 0, 0);
 		if (ret) return -7;
-		resp = read32(SD_BASE + SD_RESP0_OFFSET) & 0xFFFF0000;
+		r32(bus, hd->base, SD_RESP0_OFFSET, &resp);
+		resp &= 0xFFFF0000;
 	} while (resp == 0);
 	/* response0(high 16bit) contains card RCA */
 	/* CMD9 for specs, we don't use this now */
-	ret = sd_send_cmd(SD_CMD9, 0, resp, 0);
+	ret = __sd_zynq_send_cmd(hd, SD_CMD9, 0, resp, 0);
 	if (ret) return -8;
 	/* response0-3 contains cardSpecs */
 	/* CMD7 */
-	ret = sd_send_cmd(SD_CMD7, 0, resp, 0);
+	ret = __sd_zynq_send_cmd(hd, SD_CMD7, 0, resp, 0);
 	if (ret) return -9;
 	return cardtype;
 }
@@ -304,13 +298,20 @@ int sd_init_card()
  *
  * FIXME add support for cross-page dma
  */
-int sd_read(uint32_t pa, uint16_t count, uint32_t offset)
+static int __sd_zynq_read(struct hd_device *hd, uint32_t pa, uint16_t count,
+	uint32_t offset)
 {
+	struct bus_device * bus = hd->bus;
+	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
+	bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
+	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
+	bus_write_fp w32 = bus->bus_driver.get_write_fp(bus, 32);
+
 	int ret;
-	uint16_t state16;
-	uint32_t state32;
+	uint64_t state16;
+	uint64_t state32;
 	/* check card */
-	state32 = read32(SD_BASE + SD_PRES_STATE_OFFSET);
+	r32(bus, hd->base, SD_PRES_STATE_OFFSET, &state32);
 	if (!(state32 & SD_PSR_CARD_INSRT)) return -1;
 	/* block size set to 512 during controller init, skipping check */
 	/* SD card uses byte addressing */
@@ -318,21 +319,21 @@ int sd_read(uint32_t pa, uint16_t count, uint32_t offset)
 		offset *= 512;
 	}
 	/* write address */
-	write32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET, pa);
+	w32(bus, hd->base, SD_SDMA_SYS_ADDR_OFFSET, pa);
 	/* CMD18 with auto_cmd12 */
-	ret = sd_send_cmd(SD_CMD18, count, offset, 1);
+	ret = __sd_zynq_send_cmd(hd, SD_CMD18, count, offset, 1);
 	if (ret) return -2;
 	/* wait for transfer complete */
 	do {
-		state16 = read16(SD_BASE + SD_NORM_INTR_STS_OFFSET);
+		r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
 		if (state16 & SD_INTR_ERR) {
-			write16(SD_BASE + SD_ERR_INTR_STS_OFFSET, \
+			w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, \
 				SD_ERR_INTR_ALL);
 			return -3;
 		}
 	} while (!(state16 & SD_INTR_TC));
 	/* clean up */
-	write16(SD_BASE + SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+	w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
 	return 0;
 }
 
@@ -358,13 +359,23 @@ int sd_read(uint32_t pa, uint16_t count, uint32_t offset)
  * -2 = error sending CMD25
  * -3 = error during DMA transfer
  */
-int sd_write(uint32_t pa, uint16_t count, uint32_t offset)
+static int sd_send_cmd(uint16_t cmd, uint16_t count,
+	uint32_t arg, int mode);
+#define SD_BASE	SD0_PHYSBASE
+int __sd_zynq_write(struct hd_device *hd, uint32_t pa, uint16_t count,
+	uint32_t offset)
 {
+	struct bus_device * bus = hd->bus;
+	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
+	bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
+	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
+	bus_write_fp w32 = bus->bus_driver.get_write_fp(bus, 32);
+
 	int ret;
-	uint16_t state16;
-	uint32_t state32;
+	uint64_t state16;
+	uint64_t state32;
 	/* check card */
-	state32 = read32(SD_BASE + SD_PRES_STATE_OFFSET);
+	r32(bus, hd->base, SD_PRES_STATE_OFFSET, &state32);
 	if (!(state32 & SD_PSR_CARD_INSRT)) return -1;
 	/* block size set to 512 during controller init, skipping check */
 	/* SD card uses byte addressing */
@@ -372,22 +383,57 @@ int sd_write(uint32_t pa, uint16_t count, uint32_t offset)
 		offset *= 512;
 	}
 	/* write address */
-	write32(SD_BASE + SD_SDMA_SYS_ADDR_OFFSET, pa);
-	/* CMD18 with auto_cmd12 */
-	ret = sd_send_cmd(SD_CMD25, count, offset, 2);
+	w32(bus, hd->base, SD_SDMA_SYS_ADDR_OFFSET, pa);
+	/* CMD25 with auto_cmd12 */
+	ret = __sd_zynq_send_cmd(hd, SD_CMD25, count, offset, 1);
 	if (ret) return -2;
 	/* wait for transfer complete */
 	do {
-		state16 = read16(SD_BASE + SD_NORM_INTR_STS_OFFSET);
+		r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
 		if (state16 & SD_INTR_ERR) {
-			write16(SD_BASE + SD_ERR_INTR_STS_OFFSET, \
+			w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, \
 				SD_ERR_INTR_ALL);
 			return -3;
 		}
 	} while (!(state16 & SD_INTR_TC));
 	/* clean up */
-	write16(SD_BASE + SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+	w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
 	return 0;
+}
+
+#ifdef RAW /* baremetal driver */
+
+/* FIXME zedboard uses SD0 only */
+#define SD_BASE	SD0_PHYSBASE
+
+static struct hd_device __early_sd_zynq;
+
+void sd_init()
+{
+	__early_sd_zynq.base = SD_BASE;
+	__early_sd_zynq.bus = &early_memory_bus;
+	__sd_zynq_init(&__early_sd_zynq);
+}
+
+static int sd_send_cmd(uint16_t cmd, uint16_t count,
+	uint32_t arg, int mode)
+{
+	return __sd_zynq_send_cmd(&__early_sd_zynq, cmd, count, arg, mode);
+}
+
+int sd_init_card()
+{
+	return __sd_zynq_init_card(&__early_sd_zynq);
+}
+
+int sd_read(uint32_t pa, uint16_t count, uint32_t offset)
+{
+	return __sd_zynq_read(&__early_sd_zynq, pa, count, offset);
+}
+
+int sd_write(uint32_t pa, uint16_t count, uint32_t offset)
+{
+	return __sd_zynq_write(&__early_sd_zynq, pa, count, offset);
 }
 
 #else /* not RAW, or kernel driver */
