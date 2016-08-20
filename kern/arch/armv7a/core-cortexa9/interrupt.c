@@ -28,11 +28,21 @@
 
 #define NR_INTS	256
 
-static int (*__dispatch[NR_INTS])(struct trapframe *);
+static int (*__dispatch[NR_INTS])(int);
 
 int handle_interrupt(struct trapframe *regs)
 {
 	/* NOTREACHED */
 	return -EINVAL;
+}
+
+void add_interrupt_handler(int (*handler)(int), int irq)
+{
+	__dispatch[irq] = handler;
+}
+
+void init_IRQ(void)
+{
+
 }
 

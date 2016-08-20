@@ -57,10 +57,6 @@ void arch_init(void)
 
 /* TODO */
 #include <mm.h>
-void init_IRQ(void)
-{
-
-}
 void timer_init(void)
 {
 

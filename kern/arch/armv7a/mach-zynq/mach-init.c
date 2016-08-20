@@ -48,7 +48,7 @@ struct devtree_entry devtree[] = {
 	},
 	/* Zynq UART */
 	{
-		"uart-zynq",
+		"uart0",
 		"uart-zynq",
 		"memory",
 		1,
@@ -56,7 +56,7 @@ struct devtree_entry devtree[] = {
 		UART0_IRQ
 	},
 	{
-		"uart-zynq",
+		"uart1",
 		"uart-zynq",
 		"memory",
 		1,
@@ -64,7 +64,7 @@ struct devtree_entry devtree[] = {
 		UART1_IRQ
 	},
 	{
-		"sd-zynq",
+		"sd0",
 		"sd-zynq",
 		"memory",
 		1,
@@ -72,7 +72,7 @@ struct devtree_entry devtree[] = {
 		SD0_IRQ
 	},
 	{
-		"sd-zynq",
+		"sd1",
 		"sd-zynq",
 		"memory",
 		1,
@@ -82,7 +82,7 @@ struct devtree_entry devtree[] = {
 	{
 		"mpcore",
 		"cortex-a9",
-		"bus-mapper",
+		"memory",
 		1,
 		{MPCORE_PHYSBASE},
 		0

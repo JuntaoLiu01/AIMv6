@@ -18,6 +18,7 @@
 include $(top_srcdir)/env.am
 
 noinst_LTLIBRARIES = libio-raw.la libio.la
+noinst_DATA =
 
 SRCS = 
 
@@ -27,6 +28,11 @@ endif
 
 if IO_PORT
 SRCS += io-port.c io-port.h
+endif
+
+if BUS_MAPPER
+noinst_DATA += bus-mapper.o
+bus-mapper.o: bus-mapper.c
 endif
 
 libio_raw_la_SOURCES = $(SRCS)

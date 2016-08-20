@@ -32,9 +32,12 @@
 #include <aim/kmmap.h>
 #include <mm.h>
 #include <panic.h>
+#include <trap.h>
 #include <errno.h>
 #include <mach-conf.h>
+#include <lib/libc/string.h>
 
+#include <drivers/console/cons.h>
 #include <drivers/io/io-mem.h>
 
 /* we need macro comparision */
@@ -65,6 +68,16 @@ static inline void __uart_zynq_disable(struct chr_device * inst)
 	/* Disable TX and RX */
 	bus_write32(bus, inst->base, UART_OFFSET_CR,
 		UART_CR_TX_DIS | UART_CR_RX_DIS);
+}
+
+static inline void __uart_zynq_enable_interrupt(struct chr_device * inst)
+{
+	struct bus_device * bus = inst->bus;
+	bus_write_fp bus_write32 = bus->bus_driver.get_write_fp(bus, 32);
+
+	/* enable TIMEOUT and Rx Trigger */
+	bus_write32(bus, inst->base, UART_OFFSET_IER,
+		UART_IXR_TOUT | UART_IXR_RTRIG);
 }
 
 static inline void __uart_zynq_init(struct chr_device * inst)
@@ -107,7 +120,7 @@ static inline unsigned char __uart_zynq_getchar(struct chr_device * inst)
 
 	do {
 		bus_read32(bus, inst->base, UART_OFFSET_SR, &tmp);
-	} while (tmp & UART_SR_RXEMPTY);
+	} while (tmp & UART_SR_REMPTY);
 	bus_read8(bus, inst->base, UART_OFFSET_FIFO, &tmp);
 
 	return (unsigned char)tmp;
@@ -126,7 +139,7 @@ static inline int __uart_zynq_putchar(struct chr_device * inst, unsigned char c)
 
 	do {
 		bus_read32(bus, inst->base, UART_OFFSET_SR, &tmp);
-	} while (tmp & UART_SR_TXFULL);
+	} while (tmp & UART_SR_TFUL);
 	bus_write8(bus, inst->base, UART_OFFSET_FIFO, c);
 
 	return 0;
@@ -182,10 +195,10 @@ static struct chr_driver drv = {
 	.putc = __putc,*/
 };
 
-/* recognize UART0 and UART1 from physical address. */
-static inline int get_minor(struct devtree_entry *entry)
+/* recognize UART0 and UART1 */
+static inline int base2minor(addr_t base)
 {
-	switch (entry->regs[0]) {
+	switch (base) {
 		case UART0_PHYSBASE:
 			return 0;
 		case UART1_PHYSBASE:
@@ -195,29 +208,76 @@ static inline int get_minor(struct devtree_entry *entry)
 	}
 }
 
+static inline int irq2minor(int irq)
+{
+	switch (irq) {
+		case UART0_IRQ:
+			return 0;
+		case UART1_IRQ:
+			return 1;
+		default:
+			return 2;
+	}
+}
+
+static int __intr(int irq)
+{
+	struct chr_device *inst;
+
+	int minor = irq2minor(irq);
+	inst = (struct chr_device *)dev_from_id(makedev(UART_MAJOR, minor));
+	assert(inst != NULL);
+
+	/* read */
+	struct bus_device * bus = inst->bus;
+	bus_read_fp bus_read32 = bus->bus_driver.get_read_fp(bus, 32);
+	bus_write_fp bus_write32 = bus->bus_driver.get_write_fp(bus, 32);
+	uint64_t tmp;
+	bus_read32(bus, inst->base, UART_OFFSET_SR, &tmp);
+	while (!(tmp & UART_SR_REMPTY)) {
+		cons_intr(irq, inst, __uart_zynq_getchar);
+	}
+
+	/* clear state */
+	bus_write32(bus, inst->base, UART_OFFSET_ISR,
+		UART_IXR_TOUT | UART_IXR_RTRIG);
+	return 0;
+}
+
 static int new(struct devtree_entry *entry)
 {
 	struct chr_device *dev;
-	int minor;
+	int minor, mapped = 0;
 
 	if (strcmp(entry->model, DEVICE_MODEL) != 0)
 		return -ENOTSUP;
-	kpdebug("<uart-zynq> initializing device.\n");
-	void *vaddr = kmmap(NULL, entry->regs[0], PAGE_SIZE, MAP_SHARED_DEV);
+	kpdebug("<uart-zynq> initializing device %s.\n", entry->name);
+	/* need to kmmap if parent is memory. */
+	void *vaddr;
+	if (strcmp(entry->parent, "memory") == 0) {
+		mapped = 1;
+		vaddr = kmmap(NULL, entry->regs[0], PAGE_SIZE, MAP_SHARED_DEV);
+		if (vaddr == NULL) return -ENOMEM;
+	} else {
+		vaddr = (void *)ULCAST(entry->regs[0]);
+	}
+	/* allocate */
 	dev = kmalloc(sizeof(*dev), GFP_ZERO);
-	if (dev == NULL)
+	if (dev == NULL) {
+		if (mapped) kmunmap(vaddr);
 		return -ENOMEM;
-	minor = get_minor(entry);
+	}
+	minor = base2minor(entry->regs[0]);
 	initdev(dev, DEVCLASS_CHR, entry->name, makedev(UART_MAJOR, minor), &drv);
 	dev->bus = (struct bus_device *)dev_from_name(entry->parent);
-	dev->base = vaddr;
+	dev->base = ULCAST(vaddr);
 	dev->nregs = entry->nregs;
 	dev_add(dev);
 	/* Flush FIFO XXX */
 	__uart_zynq_init(dev);
 	__uart_zynq_enable(dev);
-//	__uart_zynq_enable_interrupt(dev);
-//	add_interrupt_handler(__intr, entry->irq);
+	add_interrupt_handler(__intr, entry->irq);
+	__uart_zynq_enable_interrupt(dev);
 	kpdebug("<uart-zynq> device registered.\n");
 	return 0;
 }

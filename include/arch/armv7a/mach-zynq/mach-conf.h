@@ -22,6 +22,7 @@
 #define TTY_MAJOR		0
 #define UART_MAJOR		1
 #define SD_MAJOR		2
+#define MAPPED_BUS_MAJOR	3
 
 #endif
 

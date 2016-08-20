@@ -144,3 +144,13 @@ if MACH_LOONGSON3A
 MODULES += $(top_builddir)/drivers/pci/pci-mem.o
 MODULES += $(top_builddir)/drivers/pci/sata_ide_pci.o
 endif
+
+########
+# MISC #
+########
+
+if BUS_MAPPER
+MODULES += $(top_builddir)/drivers/io/bus-mapper.o
+endif
+
+
