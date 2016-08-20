@@ -17,15 +17,19 @@
 
 include $(top_srcdir)/env.am
 
-noinst_LTLIBRARIES = libtimer-raw.la
+noinst_LTLIBRARIES = libtimer-raw.la libtimer.la
 
-libtimer_raw_la_SOURCES = timer.c timer.h
+SRC = timer.c timer.h
+
+if TIMER_A9
+SRC += timer-a9.c timer-a9.h timer-a9-hw.h
+endif
+
+libtimer_raw_la_SOURCES = $(SRC)
 libtimer_raw_la_CPPFLAGS = $(AM_CPPFLAGS_NOPIC) -DRAW
 libtimer_raw_la_CFLAGS = $(AM_CFLAGS_NOPIC)
 libtimer_raw_la_CCASFLAGS = $(AM_CCASFLAGS_NOPIC)
 libtimer_raw_la_LDFLAGS = $(AM_LDFLAGS_NOPIC)
 
-if TIMER_A9
-libtimer_raw_la_SOURCES += timer-a9.c timer-a9.h timer-a9-hw.h
-endif
+libtimer_la_SOURCES = $(SRC)
 

@@ -46,8 +46,9 @@ static volatile bool percpu_blocked = true;
 static void __noreturn rest_percpu_init(void)
 {
 	local_irq_enable();
-
+void debug_timer(void);
 	for (;;)
+debug_timer();
 		/* nothing */;
 }
 
@@ -145,7 +146,9 @@ void __noreturn master_init(void)
 	/* initialize or cleanup namespace */
 
 	idle_init();
+	kprintf("KERN: idle proc ready.\n");
 	timer_init();
+	kprintf("KERN: timer ready.\n");
 
 	rest_init();
 }

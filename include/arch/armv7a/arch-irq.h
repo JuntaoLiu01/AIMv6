@@ -32,6 +32,8 @@
 
 #ifndef __ASSEMBLER__
 
+#include <aim/console.h>
+
 static inline void local_irq_enable()
 {
 	uint32_t cpsr = arm_read_psr(cpsr);

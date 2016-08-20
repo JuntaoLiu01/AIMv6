@@ -35,6 +35,7 @@
 #include <trap.h>
 #include <errno.h>
 #include <mach-conf.h>
+#include <asm-generic/funcs.h>
 #include <lib/libc/string.h>
 
 #include <drivers/console/cons.h>
@@ -181,18 +182,82 @@ int uart_putchar(unsigned char c)
 
 #include <panic.h>
 
+static int open(dev_t devno, int mode, struct proc *p)
+{
+	struct chr_device *dev;
+	kpdebug("opening UART zynq\n");
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	cons_open(dev, mode, p);
+	return 0;
+}
+
+static int close(dev_t devno, int mode, struct proc *p)
+{
+	/* currently we do nothing */
+	return 0;
+}
+
+static int putc(dev_t devno, int c)
+{
+	struct chr_device *dev;
+	int err;
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	/* XXX */
+	if (c == '\n' &&
+	    (err = cons_putc(dev, '\r', __uart_zynq_putchar)) != 0)
+		return err;
+	return cons_putc(dev, c, __uart_zynq_putchar);
+}
+
+static int getc(dev_t devno)
+{
+	struct chr_device *dev;
+	int c;
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	c = cons_getc(dev);
+	/*
+	 * XXX
+	 * Ordinarily, the driver SHOULD send raw characters (or character
+	 * sequences) to user space, and leave the conversion work (such
+	 * as conversion from CR to LF here) to external user-space
+	 * libraries such as terminfo(5).
+	 *
+	 * Here, we do the job in kernel drivers so that we do not need
+	 * to implement a wholly new terminfo(5).  But do remember that
+	 * the trick here is usually a *BAD* practice.
+	 *
+	 * See also:
+	 * __kbdgetc() in uart-msim-kernel.c
+	 *
+	 * FIXME: maybe someone else could implement a mini terminfo?
+	 */
+	return (c == '\r' ? '\n' : c);
+}
+
+static int write(dev_t devno, struct uio *uio, int ioflags)
+{
+	struct chr_device *dev;
+
+	dev = (struct chr_device *)dev_from_id(devno);
+	assert(dev != NULL);
+	return cons_write(dev, uio, ioflags);
+}
+
 /* forward declarations */
 static int new(struct devtree_entry *entry);
 
 static struct chr_driver drv = {
 	.class = DEVCLASS_CHR,
 	.new = new,
-/*	.open = __open,
-	.close = __close,
+	.open = open,
+	.close = close,
 	.read = NOTSUP,
-	.write = __write,
-	.getc = __getc,
-	.putc = __putc,*/
+	.write = write,
+	.getc = getc,
+	.putc = putc
 };
 
 /* recognize UART0 and UART1 */

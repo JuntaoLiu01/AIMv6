@@ -53,4 +53,5 @@ libdrivers_la_LIBADD = \
 	$(builddir)/pci/libpci.la \
 	$(builddir)/common/libcommon.la \
 	$(builddir)/tty/libtty.la \
-	$(builddir)/console/libcons.la
+	$(builddir)/console/libcons.la \
+	$(builddir)/timer/libtimer.la

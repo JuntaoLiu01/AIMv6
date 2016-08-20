@@ -57,35 +57,34 @@ void arch_init(void)
 
 /* TODO */
 #include <mm.h>
-void timer_init(void)
-{
-
-}
 
 pgindex_t *get_pgindex(void)
 {
+kpdebug(">>>get_pgindex\n");
 	return NULL;
 }
 
 int set_pages_perm(pgindex_t *pgindex, void *vaddr, size_t size, uint32_t flags)
 {
+kpdebug(">>>set_pages_perm\n");
 	return -1;
 }
 
 #include <regs.h>
 void switch_regs(struct regs *old, struct regs *new)
 {
-
+kpdebug(">>>switch_regs\n");
 }
 
 #include <proc.h>
 int __mach_setup_default_tty(struct tty_device *a, int b, struct proc *c)
 {
+kpdebug(">>>mach_setup_default_tty\n");
 	return -1;
 }
 
 void panic_other_cpus(void)
 {
-
+kpdebug(">>>panic_other_cpus\n");
 }
 

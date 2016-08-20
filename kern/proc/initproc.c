@@ -96,10 +96,11 @@ void initproc_entry(void)
 	 * interacting with disks involves sleep() and wakeup(), which
 	 * requires a working scheduler and interrupts enabled.
 	 */
+	kpdebug("initproc running.\n");
 	fsinit();
-	kpdebug("FS initialized\n");
+	kpdebug("FS initialized.\n");
 	ttyinit();
-	kpdebug("TTY initialized\n");
+	kpdebug("TTY initialized.\n");
 
 	current_proc->cwd = rootvnode;
 	vref(rootvnode);
