@@ -46,9 +46,8 @@ static volatile bool percpu_blocked = true;
 static void __noreturn rest_percpu_init(void)
 {
 	local_irq_enable();
-void debug_timer(void);
+	//schedule();/* FIXME? */
 	for (;;)
-debug_timer();
 		/* nothing */;
 }
 

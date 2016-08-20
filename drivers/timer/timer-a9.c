@@ -73,7 +73,6 @@ static int intr(int irq)
 {
 	bus_write_fp write32 = mpcore->bus_driver.get_write_fp(mpcore, 32);
 	write32(mpcore, MPCORE_GTC_BASE, GTC_INT_OFFSET, 0x1);
-
 	schedule();
 	return 0;
 }
@@ -91,16 +90,6 @@ static inline uint64_t read_counter()
 	} while (hi != tmp);
 	time = (hi << 32) | (lo & 0xFFFFFFFF);
 	return time;
-}
-
-void debug_timer(void)
-{
-	bus_write_fp write32 = mpcore->bus_driver.get_write_fp(mpcore, 32);
-	bus_read_fp read32 = mpcore->bus_driver.get_read_fp(mpcore, 32);
-	uint64_t tmp;
-	write32(mpcore, 0x1000, 0x100, 0xffff0000);
-	read32(mpcore, 0x1000, 0x100, &tmp);
-	kpdebug("state 0x%08x\n", (uint32_t)tmp);
 }
 
 void timer_init(void)

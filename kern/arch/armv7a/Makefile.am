@@ -40,7 +40,8 @@ libarmv7a_la_SOURCES = \
 	jump.c \
 	proc.c \
 	smp.c \
-	sync.c
+	sync.c \
+	switch.S
 libarmv7a_la_LIBADD = \
 	$(PREFIXED_MACH)/lib$(MACH).la \
 	$(PREFIXED_CORE)/lib$(CORE).la

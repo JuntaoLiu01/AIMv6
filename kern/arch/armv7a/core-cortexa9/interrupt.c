@@ -34,6 +34,8 @@
 
 #define ICC_ICR_OFFSET	0x00
 #define ICC_PMR_OFFSET	0x04
+#define ICC_IAR_OFFSET	0x0C
+#define ICC_EOIR_OFFSET	0x10
 
 #define ICD_DCR_OFFSET	0x000
 #define ICD_ISER_OFFSET	0x100
@@ -44,10 +46,18 @@ struct bus_device *mpcore = NULL;
 
 int handle_interrupt(struct trapframe *regs)
 {
-	/* TODO */
-	kpdebug("<<<INTERRUPTED>>>\n");
-	/* NOTREACHED */
-	return -EINVAL;
+	bus_read_fp read32 = mpcore->bus_driver.get_read_fp(mpcore, 32);
+	bus_write_fp write32 = mpcore->bus_driver.get_write_fp(mpcore, 32);
+	/* ack and read irq# */
+	uint64_t tmp;
+	read32(mpcore, MPCORE_ICC_BASE, ICC_IAR_OFFSET, &tmp);
+	int irq = tmp & 0x2FF;
+	kpdebug("irq #%d\n", irq);
+	/* call handler */
+	int ret = __dispatch[irq](irq);
+	/* end of interrupt */
+	write32(mpcore, MPCORE_ICC_BASE, ICC_EOIR_OFFSET, tmp);
+	return ret;
 }
 
 void add_interrupt_handler(int (*handler)(int), int irq)

@@ -58,9 +58,9 @@ void trap_init(void)
 	);
 
 	/* IRQ mode */
-	arm_init_mode(0xD1, "IRQ");
+	arm_init_mode(0xD2, "IRQ");
 
-	/* FIQ(0xD2) mode not used */
+	/* FIQ(0xD1) mode not used */
 
 	/* SVC mode */
 	arm_init_mode(0xD3, "SVC");

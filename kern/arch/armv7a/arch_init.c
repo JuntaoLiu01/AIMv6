@@ -70,12 +70,6 @@ kpdebug(">>>set_pages_perm\n");
 	return -1;
 }
 
-#include <regs.h>
-void switch_regs(struct regs *old, struct regs *new)
-{
-kpdebug(">>>switch_regs\n");
-}
-
 #include <proc.h>
 int __mach_setup_default_tty(struct tty_device *a, int b, struct proc *c)
 {
