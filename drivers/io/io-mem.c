@@ -143,6 +143,7 @@ static struct bus_driver drv = {
 
 static int __driver_init(void)
 {
+	kpdebug("<io-mem> initializing.\n");
 	struct bus_device *memory_bus;
 	register_driver(NOMAJOR, &drv);
 #ifdef IO_MEM_ROOT
@@ -150,6 +151,7 @@ static int __driver_init(void)
 	initdev(memory_bus, DEVCLASS_BUS, "memory", NODEV, &drv);
 	dev_add(memory_bus);
 #endif
+	kpdebug("<io-mem> done.\n");
 	return 0;
 }
 INITCALL_DRIVER(__driver_init);

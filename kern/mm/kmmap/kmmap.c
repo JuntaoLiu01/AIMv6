@@ -83,11 +83,36 @@ void kmmap_init(void)
 
 void *kmmap(void *vaddr, addr_t paddr, size_t size, uint32_t flags)
 {
-	return NULL;
+	kpdebug("<kmmap> map(va=0x%08x, pa=0x%08x, size=0x%08x, flags=0x%08x)\n",
+		vaddr, (size_t)paddr, size, flags);
+	spin_lock(&lock);
+	/* allocate some address space if caller does not supply any */
+	if (vaddr == NULL) {
+		vaddr = __allocator.alloc(size);
+		kpdebug("<kmmap> allocated va=0x%08x\n", vaddr);
+	}
+	/*
+	 * FIXME need to sync!
+	 * before that, kmmap should only be called with only kernel_mm
+	 * existing.
+	 */
+	struct kmmap_entry entry = {
+		paddr,
+		vaddr,
+		size,
+		flags
+	};
+	__keeper.map(&entry);
+	spin_unlock(&lock);
+	kmmap_apply(kernel_mm->pgindex);
+	/* FIXME flush TLB, currently a slow method. */
+	switch_pgindex(kernel_mm->pgindex);
+	return vaddr;
 }
 
 size_t kmunmap(void *vaddr)
 {
+	/* TODO */
 	return 0;
 }
 

@@ -63,9 +63,8 @@ mm_test(void)
 	switch_pgindex(new_mm->pgindex);
 	for (i = 0; i < PAGE_SIZE; i += sizeof(unsigned int))
 		assert(*(unsigned int *)(test_addr + i) == 0xdeadbeef);
-	/* ARM ONLY */
-	extern uint32_t boot_page_index;
-	switch_pgindex((void *)&boot_page_index);
+	/* restore pgindex before we destroy anything */
+	switch_pgindex(kernel_mm->pgindex);
 
 	mm_destroy(mm);
 	mm_destroy(new_mm);

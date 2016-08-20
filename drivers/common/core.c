@@ -85,8 +85,7 @@ void initdev(struct device *dev, int class, const char *name, dev_t devno,
 static bool __dev_match(struct device *dev, struct devtree_entry *entry)
 {
 	return ((dev->nregs == entry->nregs) &&
-	    (dev->bus == (struct bus_device *)dev_from_name(entry->parent)) &&
-	    !memcmp(dev->bases, entry->regs, sizeof(addr_t) * dev->nregs));
+	    (dev->bus == (struct bus_device *)dev_from_name(entry->parent)));
 }
 
 static bool __entry_match(struct devtree_entry *a, struct devtree_entry *b)
@@ -174,7 +173,8 @@ static bool __probe_devices(void)
 		 * bus, and the PCI bus driver already probed the same
 		 * SATA controller (and already created a struct device).
 		 */
-		if ((dev = __check_dup_device(entry)) != NULL) {
+		if ((dev = __check_dup_device(entry)) != NULL &&
+				strcmp(entry->parent, "memory") != 0) {
 			assert(strcmp(dev->name, entry->name) != 0);
 			kprintf("KERN: overwriting device name %s with %s\n",
 			    dev->name, entry->name);

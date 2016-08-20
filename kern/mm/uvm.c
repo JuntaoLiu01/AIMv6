@@ -522,5 +522,6 @@ void mm_init(void)
 {
 	arch_mm_init();
 	kernel_mm = mm_new();
+	switch_pgindex(kernel_mm->pgindex);
 }
 

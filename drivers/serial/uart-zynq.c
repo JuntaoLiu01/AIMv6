@@ -25,12 +25,15 @@
 #include <uart-zynq.h>
 #include <uart-zynq-hw.h>
 
-#include <aim/device.h>
-#include <aim/initcalls.h>
-#include <aim/early_kmmap.h>
 #include <aim/console.h>
+#include <aim/device.h>
+#include <aim/early_kmmap.h>
+#include <aim/initcalls.h>
+#include <aim/kmmap.h>
 #include <mm.h>
 #include <panic.h>
+#include <errno.h>
+#include <mach-conf.h>
 
 #include <drivers/io/io-mem.h>
 
@@ -161,15 +164,72 @@ int uart_putchar(unsigned char c)
 
 #else /* not RAW, or kernel driver */
 
+#define DEVICE_MODEL	"uart-zynq"
+
 #include <panic.h>
 
+/* forward declarations */
+static int new(struct devtree_entry *entry);
+
+static struct chr_driver drv = {
+	.class = DEVCLASS_CHR,
+	.new = new,
+/*	.open = __open,
+	.close = __close,
+	.read = NOTSUP,
+	.write = __write,
+	.getc = __getc,
+	.putc = __putc,*/
+};
+
+/* recognize UART0 and UART1 from physical address. */
+static inline int get_minor(struct devtree_entry *entry)
+{
+	switch (entry->regs[0]) {
+		case UART0_PHYSBASE:
+			return 0;
+		case UART1_PHYSBASE:
+			return 1;
+		default:
+			return 2;
+	}
+}
+
+static int new(struct devtree_entry *entry)
+{
+	struct chr_device *dev;
+	int minor;
+
+	if (strcmp(entry->model, DEVICE_MODEL) != 0)
+		return -ENOTSUP;
+	kpdebug("<uart-zynq> initializing device.\n");
+	void *vaddr = kmmap(NULL, entry->regs[0], PAGE_SIZE, MAP_SHARED_DEV);
+	dev = kmalloc(sizeof(*dev), GFP_ZERO);
+	if (dev == NULL)
+		return -ENOMEM;
+	minor = get_minor(entry);
+	initdev(dev, DEVCLASS_CHR, entry->name, makedev(UART_MAJOR, minor), &drv);
+	dev->bus = (struct bus_device *)dev_from_name(entry->parent);
+	dev->base = vaddr;
+	dev->nregs = entry->nregs;
+	dev_add(dev);
+	/* Flush FIFO XXX */
+	__uart_zynq_init(dev);
+	__uart_zynq_enable(dev);
+//	__uart_zynq_enable_interrupt(dev);
+//	add_interrupt_handler(__intr, entry->irq);
+	kpdebug("<uart-zynq> device registered.\n");
+	return 0;
+}
 static int __init(void)
 {
 	kputs("KERN: <uart-zynq> Initializing.\n");
+	register_driver(UART_MAJOR, &drv);
+	kputs("KERN: <uart-zynq> Ready.\n");
 	return 0;
 }
 
-INITCALL_DEV(__init)
+INITCALL_DRIVER(__init)
 
 #if PRIMARY_CONSOLE == UART_ZYNQ
 
