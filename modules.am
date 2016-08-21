@@ -128,6 +128,10 @@ if MACH_LOONGSON3A
 MODULES += $(top_builddir)/drivers/ata/ata_ide.o
 endif
 
+if SD_ZYNQ
+MODULES += $(top_builddir)/drivers/sd/sd-zynq.o
+endif
+
 ########################
 # Interrupt controller #
 ########################

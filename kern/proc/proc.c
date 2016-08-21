@@ -169,6 +169,11 @@ void proc_init(void)
 	spinlock_init(&freekpid.lock);
 }
 
+static void idle(void)
+{
+	while (1);
+}
+
 void idle_init(void)
 {
 	current_proc = cpu_idleproc;

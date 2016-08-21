@@ -18,18 +18,22 @@
 include $(top_srcdir)/env.am
 
 noinst_LTLIBRARIES = libsd-raw.la libsd.la
+noinst_DATA =
 
 SRCS = sd.c sd.h
+MODULE_SRCS =
 
 if SD_ZYNQ
-SRCS += sd-zynq.c sd-zynq.h sd-zynq-hw.h
+MODULE_SRCS += sd-zynq.c sd-zynq.h sd-zynq-hw.h
+noinst_DATA += sd-zynq.o
+sd-zynq.o: sd-zynq.c
 endif
 
-libsd_raw_la_SOURCES = $(SRCS)
+libsd_raw_la_SOURCES = $(SRCS) $(MODULE_SRCS)
 libsd_raw_la_CPPFLAGS =  $(AM_CPPFLAGS_NOPIC) -DRAW
 libsd_raw_la_CFLAGS =  $(AM_CFLAGS_NOPIC)
 libsd_raw_la_CCASFLAGS =  $(AM_CCASFLAGS_NOPIC)
 libsd_raw_la_LDFLAGS =  $(AM_LDFLAGS_NOPIC)
 
-libsd_la_SOURCES = $(SRCS)
+libsd_la_SOURCES =
 

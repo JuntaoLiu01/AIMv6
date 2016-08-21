@@ -30,6 +30,10 @@
 #include <errno.h>
 #include <mach-conf.h>
 #include <lib/libc/string.h>
+#include <buf.h>
+#include <fs/vnode.h>
+#include <fs/bio.h>
+#include <libc/stdio.h>
 
 #include <drivers/hd/hd.h>
 #include <drivers/io/io-mem.h>
@@ -299,7 +303,7 @@ int __sd_zynq_init_card(struct hd_device *hd)
  * FIXME add support for cross-page dma
  */
 static int __sd_zynq_read(struct hd_device *hd, uint32_t pa, uint16_t count,
-	uint32_t offset)
+	uint32_t offset, int wait)
 {
 	struct bus_device * bus = hd->bus;
 	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
@@ -323,17 +327,19 @@ static int __sd_zynq_read(struct hd_device *hd, uint32_t pa, uint16_t count,
 	/* CMD18 with auto_cmd12 */
 	ret = __sd_zynq_send_cmd(hd, SD_CMD18, count, offset, 1);
 	if (ret) return -2;
-	/* wait for transfer complete */
-	do {
-		r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
-		if (state16 & SD_INTR_ERR) {
-			w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, \
-				SD_ERR_INTR_ALL);
-			return -3;
-		}
-	} while (!(state16 & SD_INTR_TC));
-	/* clean up */
-	w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+	if (wait) {
+		/* wait for transfer complete */
+		do {
+			r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
+			if (state16 & SD_INTR_ERR) {
+				w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, \
+					SD_ERR_INTR_ALL);
+				return -3;
+			}
+		} while (!(state16 & SD_INTR_TC));
+		/* clean up */
+		w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+	}
 	return 0;
 }
 
@@ -359,11 +365,8 @@ static int __sd_zynq_read(struct hd_device *hd, uint32_t pa, uint16_t count,
  * -2 = error sending CMD25
  * -3 = error during DMA transfer
  */
-static int sd_send_cmd(uint16_t cmd, uint16_t count,
-	uint32_t arg, int mode);
-#define SD_BASE	SD0_PHYSBASE
 int __sd_zynq_write(struct hd_device *hd, uint32_t pa, uint16_t count,
-	uint32_t offset)
+	uint32_t offset, int wait)
 {
 	struct bus_device * bus = hd->bus;
 	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
@@ -387,18 +390,48 @@ int __sd_zynq_write(struct hd_device *hd, uint32_t pa, uint16_t count,
 	/* CMD25 with auto_cmd12 */
 	ret = __sd_zynq_send_cmd(hd, SD_CMD25, count, offset, 1);
 	if (ret) return -2;
-	/* wait for transfer complete */
-	do {
-		r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
-		if (state16 & SD_INTR_ERR) {
-			w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, \
-				SD_ERR_INTR_ALL);
-			return -3;
-		}
-	} while (!(state16 & SD_INTR_TC));
-	/* clean up */
-	w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+	if (wait) {
+		/* wait for transfer complete */
+		do {
+			r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
+			if (state16 & SD_INTR_ERR) {
+				w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, \
+					SD_ERR_INTR_ALL);
+				return -3;
+			}
+		} while (!(state16 & SD_INTR_TC));
+		/* clean up */
+		w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+	}
 	return 0;
+}
+
+static void enable_interrupt(struct hd_device *hd)
+{
+	struct bus_device * bus = hd->bus;
+	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
+
+	w16(bus, hd->base, SD_NORM_INTR_STS_EN_OFFSET,
+		SD_INTR_TC | SD_INTR_CC | SD_INTR_ERR | SD_INTR_DMA);
+}
+
+static int __check_error_ack_interrupt(struct hd_device *hd)
+{
+	struct bus_device * bus = hd->bus;
+	bus_read_fp r16 = bus->bus_driver.get_read_fp(bus, 16);
+	bus_write_fp w16 = bus->bus_driver.get_write_fp(bus, 16);
+	uint64_t state16;
+
+	r16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, &state16);
+	if (state16 & SD_INTR_ERR) {
+		w16(bus, hd->base, SD_ERR_INTR_STS_OFFSET, SD_ERR_INTR_ALL);
+		return 0;
+	} else if (state16 & SD_INTR_DMA) {
+		return 2;
+	} else {
+		w16(bus, hd->base, SD_NORM_INTR_STS_OFFSET, SD_INTR_TC);
+		return 1;
+	}
 }
 
 #ifdef RAW /* baremetal driver */
@@ -415,12 +448,6 @@ void sd_init()
 	__sd_zynq_init(&__early_sd_zynq);
 }
 
-static int sd_send_cmd(uint16_t cmd, uint16_t count,
-	uint32_t arg, int mode)
-{
-	return __sd_zynq_send_cmd(&__early_sd_zynq, cmd, count, arg, mode);
-}
-
 int sd_init_card()
 {
 	return __sd_zynq_init_card(&__early_sd_zynq);
@@ -428,12 +455,12 @@ int sd_init_card()
 
 int sd_read(uint32_t pa, uint16_t count, uint32_t offset)
 {
-	return __sd_zynq_read(&__early_sd_zynq, pa, count, offset);
+	return __sd_zynq_read(&__early_sd_zynq, pa, count, offset, true);
 }
 
 int sd_write(uint32_t pa, uint16_t count, uint32_t offset)
 {
-	return __sd_zynq_write(&__early_sd_zynq, pa, count, offset);
+	return __sd_zynq_write(&__early_sd_zynq, pa, count, offset, true);
 }
 
 #else /* not RAW, or kernel driver */
@@ -447,7 +474,181 @@ static void init(struct hd_device *hd)
 {
 	kpdebug("initializing SD controller\n");
 	__sd_zynq_init(hd);
+	kpdebug("initializing SD(SC/HC) card\n");
+	__sd_zynq_init_card(hd);
 	kpdebug("initialization done\n");
+}
+
+static int open(dev_t dev, int mode, struct proc *p)
+{
+	struct hd_device *hdpart;
+	struct hd_device *hd;
+	char partname[DEV_NAME_MAX];
+
+	hd = (struct hd_device *)dev_from_id(hdbasedev(dev));
+	/* should be initialized by device prober... */
+	assert(hd != NULL);
+	hdpart = (struct hd_device *)dev_from_id(dev);
+	if (hdpart != NULL)
+		/* covered the case where partno == 0 */
+		return 0;
+
+	kpdebug("__open: %d, %d\n", major(dev), minor(dev));
+
+	/* Detect all partitions if the hard disk has not yet detected its
+	 * partitions. */
+	if (!(hd->hdflags & HD_LOADED))
+		detect_hd_partitions(hd);
+
+	if (hd->part[hdpartno(dev)].len == 0)
+		return -ENODEV;
+
+	/* Create a partition device for use */
+	hdpart = kmalloc(sizeof(*hdpart), GFP_ZERO);
+	snprintf(partname, DEV_NAME_MAX, "%s~%d\n", hd->name, hdpartno(dev));
+	initdev(hdpart, DEVCLASS_BLK, partname, dev, &drv);
+	dev_add(hdpart);
+
+	return 0;
+}
+
+static int close(dev_t dev, int oflags, struct proc *p)
+{
+	/*
+	 * Since we only have one hard disk (which is root), do we really
+	 * want to "close" it? (FIXME)
+	 */
+	kpdebug("sd-zynq: closing\n");
+	return 0;
+}
+
+static void __start(struct hd_device *dev)
+{
+	struct buf *bp;
+	off_t blkno, partoff;
+	int partno;
+	void *data;
+
+	assert(!list_empty(&dev->bufqueue));
+	bp = list_first_entry(&dev->bufqueue, struct buf, ionode);
+	assert(bp->nbytesrem != 0);
+	assert(IS_ALIGNED(bp->nbytes, SECTOR_SIZE));
+	assert(IS_ALIGNED(bp->nbytesrem, SECTOR_SIZE));
+	assert(bp->flags & (B_DIRTY | B_INVALID));
+	assert(bp->flags & B_BUSY);
+	assert(bp->blkno != BLKNO_INVALID);
+	partno = hdpartno(bp->devno);
+	assert((partno == 0) | (dev->part[partno].len != 0));
+	partoff = (partno == 0) ? 0 : dev->part[partno].offset;
+	blkno = bp->blkno + partoff;
+	data = bp->data + (bp->nbytes - bp->nbytesrem);
+	bp->flags &= ~(B_DONE | B_ERROR | B_EINTR);
+
+	if (bp->flags & B_DIRTY) {
+		kpdebug("writing to %d from %p\n", blkno, data);
+		__sd_zynq_write(dev, kva2pa(ULCAST(data)), bp->nbytesrem/512, blkno, false);
+	} else if (bp->flags & B_INVALID) {
+		kpdebug("reading from %d to %p\n", blkno, data);
+		__sd_zynq_read(dev, kva2pa(ULCAST(data)), bp->nbytesrem/512, blkno, false);
+	}
+}
+
+static int strategy(struct buf *bp)
+{
+	struct hd_device *hd;
+	unsigned long flags;
+
+	hd = (struct hd_device *)dev_from_id(hdbasedev(bp->devno));
+	spin_lock_irq_save(&hd->lock, flags);
+
+	assert(bp->flags & B_BUSY);
+	if (!(bp->flags & (B_DIRTY | B_INVALID))) {
+		kpdebug("sd-zynq: nothing to do\n");
+		spin_unlock_irq_restore(&hd->lock, flags);
+		return 0;
+	}
+	kpdebug("sd-zynq: queuing buf %p with %d bytes at %p\n",
+	    bp, bp->nbytes, bp->data);
+
+	bp->nbytesrem = bp->nbytes;
+
+	if (list_empty(&hd->bufqueue)) {
+		list_add_tail(&bp->ionode, &hd->bufqueue);
+		__start(hd);
+	} else {
+		list_add_tail(&bp->ionode, &hd->bufqueue);
+	}
+
+	spin_unlock_irq_restore(&hd->lock, flags);
+	return 0;
+}
+
+static int intr(int irq)
+{
+	struct hd_device *hd;
+	struct buf *bp;
+	unsigned long flags;
+	int state;
+
+	hd = (struct hd_device *)dev_from_id(hdbasedev(rootdev));
+	kpdebug("sd interrupt\n");
+
+	spin_lock_irq_save(&hd->lock, flags);
+
+	if (list_empty(&hd->bufqueue)) {
+		kpdebug("sd spurious interrupt\n");
+		//__check_error_ack_interrupt(hd);
+		spin_unlock_irq_restore(&hd->lock, flags);
+		return 0;
+	}
+
+	bp = list_first_entry(&hd->bufqueue, struct buf, ionode);
+	state = __check_error_ack_interrupt(hd);
+	assert(bp->flags & B_BUSY);
+	assert(bp->flags & (B_INVALID | B_DIRTY));
+	if (state == 0) {
+		bp->errno = -EIO;
+		bp->flags |= B_ERROR;
+		kpdebug("fail buf %p\n", bp);
+		list_del(&(bp->ionode));
+		biodone(bp);
+		//__startnext(hd);
+		spin_unlock_irq_restore(&hd->lock, flags);
+		return 0;
+	} else if (state == 2) {
+		struct bus_device * bus = hd->bus;
+		bus_read_fp r32 = bus->bus_driver.get_read_fp(bus, 32);
+		bus_write_fp w32 = bus->bus_driver.get_write_fp(bus, 32);
+		uint64_t pa;
+
+		r32(bus, hd->base, SD_SDMA_SYS_ADDR_OFFSET, &pa);
+		w32(bus, hd->base, SD_SDMA_SYS_ADDR_OFFSET, pa);
+		spin_unlock_irq_restore(&hd->lock, flags);
+		return 0;
+	}
+	if (!(bp->flags & B_DIRTY) && (bp->flags & B_INVALID)) {
+		kpdebug("fetching to %p\n",
+		    bp->data + bp->nbytes - bp->nbytesrem);
+		//__fetch(hd, bp);
+	} else if (bp->flags & B_DIRTY) {
+		/* Write finished, decrement one sector */
+		bp->nbytesrem -= SECTOR_SIZE;
+	}
+
+	kpdebug("buf %p remain %d\n", bp, bp->nbytesrem);
+	if (bp->nbytesrem == 0) {
+		kpdebug("done buf %p\n", bp);
+		list_del(&(bp->ionode));
+		biodone(bp);
+		/* We start the next request only if the current request is
+		 * done or failed */
+		//__startnext(hd);
+	} else if (bp->flags & B_DIRTY) {
+		/* Send next sector to PIO if not finished */
+		//__send_one_sector(hd, bp->data + bp->nbytes - bp->nbytesrem);
+	}
+	spin_unlock_irq_restore(&hd->lock, flags);
+	return 0;
 }
 
 static int new(struct devtree_entry *entry)
@@ -479,29 +680,33 @@ static int new(struct devtree_entry *entry)
 	initdev(hd, DEVCLASS_BLK, entry->name,
 	    make_hdbasedev(SD_MAJOR, 0), &drv);
 	hd->bus = (struct bus_device *)dev_from_name(entry->parent);
-	hd->base = entry->regs[0];
+	hd->base = ULCAST(vaddr);
 	hd->nregs = entry->nregs;	/* assuming dev tree can't go wrong */
 	list_init(&(hd->bufqueue));
 	dev_add(hd);
 	init(hd);
-	//add_interrupt_handler(intr, entry->irq);
+	enable_interrupt(hd);
+	add_interrupt_handler(intr, entry->irq);
+	kpdebug("<sd-zynq> device registered.\n");
 	return 0;
 }
 
 static struct blk_driver drv = {
 	.class = DEVCLASS_BLK,
-/*	.open = open,
-	.close = __close,
-	.strategy = __strategy,*/
+	.open = open,
+	.close = close,
+	.strategy = strategy,
 	.new = new
 };
 
 static int __init(void)
 {
+	kputs("KERN: <sd-zynq> Initializing.\n");
 	register_driver(SD_MAJOR, &drv);
+	kputs("KERN: <sd-zynq> Ready.\n");
 	return 0;
 }
-INITCALL_DRIVER(__init);
+INITCALL_DRIVER(__init)
 
 #endif /* RAW */
 

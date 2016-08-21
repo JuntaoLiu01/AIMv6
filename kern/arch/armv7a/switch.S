@@ -34,10 +34,14 @@ switch_regs:
 	stmia	r0!, {sp, lr}
 	mrs	r2, CPSR
 	stmia	r0!, {r2}
-	stmia	r0!, {r0-r12, pc}
+	stmia	r0!, {r0-r12}
+	nop
+	nop
 	/* and then we restore */
 	ldmia	r1!, {sp, lr}
 	ldmia	r1!, {r2}
 	msr	CPSR, r2
 	ldmia	r1!, {r0-r12, pc}
+	/* return */
+	bx	lr
 
