@@ -49,8 +49,12 @@ Run `ct-ng` to see usage.
 
 #### MIPS developers
 
-**First, read the previous section to ensure that you can compile with
-multiple ABIs by one toolchain.**
+Once you have Crosstool-NG installed, you can build your toolchain.
+
+**IMPORTANT: Do not run Crosstool-NG under your home directory.**  Crosstool-NG
+by default saves its configuration in `.config`, and you probably won't be able
+to save there.  If you run `ct-ng clean`, then you will clean up your own
+user-wide configurations in Linux, such as those for GNOME.
 
 Run
 
