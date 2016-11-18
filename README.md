@@ -429,3 +429,7 @@ they are often quite complicated.
 
 ## BUGS
 
+There are some problems in synchronization in file system.  On uniprocessor
+systems it should work fine, but on multiprocessors there are races and/or
+deadlocks.
+

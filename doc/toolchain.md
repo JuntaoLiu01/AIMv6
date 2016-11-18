@@ -34,55 +34,18 @@ and C library for you.
 
 ### Building with Crosstool-NG
 
-Fetch a release from Crosstool-NG official website, and execute
-
-```
-./configure
-make
-make install
-```
-
-Run `ct-ng` to see usage.
-
-#### Read this if developing with multiple ABI
-
-Currently, Crosstool-NG on
-[master branch](https://github.com/crosstool-ng/crosstool-ng)
-does not support `multilib`, which is necessary for developing
-on multiple ABIs (a typical example being developing on MSIM with o32 ABI
-and Loongson 3A with n64 ABI).  We need to manually merge a pull request
-to enable `multilib` support on Crosstool-NG.
-
-First, fetch the latest Crosstool-NG source.
+Execute the following to get Crosstool-NG installed first:
 
 ```
 git clone https://github.com/crosstool-ng/crosstool-ng
 cd crosstool-ng
-```
-
-Then, merge pull request
-[#383](https://github.com/crosstool-ng/crosstool-ng/pull/383).
-
-```
-git fetch origin pull/383/head:multilib
-git checkout multilib
-```
-
-Run
-
-```
 ./bootstrap
-```
-
-to generate a `configure` script.  Then,
-
-```
 ./configure
 make
-make install
+sudo make install
 ```
 
-to install Crosstool-NG with `multilib` support.
+Run `ct-ng` to see usage.
 
 #### MIPS developers
 
